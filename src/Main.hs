@@ -7,6 +7,7 @@ import System.Process
 import System.Exit (ExitCode(..))
 import Control.Monad.Trans.Either (EitherT(..), left, right, runEitherT)
 import Control.Monad.IO.Class (MonadIO(liftIO))
+import Control.Applicative ((<*>), (<$>), pure)
 
 import Data.List
 
@@ -19,7 +20,7 @@ currentTimestamp = do
 
 type RemoteCommand = EitherT (Int, Maybe String) IO (Maybe String)
 
--- ^ Used to compose a "command" that is really just output in the chain.
+-- | Used to compose a "command" that is really just output in the chain.
 echoMessage :: String -> RemoteCommand
 echoMessage msg = do
   liftIO $ putStrLn msg
@@ -53,17 +54,13 @@ remoteT server command = do
 
       left $ (int, maybeString stderr)
 
-
--- ^ Check for existence of bare repo - does not verify contents.
-doesBareRepoExist :: Config -> RemoteCommand
-doesBareRepoExist config = do
-  remoteT (host config) $ "ls " ++ repoPath config
-
+directoryExists :: String -> String -> RemoteCommand
+directoryExists server path = remoteT server $ "ls " ++ path
 
 -- ^ Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: Config -> RemoteCommand
 ensureRepositoryPushed config = do
-  res <- liftIO $ runEitherT $ doesBareRepoExist config
+  res <- liftIO $ runEitherT $ directoryExists (host config) (repoPath config)
 
   case res of
     Left _ -> createCacheRepo config
@@ -78,8 +75,8 @@ data Config = Config { deployPath :: String
                      } deriving (Show)
 
 
--- ^ Returns a Just String or Nothing based on whether the input is null or
--- ^ has contents.
+-- | Returns a Just String or Nothing based on whether the input is null or
+-- has contents.
 maybeString :: String -> Maybe String
 maybeString possibleString =
   if null possibleString then Nothing else Just possibleString
@@ -87,13 +84,13 @@ maybeString possibleString =
 releasesPath :: Config -> String
 releasesPath config = deployPath config ++ "/releases"
 
--- ^ The path indicating the current release folder.
+-- | The path indicating the current release folder.
 releasePath :: Config -> IO String
 releasePath config = do
   ts <- currentTimestamp
   return $ releasesPath config ++ "/" ++ ts
 
--- ^ Clones the repository to the next releasePath timestamp.
+-- | Clones the repository to the next releasePath timestamp.
 cloneToNewRelease :: Config -> RemoteCommand
 cloneToNewRelease config = do
   nextReleasePath <- liftIO $ releasePath config
@@ -117,7 +114,7 @@ releases config = do
 
   where cmd = "find " ++ releasesPath config ++ " -type d -maxdepth 1"
 
--- Given a list of release strings, takes the last five in the sequence.
+-- |Given a list of release strings, takes the last five in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
 oldReleases :: Config -> [String] -> [String]
@@ -156,6 +153,31 @@ setupDirs :: Config -> RemoteCommand
 setupDirs config =
   remoteT (host config) $ "mkdir -p " ++ (deployPath config) ++ "/releases"
 
+currentSymlinkPath :: Config -> String
+currentSymlinkPath config = deployPath config ++ "/current"
+
+removeCurrentSymlink :: Config -> RemoteCommand
+removeCurrentSymlink config = remoteT (host config) $
+                              "rm -rf " ++ currentSymlinkPath config
+
+
+newestReleasePath :: Config -> [String] -> Maybe String
+newestReleasePath _ [] = Nothing
+newestReleasePath config rls = Just $ releasesPath config ++ "/" ++
+                                    (head . reverse . sort) rls
+
+symlinkCurrent :: Config -> RemoteCommand
+symlinkCurrent config = do
+  allReleases <- liftIO $ runEitherT $ releases config
+
+  case allReleases of
+    Left err -> left err
+    Right [] -> left (1, Just "No releases to symlink!")
+    Right rls -> do
+      let latest = releasesPath config ++ "/" ++ (head . reverse . sort) rls
+      remoteT (host config) $ "ln -s " ++  latest ++ " " ++
+        (currentSymlinkPath config)
+
 testConfig :: Config
 testConfig = Config { deployPath = "/tmp/project"
                     , deploySha1 = "master"
@@ -170,6 +192,9 @@ main = do
     setupDirs testConfig >>
     ensureRepositoryPushed testConfig >>
     cleanReleases testConfig >>
-    cloneToNewRelease testConfig
+    cloneToNewRelease testConfig >>
+    -- Build here!
+    removeCurrentSymlink testConfig >>
+    symlinkCurrent testConfig
 
   return ()
