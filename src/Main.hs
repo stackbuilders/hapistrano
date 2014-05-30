@@ -7,7 +7,8 @@ import System.Process
 import System.Exit (ExitCode(..))
 import Control.Monad.Trans.Either (EitherT(..), left, right, runEitherT)
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Applicative ((<*>), (<$>), pure)
+
+import System.IO (hPutStrLn, stderr)
 
 import Data.List
 
@@ -26,6 +27,15 @@ echoMessage msg = do
   liftIO $ putStrLn msg
   right Nothing
 
+printCommandError :: String -> String -> (Int, Maybe String) -> IO ()
+printCommandError server cmd (errCode, Nothing) =
+  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
+  server ++ "' with error code " ++ show errCode ++ " and no STDERR output."
+printCommandError server cmd (errCode, Just errMsg) =
+  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
+  server ++ "' with error code " ++ show errCode ++ " and message '" ++
+  errMsg ++ "'."
+
 remoteT ::  -- ^ The host to run commands on
             String
 
@@ -39,8 +49,9 @@ remoteT server command = do
   liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server ++
     "."
 
-  (code, stdout, stderr) <-
+  (code, stdout, err) <-
     liftIO $ readProcessWithExitCode "ssh" (server : words command) ""
+
   case code of
     ExitSuccess -> do
       liftIO $ putStrLn $ "Command '" ++ command ++
@@ -48,11 +59,9 @@ remoteT server command = do
 
       right $ maybeString stdout
     ExitFailure int -> do
-      liftIO $
-        putStrLn $ "Command '" ++ command ++ "' failed " ++ "on host '" ++
-                   server ++ "'."
-
-      left $ (int, maybeString stderr)
+      let maybeError = maybeString err
+      liftIO $ printCommandError server command (int, maybeError)
+      left $ (int, maybeError)
 
 directoryExists :: String -> String -> RemoteCommand
 directoryExists server path = remoteT server $ "ls " ++ path
@@ -60,7 +69,7 @@ directoryExists server path = remoteT server $ "ls " ++ path
 -- ^ Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: Config -> RemoteCommand
 ensureRepositoryPushed config = do
-  res <- liftIO $ runEitherT $ directoryExists (host config) (repoPath config)
+  res <- liftIO $ runEitherT $ directoryExists (host config) (cacheRepoPath config)
 
   case res of
     Left _ -> createCacheRepo config
@@ -91,30 +100,28 @@ releasePath config = do
   return $ releasesPath config ++ "/" ++ ts
 
 -- | Clones the repository to the next releasePath timestamp.
-cloneToNewRelease :: Config -> RemoteCommand
-cloneToNewRelease config = do
-  nextReleasePath <- liftIO $ releasePath config
+cloneToRelease :: Config -> String -> RemoteCommand
+cloneToRelease config releaseTimestamp = do
   remoteT (host config) $
-    "git clone " ++ repoPath config ++ " " ++ nextReleasePath
+    "git clone " ++ cacheRepoPath config ++ " " ++ releasesPath config ++ "/" ++
+    releaseTimestamp
 
-repoPath :: Config -> String
-repoPath config = deployPath config ++ "/repo"
+cacheRepoPath :: Config -> String
+cacheRepoPath config = deployPath config ++ "/repo"
 
 releases :: Config -> EitherT (Int, Maybe String) IO [String]
 releases config = do
-  res <- liftIO $ runEitherT $ remoteT (host config) cmd
+  res <- liftIO $ runEitherT $ remoteT (host config) $
+         "find " ++ releasesPath config ++ " -type d -maxdepth 1"
+
   case res of
     Left r -> left r
-    Right rs ->
-      case rs of
-        Nothing -> right []
-        Just s  ->
-          right $ filter isReleaseString . map (reverse . take 14 . reverse) $
-          lines s
+    Right Nothing -> right []
+    Right (Just s) ->
+      right $ filter isReleaseString . map (reverse . take 14 . reverse) $
+      lines s
 
-  where cmd = "find " ++ releasesPath config ++ " -type d -maxdepth 1"
-
--- |Given a list of release strings, takes the last five in the sequence.
+-- | Given a list of release strings, takes the last five in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
 oldReleases :: Config -> [String] -> [String]
@@ -131,14 +138,12 @@ cleanReleases config = do
 
   case allReleases of
     Left err -> left err
+    Right [] -> echoMessage "There are no old releases to prune."
     Right xs -> do
       let deletable = oldReleases config xs
 
-      if null deletable then
-        echoMessage "There are no old releases to prune."
-       else
-        remoteT (host config) $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
-          deletable
+      remoteT (host config) $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
+        deletable
 
 isReleaseString :: String -> Bool
 isReleaseString s = all isNumber s && (length s) == 14
@@ -147,7 +152,8 @@ createCacheRepo :: Config -> RemoteCommand
 createCacheRepo config =
   remoteT (host config) cmd
   where cmd = "git clone --bare " ++ (repository config) ++ " " ++
-              repoPath config
+              cacheRepoPath config
+
 
 setupDirs :: Config -> RemoteCommand
 setupDirs config =
@@ -185,15 +191,36 @@ testConfig = Config { deployPath = "/tmp/project"
                     , repository = "/tmp/testrepo"
                     }
 
+updateCacheRepo :: Config -> RemoteCommand
+updateCacheRepo config =
+  remoteT (host config) cmd
+  where cmd = "cd " ++ (cacheRepoPath config) ++ " && " ++
+              "git fetch origin +refs/heads/*:refs/heads/*"
+
+buildRelease :: Config -> String -> RemoteCommand
+buildRelease config releaseTimestamp = remoteT (host config) cmd
+  where cmd = intercalate " && "
+              [ "cd " ++ releasesPath config ++ "/" ++ releaseTimestamp
+              , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
+              , "git fetch --all"
+              , "git reset --hard origin/master"
+              , "rm -rf .cabal-sandbox"
+              , "cabal sandbox init"
+              , "cabal clean"
+              , "cabal update"
+              , "cabal install --only-dependencies -j"
+              , "cabal build -j" ]
 
 main :: IO ()
 main = do
+  releaseTimestamp <- currentTimestamp
   runEitherT $
     setupDirs testConfig >>
     ensureRepositoryPushed testConfig >>
+    updateCacheRepo testConfig >>
     cleanReleases testConfig >>
-    cloneToNewRelease testConfig >>
-    -- Build here!
+    cloneToRelease testConfig releaseTimestamp >>
+    buildRelease testConfig releaseTimestamp >>
     removeCurrentSymlink testConfig >>
     symlinkCurrent testConfig
 
