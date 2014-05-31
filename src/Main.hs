@@ -21,9 +21,9 @@ import Data.Char (isNumber)
 ------------------------------------------------------------------------------
 -- ^ Config stuff that will be replaced by config file reading
 data Config = Config { _deployPath :: String
-                     , _deploySha1 :: String
                      , _host       :: String
                      , _repository :: String -- ^ The remote git repo
+                     , _revision   :: String -- ^ A SHA1 or branch to release
                      } deriving (Show)
 
 makeLenses ''Config
@@ -155,7 +155,9 @@ releases :: RC [String]
 releases = do
   state  <- get
   config <- use config
-  res    <- liftIO $ runEitherT (evalStateT (remoteT ("find " ++ releasesPath config ++ " -type d -maxdepth 1")) state)
+  res    <- liftIO $ runEitherT
+            (evalStateT (remoteT ("find " ++ releasesPath config ++
+                                  " -type d -maxdepth 1")) state)
 
   case res of
     Left r -> lift $ left r
@@ -197,9 +199,9 @@ isReleaseString s = all isNumber s && length s == 14
 ------------------------------------------------------------------------------
 createCacheRepo :: RC (Maybe String)
 createCacheRepo = do
-  config <- use config
-  remoteT $ cmd config
-  where cmd config = "git clone --bare " ++ config ^. repository ++ " " ++ cacheRepoPath config
+  conf <- use config
+  remoteT $ "git clone --bare " ++ conf ^. repository ++ " " ++ cacheRepoPath
+    conf ++ " && git reset --hard " ++ conf ^. revision
 
 ------------------------------------------------------------------------------
 currentSymlinkPath :: Config -> String
@@ -233,9 +235,9 @@ symlinkCurrent = do
 ------------------------------------------------------------------------------
 testConfig :: Config
 testConfig = Config { _deployPath = "/tmp/project"
-                    , _deploySha1 = "master"
                     , _host       = "localhost"
                     , _repository = "/tmp/testrepo"
+                    , _revision    = "master"
                     }
 
 ------------------------------------------------------------------------------
