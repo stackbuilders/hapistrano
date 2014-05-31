@@ -9,13 +9,13 @@ import Data.Time.Format (formatTime)
 import System.Process
 import System.Exit (ExitCode(..))
 import Control.Lens
-import Control.Monad (void)
+import Control.Monad (void, unless)
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Either (EitherT(..), left, right, runEitherT, eitherT)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import System.IO (hPutStrLn, stderr)
-import Data.List
+import Data.List (intercalate, sortBy)
 import Data.Char (isNumber)
 
 ------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ makeLenses ''Config
 ------------------------------------------------------------------------------
 data HapistranoState = HapistranoState { _config    :: Config
                                        , _timestamp :: String
-                                       } 
+                                       }
 makeLenses ''HapistranoState
 
 ------------------------------------------------------------------------------
@@ -41,9 +41,9 @@ type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
 runRC :: ((Int, Maybe String) -> IO a) -- Error handler
       -> (a -> IO a)                   -- Success handler
       -> HapistranoState               -- Initial state
-      -> RC a                          
+      -> RC a
       -> IO a
-runRC errorHandler successHandler initialState remoteCommand  = 
+runRC errorHandler successHandler initialState remoteCommand  =
     eitherT errorHandler
             successHandler
             (evalStateT remoteCommand initialState)
@@ -69,6 +69,9 @@ remoteT command = do
     ExitSuccess -> do
       liftIO $ putStrLn $ "Command '" ++ command ++
         "' was successful on host '" ++ server ++ "'."
+
+      unless (null stdout) (liftIO $ putStrLn $ "Output:\n" ++ stdout)
+
       lift $ right $ maybeString stdout
 
     ExitFailure int -> do
@@ -151,7 +154,7 @@ cacheRepoPath config = config ^. deployPath ++ "/repo"
 releases :: RC [String]
 releases = do
   state  <- get
-  config <- use config 
+  config <- use config
   res    <- liftIO $ runEitherT (evalStateT (remoteT ("find " ++ releasesPath config ++ " -type d -maxdepth 1")) state)
 
   case res of
@@ -170,7 +173,7 @@ oldReleases config rs = map mergePath toDelete
   where sorted             = sortBy (flip compare) rs
         toDelete           = drop 5 sorted
         mergePath fileName = releasesPath config ++ "/" ++ fileName
-        
+
 ------------------------------------------------------------------------------
 cleanReleases :: RC (Maybe String)
 cleanReleases = do
@@ -216,7 +219,7 @@ newestReleasePath config rls = Just $ releasesPath config ++ "/" ++ maximum rls
 ------------------------------------------------------------------------------
 symlinkCurrent :: RC (Maybe String)
 symlinkCurrent = do
-  state <- get 
+  state <- get
   config <- use config
   allReleases <- liftIO . runEitherT $ evalStateT releases state
 
@@ -247,8 +250,8 @@ updateCacheRepo = do
 buildRelease :: RC (Maybe String)
 buildRelease  = do
   config <- use config
-  releaseTimestamp <- use timestamp            
-  remoteT $ cmd releaseTimestamp config 
+  releaseTimestamp <- use timestamp
+  remoteT $ cmd releaseTimestamp config
   where cmd releaseTimestamp config = intercalate " && "
               [ "cd " ++ releasesPath config ++ "/" ++ releaseTimestamp
               , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
@@ -267,13 +270,13 @@ initialState = do
   timestamp <- currentTimestamp
   return $ HapistranoState { _config    = testConfig
                            , _timestamp = timestamp
-                           }          
+                           }
 
 ------------------------------------------------------------------------------
 main :: IO ()
 main = do
-  initState <- initialState                      
-  void $ runRC errorHandler successHandler  initState $ do 
+  initState <- initialState
+  void $ runRC errorHandler successHandler  initState $ do
            setupDirs
            ensureRepositoryPushed
            updateCacheRepo
@@ -285,5 +288,3 @@ main = do
   where
     errorHandler   = undefined
     successHandler = undefined
-   
-    
