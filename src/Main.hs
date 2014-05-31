@@ -51,7 +51,6 @@ runRC errorHandler successHandler initialState remoteCommand  =
 ------------------------------------------------------------------------------
 setupDirs :: RC (Maybe String)
 setupDirs = do
-  hostName <- use $ config . host
   pathName <- use $ config . deployPath
   remoteT $ "mkdir -p " ++ pathName ++ "/releases"
 
