@@ -200,8 +200,8 @@ isReleaseString s = all isNumber s && length s == 14
 createCacheRepo :: RC (Maybe String)
 createCacheRepo = do
   conf <- use config
-  remoteT $ "git clone --bare " ++ conf ^. repository ++ " " ++ cacheRepoPath
-    conf ++ " && git reset --hard " ++ conf ^. revision
+  remoteT $ "git clone --bare " ++ conf ^. repository ++ " " ++
+    cacheRepoPath conf
 
 ------------------------------------------------------------------------------
 currentSymlinkPath :: Config -> String
@@ -237,7 +237,7 @@ testConfig :: Config
 testConfig = Config { _deployPath = "/tmp/project"
                     , _host       = "localhost"
                     , _repository = "/tmp/testrepo"
-                    , _revision    = "master"
+                    , _revision    = "transformer-refactor"
                     }
 
 ------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ buildRelease  = do
               [ "cd " ++ releasesPath config ++ "/" ++ releaseTimestamp
               , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
               , "git fetch --all"
-              , "git reset --hard origin/master"
+              , "git reset --hard origin/" ++ config ^. revision
               , "rm -rf .cabal-sandbox"
               , "cabal sandbox init"
               , "cabal clean"
@@ -278,7 +278,7 @@ initialState = do
 main :: IO ()
 main = do
   initState <- initialState
-  void $ runRC errorHandler successHandler  initState $ do
+  void $ runRC errorHandler successHandler initState $ do
            setupDirs
            ensureRepositoryPushed
            updateCacheRepo
