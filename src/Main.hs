@@ -12,7 +12,12 @@ import Control.Lens
 import Control.Monad (void, unless)
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Either (EitherT(..), left, right, runEitherT, eitherT)
+import Control.Monad.Trans.Either ( EitherT(..)
+                                  , left
+                                  , right
+                                  , runEitherT
+                                  , eitherT )
+
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import System.IO (hPutStrLn, stderr)
 import Data.List (intercalate, sortBy)
@@ -56,10 +61,11 @@ setupDirs = do
 
 ------------------------------------------------------------------------------
 remoteT :: String -- ^ The command to run remotely
-        -> RC (Maybe String) -- ^ Left (non-zero code, Maybe STDERR) or Right (Maybe STDOUT)
+        -> RC (Maybe String)
 remoteT command = do
   server <- use $ config . host
-  liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server ++ "."
+  liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server
+           ++ "."
 
   (code, stdout, err) <-
     liftIO $ readProcessWithExitCode "ssh" (server : words command) ""
@@ -152,18 +158,18 @@ cacheRepoPath conf = conf ^. deployPath ++ "/repo"
 ------------------------------------------------------------------------------
 releases :: RC [String]
 releases = do
-  state  <- get
+  st  <- get
   conf <- use config
   res    <- liftIO $ runEitherT
             (evalStateT (remoteT ("find " ++ releasesPath conf ++
-                                  " -type d -maxdepth 1")) state)
+                                  " -type d -maxdepth 1")) st)
 
   case res of
     Left r -> lift $ left r
     Right Nothing -> lift $ right []
     Right (Just s) ->
-      lift $ right $ filter isReleaseString . map (reverse . take 14 . reverse) $
-      lines s
+      lift $ right $ filter isReleaseString . map (reverse . take 14 . reverse)
+      $ lines s
 
 ------------------------------------------------------------------------------
 -- | Given a list of release strings, takes the last five in the sequence.
