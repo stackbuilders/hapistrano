@@ -43,10 +43,10 @@ runRC :: ((Int, Maybe String) -> IO a) -- Error handler
       -> HapistranoState               -- Initial state
       -> RC a
       -> IO a
-runRC errorHandler successHandler initialState remoteCommand  =
+runRC errorHandler successHandler initState remoteCommand  =
     eitherT errorHandler
             successHandler
-            (evalStateT remoteCommand initialState)
+            (evalStateT remoteCommand initState)
 
 ------------------------------------------------------------------------------
 setupDirs :: RC (Maybe String)
@@ -108,9 +108,9 @@ directoryExists path =
 -- ^ Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: RC (Maybe String)
 ensureRepositoryPushed = do
-  state <- get
-  config <- use config
-  let e = runStateT (directoryExists (cacheRepoPath config)) state
+  st <- get
+  conf <- use config
+  let e = runStateT (directoryExists (cacheRepoPath conf)) st
   res <- liftIO $ runEitherT e
 
   case res of
@@ -220,9 +220,9 @@ newestReleasePath conf rls = Just $ releasesPath conf ++ "/" ++ maximum rls
 ------------------------------------------------------------------------------
 symlinkCurrent :: RC (Maybe String)
 symlinkCurrent = do
-  state <- get
+  st <- get
   conf <- use config
-  allReleases <- liftIO . runEitherT $ evalStateT releases state
+  allReleases <- liftIO . runEitherT $ evalStateT releases st
 
   case allReleases of
     Left err -> lift $ left err
