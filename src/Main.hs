@@ -127,36 +127,36 @@ maybeString possibleString =
 
 ------------------------------------------------------------------------------
 releasesPath :: Config -> String
-releasesPath config = (config ^. deployPath) ++ "/releases"
+releasesPath conf = (conf ^. deployPath) ++ "/releases"
 
 ------------------------------------------------------------------------------
 -- | The path indicating the current release folder.
 releasePath :: Config -> IO String
-releasePath config = do
+releasePath conf = do
   ts <- currentTimestamp
-  return $ releasesPath config ++ "/" ++ ts
+  return $ releasesPath conf ++ "/" ++ ts
 
 ------------------------------------------------------------------------------
 -- | Clones the repository to the next releasePath timestamp.
 cloneToRelease :: RC (Maybe String)
 cloneToRelease = do
-  config <- use config
+  conf <- use config
   releaseTimestamp <- use timestamp
   remoteT $
-    "git clone " ++ cacheRepoPath config ++ " " ++ releasesPath config ++ "/" ++
+    "git clone " ++ cacheRepoPath conf ++ " " ++ releasesPath conf ++ "/" ++
     releaseTimestamp
 
 ------------------------------------------------------------------------------
 cacheRepoPath :: Config -> String
-cacheRepoPath config = config ^. deployPath ++ "/repo"
+cacheRepoPath conf = conf ^. deployPath ++ "/repo"
 
 ------------------------------------------------------------------------------
 releases :: RC [String]
 releases = do
   state  <- get
-  config <- use config
+  conf <- use config
   res    <- liftIO $ runEitherT
-            (evalStateT (remoteT ("find " ++ releasesPath config ++
+            (evalStateT (remoteT ("find " ++ releasesPath conf ++
                                   " -type d -maxdepth 1")) state)
 
   case res of
@@ -171,23 +171,23 @@ releases = do
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
 oldReleases :: Config -> [String] -> [String]
-oldReleases config rs = map mergePath toDelete
+oldReleases conf rs = map mergePath toDelete
   where sorted             = sortBy (flip compare) rs
         toDelete           = drop 5 sorted
-        mergePath fileName = releasesPath config ++ "/" ++ fileName
+        mergePath fileName = releasesPath conf ++ "/" ++ fileName
 
 ------------------------------------------------------------------------------
 cleanReleases :: RC (Maybe String)
 cleanReleases = do
   state <- get
-  config <- use config
+  conf <- use config
   allReleases <- liftIO $ runEitherT $ evalStateT releases state
 
   case allReleases of
     Left err -> lift $ left err
     Right [] -> echoMessage "There are no old releases to prune."
     Right xs -> do
-      let deletable = oldReleases config xs
+      let deletable = oldReleases conf xs
 
       remoteT $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
         deletable
@@ -205,60 +205,58 @@ createCacheRepo = do
 
 ------------------------------------------------------------------------------
 currentSymlinkPath :: Config -> String
-currentSymlinkPath config = config ^. deployPath ++ "/current"
+currentSymlinkPath conf = conf ^. deployPath ++ "/current"
 
 ------------------------------------------------------------------------------
 removeCurrentSymlink :: RC (Maybe String)
 removeCurrentSymlink = do
-  config <- use config
-  remoteT $ "rm -rf " ++ currentSymlinkPath config
+  conf <- use config
+  remoteT $ "rm -rf " ++ currentSymlinkPath conf
 
 ------------------------------------------------------------------------------
 newestReleasePath :: Config -> [String] -> Maybe String
 newestReleasePath _ [] = Nothing
-newestReleasePath config rls = Just $ releasesPath config ++ "/" ++ maximum rls
+newestReleasePath conf rls = Just $ releasesPath conf ++ "/" ++ maximum rls
 
 ------------------------------------------------------------------------------
 symlinkCurrent :: RC (Maybe String)
 symlinkCurrent = do
   state <- get
-  config <- use config
+  conf <- use config
   allReleases <- liftIO . runEitherT $ evalStateT releases state
 
   case allReleases of
     Left err -> lift $ left err
     Right [] -> lift $ left (1, Just "No releases to symlink!")
     Right rls -> do
-      let latest = releasesPath config ++ "/" ++ maximum rls
-      remoteT $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath config
+      let latest = releasesPath conf ++ "/" ++ maximum rls
+      remoteT $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath conf
 
 ------------------------------------------------------------------------------
 testConfig :: Config
 testConfig = Config { _deployPath = "/tmp/project"
                     , _host       = "localhost"
                     , _repository = "/tmp/testrepo"
-                    , _revision    = "transformer-refactor"
+                    , _revision    = "origin/transformer-refactor"
                     }
 
 ------------------------------------------------------------------------------
 updateCacheRepo :: RC (Maybe String)
 updateCacheRepo = do
-  config <- use config
-  remoteT $ cmd config
-  where cmd config = "cd " ++ (cacheRepoPath config) ++ " && " ++
-                     "git fetch origin +refs/heads/*:refs/heads/*"
+  conf <- use config
+  remoteT $ "cd " ++ (cacheRepoPath conf) ++ " && " ++
+            "git fetch origin +refs/heads/*:refs/heads/*"
 
 ------------------------------------------------------------------------------
 buildRelease :: RC (Maybe String)
 buildRelease  = do
-  config <- use config
+  conf <- use config
   releaseTimestamp <- use timestamp
-  remoteT $ cmd releaseTimestamp config
-  where cmd releaseTimestamp config = intercalate " && "
-              [ "cd " ++ releasesPath config ++ "/" ++ releaseTimestamp
+  remoteT $ intercalate " && "
+              [ "cd " ++ releasesPath conf ++ "/" ++ releaseTimestamp
               , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
               , "git fetch --all"
-              , "git reset --hard origin/" ++ config ^. revision
+              , "git reset --hard " ++ conf ^. revision
               , "rm -rf .cabal-sandbox"
               , "cabal sandbox init"
               , "cabal clean"
@@ -269,9 +267,9 @@ buildRelease  = do
 ------------------------------------------------------------------------------
 initialState :: IO HapistranoState
 initialState = do
-  timestamp <- currentTimestamp
+  ts <- currentTimestamp
   return $ HapistranoState { _config    = testConfig
-                           , _timestamp = timestamp
+                           , _timestamp = ts
                            }
 
 ------------------------------------------------------------------------------
