@@ -178,9 +178,9 @@ oldReleases conf rs = map mergePath toDelete
 ------------------------------------------------------------------------------
 cleanReleases :: RC (Maybe String)
 cleanReleases = do
-  state <- get
+  st <- get
   conf <- use config
-  allReleases <- liftIO $ runEitherT $ evalStateT releases state
+  allReleases <- liftIO $ runEitherT $ evalStateT releases st
 
   case allReleases of
     Left err -> lift $ left err
