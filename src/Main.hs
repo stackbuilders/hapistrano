@@ -249,8 +249,9 @@ testConfig = Config { _deployPath = "/tmp/project"
 updateCacheRepo :: RC (Maybe String)
 updateCacheRepo = do
   conf <- use config
-  remoteT $ "cd " ++ (cacheRepoPath conf) ++ " && " ++
-            "git fetch origin +refs/heads/*:refs/heads/*"
+  remoteT $ intercalate " && "
+    [ "cd " ++ cacheRepoPath conf
+    , "git fetch origin +refs/heads/*:refs/heads/*" ]
 
 ------------------------------------------------------------------------------
 buildRelease :: RC (Maybe String)
@@ -273,9 +274,9 @@ buildRelease  = do
 initialState :: IO HapistranoState
 initialState = do
   ts <- currentTimestamp
-  return $ HapistranoState { _config    = testConfig
-                           , _timestamp = ts
-                           }
+  return HapistranoState { _config    = testConfig
+                         , _timestamp = ts
+                         }
 
 ------------------------------------------------------------------------------
 main :: IO ()
