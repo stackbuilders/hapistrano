@@ -1,53 +1,77 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
+------------------------------------------------------------------------------
 import System.Locale (defaultTimeLocale)
 import Data.Time (getCurrentTime)
 import Data.Time.Format (formatTime)
 import System.Process
 import System.Exit (ExitCode(..))
-import Control.Monad.Trans.Either (EitherT(..), left, right, runEitherT)
+import Control.Lens
+import Control.Monad (void, unless)
+import Control.Monad.Trans.State
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.Either ( EitherT(..)
+                                  , left
+                                  , right
+                                  , runEitherT
+                                  , eitherT )
+
 import Control.Monad.IO.Class (MonadIO(liftIO))
-
 import System.IO (hPutStrLn, stderr)
-
-import Data.List
-
+import Data.List (intercalate, sortBy)
 import Data.Char (isNumber)
 
-currentTimestamp :: IO String
-currentTimestamp = do
-  curTime <- getCurrentTime
-  return $ formatTime defaultTimeLocale "%Y%m%d%H%M%S" curTime
+------------------------------------------------------------------------------
+-- ^ Config stuff that will be replaced by config file reading
+data Config = Config { _deployPath :: String
+                     , _host       :: String
+                     , _repository :: String -- ^ The remote git repo
+                     , _revision   :: String -- ^ A SHA1 or branch to release
+                     } deriving (Show)
 
-type RemoteCommand = EitherT (Int, Maybe String) IO (Maybe String)
+makeLenses ''Config
 
--- | Used to compose a "command" that is really just output in the chain.
-echoMessage :: String -> RemoteCommand
-echoMessage msg = do
-  liftIO $ putStrLn msg
-  right Nothing
+------------------------------------------------------------------------------
+data HapistranoState = HapistranoState { _config    :: Config
+                                       , _timestamp :: String
+                                       }
+makeLenses ''HapistranoState
 
-printCommandError :: String -> String -> (Int, Maybe String) -> IO ()
-printCommandError server cmd (errCode, Nothing) =
-  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
-  server ++ "' with error code " ++ show errCode ++ " and no STDERR output."
-printCommandError server cmd (errCode, Just errMsg) =
-  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
-  server ++ "' with error code " ++ show errCode ++ " and message '" ++
-  errMsg ++ "'."
+------------------------------------------------------------------------------
+type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
 
-remoteT ::  -- ^ The host to run commands on
-            String
+------------------------------------------------------------------------------
+runRC :: ((Int, Maybe String) -> IO a) -- ^ Error handler
+      -> (a -> IO a)                   -- ^ Success handler
+      -> HapistranoState               -- ^ Initial state
+      -> RC a
+      -> IO a
+runRC errorHandler successHandler initState remoteCommand  =
+    eitherT errorHandler
+            successHandler
+            (evalStateT remoteCommand initState)
 
-            -- ^ The command to run remotely
-            -> String
+defaultErrorHandler :: (Int, Maybe String) -> IO ()
+defaultErrorHandler _ = putStrLn "Deploy failed."
 
-            -- ^ Left (non-zero code, Maybe STDERR) or Right (Maybe STDOUT)
-            -> RemoteCommand
+defaultSuccessHandler :: a -> IO ()
+defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
 
-remoteT server command = do
-  liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server ++
-    "."
+------------------------------------------------------------------------------
+setupDirs :: RC (Maybe String)
+setupDirs = do
+  pathName <- use $ config . deployPath
+  remoteT $ "mkdir -p " ++ pathName ++ "/releases"
+
+------------------------------------------------------------------------------
+remoteT :: String -- ^ The command to run remotely
+        -> RC (Maybe String)
+remoteT command = do
+  server <- use $ config . host
+  liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server
+           ++ "."
 
   (code, stdout, err) <-
     liftIO $ readProcessWithExitCode "ssh" (server : words command) ""
@@ -57,153 +81,194 @@ remoteT server command = do
       liftIO $ putStrLn $ "Command '" ++ command ++
         "' was successful on host '" ++ server ++ "'."
 
-      right $ maybeString stdout
+      unless (null stdout) (liftIO $ putStrLn $ "Output:\n" ++ stdout)
+
+      lift $ right $ maybeString stdout
+
     ExitFailure int -> do
       let maybeError = maybeString err
       liftIO $ printCommandError server command (int, maybeError)
-      left $ (int, maybeError)
+      lift $ left (int, maybeError)
 
-directoryExists :: String -> String -> RemoteCommand
-directoryExists server path = remoteT server $ "ls " ++ path
+------------------------------------------------------------------------------
+currentTimestamp :: IO String
+currentTimestamp = do
+  curTime <- getCurrentTime
+  return $ formatTime defaultTimeLocale "%Y%m%d%H%M%S" curTime
 
--- ^ Ensure that the initial bare repo exists in the repo directory. Idempotent.
-ensureRepositoryPushed :: Config -> RemoteCommand
-ensureRepositoryPushed config = do
-  res <- liftIO $ runEitherT $ directoryExists (host config) (cacheRepoPath config)
+------------------------------------------------------------------------------
+echoMessage :: String -> RC (Maybe String)
+echoMessage msg = do
+  liftIO $ putStrLn msg
+  lift $ right Nothing
+------------------------------------------------------------------------------
+printCommandError :: String -> String -> (Int, Maybe String) -> IO ()
+printCommandError server cmd (errCode, Nothing) =
+  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
+  server ++ "' with error code " ++ show errCode ++ " and no STDERR output."
+printCommandError server cmd (errCode, Just errMsg) =
+  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
+  server ++ "' with error code " ++ show errCode ++ " and message '" ++
+  errMsg ++ "'."
+
+------------------------------------------------------------------------------
+directoryExists :: String -> RC (Maybe String)
+directoryExists path =
+  remoteT $ "ls " ++  path
+
+------------------------------------------------------------------------------
+-- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
+ensureRepositoryPushed :: RC (Maybe String)
+ensureRepositoryPushed = do
+  st <- get
+  conf <- use config
+  let e = runStateT (directoryExists (cacheRepoPath conf)) st
+  res <- liftIO $ runEitherT e
 
   case res of
-    Left _ -> createCacheRepo config
-    Right _ -> right $ Just "Repo already existed"
+    Left _ -> createCacheRepo
+    Right _ -> lift $ right $ Just "Repo already existed"
 
-
--- ^ Config stuff that will be replaced by config file reading
-data Config = Config { deployPath :: String
-                     , deploySha1 :: String
-                     , host       :: String
-                     , repository :: String -- ^ The remote git repo
-                     } deriving (Show)
-
-
+------------------------------------------------------------------------------
 -- | Returns a Just String or Nothing based on whether the input is null or
 -- has contents.
 maybeString :: String -> Maybe String
 maybeString possibleString =
   if null possibleString then Nothing else Just possibleString
 
+------------------------------------------------------------------------------
 releasesPath :: Config -> String
-releasesPath config = deployPath config ++ "/releases"
+releasesPath conf = (conf ^. deployPath) ++ "/releases"
 
+------------------------------------------------------------------------------
 -- | The path indicating the current release folder.
 releasePath :: Config -> IO String
-releasePath config = do
+releasePath conf = do
   ts <- currentTimestamp
-  return $ releasesPath config ++ "/" ++ ts
+  return $ releasesPath conf ++ "/" ++ ts
 
+------------------------------------------------------------------------------
 -- | Clones the repository to the next releasePath timestamp.
-cloneToRelease :: Config -> String -> RemoteCommand
-cloneToRelease config releaseTimestamp = do
-  remoteT (host config) $
-    "git clone " ++ cacheRepoPath config ++ " " ++ releasesPath config ++ "/" ++
+cloneToRelease :: RC (Maybe String)
+cloneToRelease = do
+  conf <- use config
+  releaseTimestamp <- use timestamp
+  remoteT $
+    "git clone " ++ cacheRepoPath conf ++ " " ++ releasesPath conf ++ "/" ++
     releaseTimestamp
 
+------------------------------------------------------------------------------
 cacheRepoPath :: Config -> String
-cacheRepoPath config = deployPath config ++ "/repo"
+cacheRepoPath conf = conf ^. deployPath ++ "/repo"
 
-releases :: Config -> EitherT (Int, Maybe String) IO [String]
-releases config = do
-  res <- liftIO $ runEitherT $ remoteT (host config) $
-         "find " ++ releasesPath config ++ " -type d -maxdepth 1"
+------------------------------------------------------------------------------
+releases :: RC [String]
+releases = do
+  st  <- get
+  conf <- use config
+  res    <- liftIO $ runEitherT
+            (evalStateT (remoteT ("find " ++ releasesPath conf ++
+                                  " -type d -maxdepth 1")) st)
 
   case res of
-    Left r -> left r
-    Right Nothing -> right []
+    Left r -> lift $ left r
+    Right Nothing -> lift $ right []
     Right (Just s) ->
-      right $ filter isReleaseString . map (reverse . take 14 . reverse) $
-      lines s
+      lift $ right $ filter isReleaseString . map (reverse . take 14 . reverse)
+      $ lines s
 
+------------------------------------------------------------------------------
 -- | Given a list of release strings, takes the last five in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
 oldReleases :: Config -> [String] -> [String]
-oldReleases config rs =
-  withDir
-  where sorted = (reverse . sort) rs
-        toDelete = drop 5 sorted
-        withDir = map (\fileName -> (releasesPath config) ++ "/" ++ fileName)
-                  toDelete
+oldReleases conf rs = map mergePath toDelete
+  where sorted             = sortBy (flip compare) rs
+        toDelete           = drop 5 sorted
+        mergePath fileName = releasesPath conf ++ "/" ++ fileName
 
-cleanReleases :: Config -> RemoteCommand
-cleanReleases config = do
-  allReleases <- liftIO $ runEitherT $ releases config
+------------------------------------------------------------------------------
+cleanReleases :: RC (Maybe String)
+cleanReleases = do
+  st <- get
+  conf <- use config
+  allReleases <- liftIO $ runEitherT $ evalStateT releases st
 
   case allReleases of
-    Left err -> left err
+    Left err -> lift $ left err
     Right [] -> echoMessage "There are no old releases to prune."
     Right xs -> do
-      let deletable = oldReleases config xs
+      let deletable = oldReleases conf xs
 
-      remoteT (host config) $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
+      remoteT $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
         deletable
 
+------------------------------------------------------------------------------
 isReleaseString :: String -> Bool
-isReleaseString s = all isNumber s && (length s) == 14
+isReleaseString s = all isNumber s && length s == 14
 
-createCacheRepo :: Config -> RemoteCommand
-createCacheRepo config =
-  remoteT (host config) cmd
-  where cmd = "git clone --bare " ++ (repository config) ++ " " ++
-              cacheRepoPath config
+------------------------------------------------------------------------------
+createCacheRepo :: RC (Maybe String)
+createCacheRepo = do
+  conf <- use config
+  remoteT $ "git clone --bare " ++ conf ^. repository ++ " " ++
+    cacheRepoPath conf
 
-
-setupDirs :: Config -> RemoteCommand
-setupDirs config =
-  remoteT (host config) $ "mkdir -p " ++ (deployPath config) ++ "/releases"
-
+------------------------------------------------------------------------------
 currentSymlinkPath :: Config -> String
-currentSymlinkPath config = deployPath config ++ "/current"
+currentSymlinkPath conf = conf ^. deployPath ++ "/current"
 
-removeCurrentSymlink :: Config -> RemoteCommand
-removeCurrentSymlink config = remoteT (host config) $
-                              "rm -rf " ++ currentSymlinkPath config
+------------------------------------------------------------------------------
+removeCurrentSymlink :: RC (Maybe String)
+removeCurrentSymlink = do
+  conf <- use config
+  remoteT $ "rm -rf " ++ currentSymlinkPath conf
 
-
+------------------------------------------------------------------------------
 newestReleasePath :: Config -> [String] -> Maybe String
 newestReleasePath _ [] = Nothing
-newestReleasePath config rls = Just $ releasesPath config ++ "/" ++
-                                    (head . reverse . sort) rls
+newestReleasePath conf rls = Just $ releasesPath conf ++ "/" ++ maximum rls
 
-symlinkCurrent :: Config -> RemoteCommand
-symlinkCurrent config = do
-  allReleases <- liftIO $ runEitherT $ releases config
+------------------------------------------------------------------------------
+symlinkCurrent :: RC (Maybe String)
+symlinkCurrent = do
+  st <- get
+  conf <- use config
+  allReleases <- liftIO . runEitherT $ evalStateT releases st
 
   case allReleases of
-    Left err -> left err
-    Right [] -> left (1, Just "No releases to symlink!")
+    Left err -> lift $ left err
+    Right [] -> lift $ left (1, Just "No releases to symlink!")
     Right rls -> do
-      let latest = releasesPath config ++ "/" ++ (head . reverse . sort) rls
-      remoteT (host config) $ "ln -s " ++  latest ++ " " ++
-        (currentSymlinkPath config)
+      let latest = releasesPath conf ++ "/" ++ maximum rls
+      remoteT $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath conf
 
+------------------------------------------------------------------------------
 testConfig :: Config
-testConfig = Config { deployPath = "/tmp/project"
-                    , deploySha1 = "master"
-                    , host       = "localhost"
-                    , repository = "/tmp/testrepo"
+testConfig = Config { _deployPath = "/tmp/project"
+                    , _host       = "localhost"
+                    , _repository = "/tmp/testrepo"
+                    , _revision    = "origin/transformer-refactor"
                     }
 
-updateCacheRepo :: Config -> RemoteCommand
-updateCacheRepo config =
-  remoteT (host config) cmd
-  where cmd = "cd " ++ (cacheRepoPath config) ++ " && " ++
-              "git fetch origin +refs/heads/*:refs/heads/*"
+------------------------------------------------------------------------------
+updateCacheRepo :: RC (Maybe String)
+updateCacheRepo = do
+  conf <- use config
+  remoteT $ intercalate " && "
+    [ "cd " ++ cacheRepoPath conf
+    , "git fetch origin +refs/heads/*:refs/heads/*" ]
 
-buildRelease :: Config -> String -> RemoteCommand
-buildRelease config releaseTimestamp = remoteT (host config) cmd
-  where cmd = intercalate " && "
-              [ "cd " ++ releasesPath config ++ "/" ++ releaseTimestamp
+------------------------------------------------------------------------------
+buildRelease :: RC (Maybe String)
+buildRelease  = do
+  conf <- use config
+  releaseTimestamp <- use timestamp
+  remoteT $ intercalate " && "
+              [ "cd " ++ releasesPath conf ++ "/" ++ releaseTimestamp
               , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
               , "git fetch --all"
-              , "git reset --hard origin/master"
+              , "git reset --hard " ++ conf ^. revision
               , "rm -rf .cabal-sandbox"
               , "cabal sandbox init"
               , "cabal clean"
@@ -211,17 +276,29 @@ buildRelease config releaseTimestamp = remoteT (host config) cmd
               , "cabal install --only-dependencies -j"
               , "cabal build -j" ]
 
+------------------------------------------------------------------------------
+initialState :: IO HapistranoState
+initialState = do
+  ts <- currentTimestamp
+  return HapistranoState { _config    = testConfig
+                         , _timestamp = ts
+                         }
+
+------------------------------------------------------------------------------
 main :: IO ()
 main = do
-  releaseTimestamp <- currentTimestamp
-  runEitherT $
-    setupDirs testConfig >>
-    ensureRepositoryPushed testConfig >>
-    updateCacheRepo testConfig >>
-    cleanReleases testConfig >>
-    cloneToRelease testConfig releaseTimestamp >>
-    buildRelease testConfig releaseTimestamp >>
-    removeCurrentSymlink testConfig >>
-    symlinkCurrent testConfig
+  initState <- initialState
+  void $ runRC errorHandler successHandler initState $ do
+           setupDirs
+           ensureRepositoryPushed
+           updateCacheRepo
+           cleanReleases
+           cloneToRelease
+           buildRelease
+           removeCurrentSymlink
+           symlinkCurrent
+           return ()
 
-  return ()
+  where
+    errorHandler   = defaultErrorHandler
+    successHandler = defaultSuccessHandler

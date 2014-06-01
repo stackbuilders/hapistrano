@@ -1,0 +1,7 @@
+# Ignore the dist directory
+/dist
+
+# Ignore cabal sandbox
+.cabal-sandbox
+cabal.sandbox.config
+
