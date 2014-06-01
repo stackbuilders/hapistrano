@@ -19,12 +19,12 @@ module Hapistrano
 import System.Locale (defaultTimeLocale)
 import Data.Time (getCurrentTime)
 import Data.Time.Format (formatTime)
-import System.Process
+import System.Process (readProcessWithExitCode)
 import System.Exit (ExitCode(..))
-import Control.Lens
+import Control.Lens (makeLenses, use, (^.))
 import Control.Monad (unless)
-import Control.Monad.Trans.State
-import Control.Monad.Trans.Class
+import Control.Monad.Trans.State (StateT, evalStateT, runStateT, get)
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Either ( EitherT(..)
                                   , left
                                   , right
