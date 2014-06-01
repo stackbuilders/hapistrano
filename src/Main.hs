@@ -53,6 +53,12 @@ runRC errorHandler successHandler initState remoteCommand  =
             successHandler
             (evalStateT remoteCommand initState)
 
+defaultErrorHandler :: (Int, Maybe String) -> IO ()
+defaultErrorHandler _ = putStrLn "Deploy failed."
+
+defaultSuccessHandler :: a -> IO ()
+defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
+
 ------------------------------------------------------------------------------
 setupDirs :: RC (Maybe String)
 setupDirs = do
@@ -291,6 +297,8 @@ main = do
            buildRelease
            removeCurrentSymlink
            symlinkCurrent
+           return ()
+
   where
-    errorHandler   = undefined
-    successHandler = undefined
+    errorHandler   = defaultErrorHandler
+    successHandler = defaultSuccessHandler
