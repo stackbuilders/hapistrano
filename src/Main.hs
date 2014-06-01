@@ -43,9 +43,9 @@ makeLenses ''HapistranoState
 type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
 
 ------------------------------------------------------------------------------
-runRC :: ((Int, Maybe String) -> IO a) -- Error handler
-      -> (a -> IO a)                   -- Success handler
-      -> HapistranoState               -- Initial state
+runRC :: ((Int, Maybe String) -> IO a) -- ^ Error handler
+      -> (a -> IO a)                   -- ^ Success handler
+      -> HapistranoState               -- ^ Initial state
       -> RC a
       -> IO a
 runRC errorHandler successHandler initState remoteCommand  =
@@ -111,7 +111,7 @@ directoryExists path =
   remoteT $ "ls " ++  path
 
 ------------------------------------------------------------------------------
--- ^ Ensure that the initial bare repo exists in the repo directory. Idempotent.
+-- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: RC (Maybe String)
 ensureRepositoryPushed = do
   st <- get
