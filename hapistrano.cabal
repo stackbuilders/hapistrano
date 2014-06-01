@@ -1,21 +1,23 @@
 name:                hapistrano
 version:             0.1.0.0
--- synopsis:
--- description:
+synopsis:            A deployment library for Haskell applications
+description:         Hapistrano makes it easy to reliably deploy Haskell
+                     applications.
+
 license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
 maintainer:          justin@stackbuilders.com
--- copyright:
+copyright:           2014 Stack Builders Inc.
 category:            System
 build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
 
-executable hap
-  main-is:             Main.hs
+library
   -- other-modules:
   -- other-extensions:
+  exposed-modules:     Hapistrano
   build-depends:         base >=4.6 && <4.7
                        , time
                        , old-locale

@@ -1,15 +1,28 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-module Main where
+{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 
-------------------------------------------------------------------------------
+-- | A module for easily creating reliable deploy processes for Haskell
+-- applications.
+module Hapistrano
+       (
+         Config(..)
+       , initialState
+       , runRC
+       , pushRelease
+       , activateRelease
+       , defaultBuildRelease
+       , defaultSuccessHandler
+       , defaultErrorHandler
+       , currentTimestamp
+       ) where
+
+
 import System.Locale (defaultTimeLocale)
 import Data.Time (getCurrentTime)
 import Data.Time.Format (formatTime)
 import System.Process
 import System.Exit (ExitCode(..))
 import Control.Lens
-import Control.Monad (void, unless)
+import Control.Monad (unless)
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Either ( EitherT(..)
@@ -23,7 +36,7 @@ import System.IO (hPutStrLn, stderr)
 import Data.List (intercalate, sortBy)
 import Data.Char (isNumber)
 
-------------------------------------------------------------------------------
+
 -- ^ Config stuff that will be replaced by config file reading
 data Config = Config { _deployPath :: String
                      , _host       :: String
@@ -33,16 +46,24 @@ data Config = Config { _deployPath :: String
 
 makeLenses ''Config
 
-------------------------------------------------------------------------------
+
 data HapistranoState = HapistranoState { _config    :: Config
                                        , _timestamp :: String
                                        }
 makeLenses ''HapistranoState
 
-------------------------------------------------------------------------------
+
 type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
 
-------------------------------------------------------------------------------
+initialState :: Config -> IO HapistranoState
+initialState cfg = do
+  ts <- currentTimestamp
+  return HapistranoState { _config    = cfg
+                         , _timestamp = ts
+                         }
+-- | Given a pair of actions, one to perform in case of failure, and
+-- one to perform in case of success, run an EitherT and get back a
+-- monadic result.
 runRC :: ((Int, Maybe String) -> IO a) -- ^ Error handler
       -> (a -> IO a)                   -- ^ Success handler
       -> HapistranoState               -- ^ Initial state
@@ -59,13 +80,14 @@ defaultErrorHandler _ = putStrLn "Deploy failed."
 defaultSuccessHandler :: a -> IO ()
 defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
 
-------------------------------------------------------------------------------
+-- | Creates necessary directories for the hapistrano project. Should
+-- only need to run the first time the project is deployed on a given
+-- system.
 setupDirs :: RC (Maybe String)
 setupDirs = do
   pathName <- use $ config . deployPath
   remoteT $ "mkdir -p " ++ pathName ++ "/releases"
 
-------------------------------------------------------------------------------
 remoteT :: String -- ^ The command to run remotely
         -> RC (Maybe String)
 remoteT command = do
@@ -90,18 +112,18 @@ remoteT command = do
       liftIO $ printCommandError server command (int, maybeError)
       lift $ left (int, maybeError)
 
-------------------------------------------------------------------------------
+-- | Returns a timestamp in the default format for build directories.
 currentTimestamp :: IO String
 currentTimestamp = do
   curTime <- getCurrentTime
   return $ formatTime defaultTimeLocale "%Y%m%d%H%M%S" curTime
 
-------------------------------------------------------------------------------
+
 echoMessage :: String -> RC (Maybe String)
 echoMessage msg = do
   liftIO $ putStrLn msg
   lift $ right Nothing
-------------------------------------------------------------------------------
+
 printCommandError :: String -> String -> (Int, Maybe String) -> IO ()
 printCommandError server cmd (errCode, Nothing) =
   hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
@@ -111,12 +133,10 @@ printCommandError server cmd (errCode, Just errMsg) =
   server ++ "' with error code " ++ show errCode ++ " and message '" ++
   errMsg ++ "'."
 
-------------------------------------------------------------------------------
 directoryExists :: String -> RC (Maybe String)
 directoryExists path =
   remoteT $ "ls " ++  path
 
-------------------------------------------------------------------------------
 -- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: RC (Maybe String)
 ensureRepositoryPushed = do
@@ -129,25 +149,16 @@ ensureRepositoryPushed = do
     Left _ -> createCacheRepo
     Right _ -> lift $ right $ Just "Repo already existed"
 
-------------------------------------------------------------------------------
 -- | Returns a Just String or Nothing based on whether the input is null or
 -- has contents.
 maybeString :: String -> Maybe String
 maybeString possibleString =
   if null possibleString then Nothing else Just possibleString
 
-------------------------------------------------------------------------------
+-- | Returns the full path of the folder containing all of the release builds.
 releasesPath :: Config -> String
 releasesPath conf = (conf ^. deployPath) ++ "/releases"
 
-------------------------------------------------------------------------------
--- | The path indicating the current release folder.
-releasePath :: Config -> IO String
-releasePath conf = do
-  ts <- currentTimestamp
-  return $ releasesPath conf ++ "/" ++ ts
-
-------------------------------------------------------------------------------
 -- | Clones the repository to the next releasePath timestamp.
 cloneToRelease :: RC (Maybe String)
 cloneToRelease = do
@@ -157,11 +168,12 @@ cloneToRelease = do
     "git clone " ++ cacheRepoPath conf ++ " " ++ releasesPath conf ++ "/" ++
     releaseTimestamp
 
-------------------------------------------------------------------------------
+-- | Returns the full path to the git repo used for cache purposes on the
+-- target host filesystem.
 cacheRepoPath :: Config -> String
 cacheRepoPath conf = conf ^. deployPath ++ "/repo"
 
-------------------------------------------------------------------------------
+-- | Returns a list of Strings representing the currently deployed releases.
 releases :: RC [String]
 releases = do
   st  <- get
@@ -177,7 +189,6 @@ releases = do
       lift $ right $ filter isReleaseString . map (reverse . take 14 . reverse)
       $ lines s
 
-------------------------------------------------------------------------------
 -- | Given a list of release strings, takes the last five in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
@@ -187,7 +198,8 @@ oldReleases conf rs = map mergePath toDelete
         toDelete           = drop 5 sorted
         mergePath fileName = releasesPath conf ++ "/" ++ fileName
 
-------------------------------------------------------------------------------
+-- | Removes releases older than the last five to avoid filling up the target
+-- host filesystem.
 cleanReleases :: RC (Maybe String)
 cleanReleases = do
   st <- get
@@ -203,33 +215,32 @@ cleanReleases = do
       remoteT $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
         deletable
 
-------------------------------------------------------------------------------
+-- | Returns a Bool indicating if the given String is in the proper release
+-- format.
 isReleaseString :: String -> Bool
 isReleaseString s = all isNumber s && length s == 14
 
-------------------------------------------------------------------------------
+-- | Creates the git repository that is used on the target host for
+-- cache purposes.
 createCacheRepo :: RC (Maybe String)
 createCacheRepo = do
   conf <- use config
   remoteT $ "git clone --bare " ++ conf ^. repository ++ " " ++
     cacheRepoPath conf
 
-------------------------------------------------------------------------------
+-- | Returns the full path of the symlink pointing to the current
+-- release.
 currentSymlinkPath :: Config -> String
 currentSymlinkPath conf = conf ^. deployPath ++ "/current"
 
-------------------------------------------------------------------------------
+-- | Removes the current symlink in preparation for a new release being
+-- activated.
 removeCurrentSymlink :: RC (Maybe String)
 removeCurrentSymlink = do
   conf <- use config
   remoteT $ "rm -rf " ++ currentSymlinkPath conf
 
-------------------------------------------------------------------------------
-newestReleasePath :: Config -> [String] -> Maybe String
-newestReleasePath _ [] = Nothing
-newestReleasePath conf rls = Just $ releasesPath conf ++ "/" ++ maximum rls
-
-------------------------------------------------------------------------------
+-- | Creates a symlink to the directory indicated by the release timestamp.
 symlinkCurrent :: RC (Maybe String)
 symlinkCurrent = do
   st <- get
@@ -243,15 +254,7 @@ symlinkCurrent = do
       let latest = releasesPath conf ++ "/" ++ maximum rls
       remoteT $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath conf
 
-------------------------------------------------------------------------------
-testConfig :: Config
-testConfig = Config { _deployPath = "/tmp/project"
-                    , _host       = "localhost"
-                    , _repository = "/tmp/testrepo"
-                    , _revision    = "origin/transformer-refactor"
-                    }
-
-------------------------------------------------------------------------------
+-- | Updates the git repo used as a cache in the target host filesystem.
 updateCacheRepo :: RC (Maybe String)
 updateCacheRepo = do
   conf <- use config
@@ -259,9 +262,13 @@ updateCacheRepo = do
     [ "cd " ++ cacheRepoPath conf
     , "git fetch origin +refs/heads/*:refs/heads/*" ]
 
-------------------------------------------------------------------------------
-buildRelease :: RC (Maybe String)
-buildRelease  = do
+-- | Does a default, conservative build of the project directory by
+-- completely re-installing all dependencies in a sandbox. This exact
+-- process is likely to be different depending on your application and
+-- environment, so feel free to create your own version of this
+-- function.
+defaultBuildRelease :: RC (Maybe String)
+defaultBuildRelease  = do
   conf <- use config
   releaseTimestamp <- use timestamp
   remoteT $ intercalate " && "
@@ -276,29 +283,17 @@ buildRelease  = do
               , "cabal install --only-dependencies -j"
               , "cabal build -j" ]
 
-------------------------------------------------------------------------------
-initialState :: IO HapistranoState
-initialState = do
-  ts <- currentTimestamp
-  return HapistranoState { _config    = testConfig
-                         , _timestamp = ts
-                         }
+-- | Does basic project setup for a project, including making sure
+-- some directories exist, and pushing a new release directory with the
+-- SHA1 or branch specified in the configuration.
+pushRelease :: RC (Maybe String)
+pushRelease = setupDirs >>
+              ensureRepositoryPushed >>
+              updateCacheRepo >>
+              cleanReleases >>
+              cloneToRelease
 
-------------------------------------------------------------------------------
-main :: IO ()
-main = do
-  initState <- initialState
-  void $ runRC errorHandler successHandler initState $ do
-           setupDirs
-           ensureRepositoryPushed
-           updateCacheRepo
-           cleanReleases
-           cloneToRelease
-           buildRelease
-           removeCurrentSymlink
-           symlinkCurrent
-           return ()
-
-  where
-    errorHandler   = defaultErrorHandler
-    successHandler = defaultSuccessHandler
+-- | Switches the current symlink to point to the release specified in
+-- the configuration.
+activateRelease :: RC (Maybe String)
+activateRelease = removeCurrentSymlink >> symlinkCurrent
