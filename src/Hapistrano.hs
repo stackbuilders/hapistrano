@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 -- | A module for easily creating reliable deploy processes for Haskell
 -- applications.
@@ -84,11 +85,11 @@ defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
 setupDirs :: RC (Maybe String)
 setupDirs = do
   pathName <- use $ config . deployPath
-  remoteT $ "mkdir -p " ++ joinPath [pathName, "releases"]
+  remoteCommand $ "mkdir -p " ++ joinPath [pathName, "releases"]
 
-remoteT :: String -- ^ The command to run remotely
+remoteCommand :: String -- ^ The command to run remotely
         -> RC (Maybe String)
-remoteT command = do
+remoteCommand command = do
   server <- use $ config . host
   liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server
            ++ "."
@@ -132,7 +133,7 @@ printCommandError server cmd (errCode, Just errMsg) =
 
 directoryExists :: FilePath -> RC (Maybe String)
 directoryExists path =
-  remoteT $ "ls " ++ path
+  remoteCommand $ "ls " ++ path
 
 -- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: RC (Maybe String)
@@ -161,7 +162,7 @@ cloneToRelease :: RC (Maybe String)
 cloneToRelease = do
   conf <- use config
   releaseTimestamp <- use timestamp
-  remoteT $
+  remoteCommand $
     "git clone " ++ cacheRepoPath conf ++ " " ++ joinPath [releasesPath conf, releaseTimestamp]
 
 -- | Returns the full path to the git repo used for cache purposes on the
@@ -175,7 +176,7 @@ releases = do
   st  <- get
   conf <- use config
   res    <- liftIO $ runEitherT
-            (evalStateT (remoteT ("find " ++ releasesPath conf ++
+            (evalStateT (remoteCommand ("find " ++ releasesPath conf ++
                                   " -type d -maxdepth 1")) st)
 
   case res of
@@ -208,7 +209,7 @@ cleanReleases = do
     Right xs -> do
       let deletable = oldReleases conf xs
 
-      remoteT $ "rm -rf --" ++ foldr (\a b -> a ++ " " ++ b) ""
+      remoteCommand $ "rm -rf --" ++ foldr (\a b -> a ++ " " ++ b) ""
         deletable
 
 -- | Returns a Bool indicating if the given String is in the proper release
@@ -221,7 +222,7 @@ isReleaseString s = all isNumber s && length s == 14
 createCacheRepo :: RC (Maybe String)
 createCacheRepo = do
   conf <- use config
-  remoteT $ "git clone --bare " ++ conf ^. repository ++ " " ++
+  remoteCommand $ "git clone --bare " ++ conf ^. repository ++ " " ++
     cacheRepoPath conf
 
 -- | Returns the full path of the symlink pointing to the current
@@ -234,7 +235,7 @@ currentSymlinkPath conf = joinPath [conf ^. deployPath, "current"]
 removeCurrentSymlink :: RC (Maybe String)
 removeCurrentSymlink = do
   conf <- use config
-  remoteT $ "rm -rf " ++ currentSymlinkPath conf
+  remoteCommand $ "rm -rf " ++ currentSymlinkPath conf
 
 -- | Creates a symlink to the directory indicated by the release timestamp.
 symlinkCurrent :: RC (Maybe String)
@@ -248,13 +249,13 @@ symlinkCurrent = do
     Right [] -> lift $ left (1, Just "No releases to symlink!")
     Right rls -> do
       let latest = joinPath [releasesPath conf, maximum rls]
-      remoteT $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath conf
+      remoteCommand $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath conf
 
 -- | Updates the git repo used as a cache in the target host filesystem.
 updateCacheRepo :: RC (Maybe String)
 updateCacheRepo = do
   conf <- use config
-  remoteT $ intercalate " && "
+  remoteCommand $ intercalate " && "
     [ "cd " ++ cacheRepoPath conf
     , "git fetch origin +refs/heads/*:refs/heads/*" ]
 
@@ -267,7 +268,7 @@ defaultBuildRelease :: RC (Maybe String)
 defaultBuildRelease  = do
   conf <- use config
   releaseTimestamp <- use timestamp
-  remoteT $ intercalate " && "
+  remoteCommand $ intercalate " && "
               [ "cd " ++ joinPath [releasesPath conf, releaseTimestamp]
               , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
               , "git fetch --all"
