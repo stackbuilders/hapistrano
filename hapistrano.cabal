@@ -25,5 +25,8 @@ library
                        , either
                        , transformers
                        , lens >= 4.1
+                       , filepath
+                       , either
+
   hs-source-dirs:      src
   default-language:    Haskell2010
