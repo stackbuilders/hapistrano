@@ -283,11 +283,12 @@ defaultBuildRelease  = do
 -- some directories exist, and pushing a new release directory with the
 -- SHA1 or branch specified in the configuration.
 pushRelease :: RC (Maybe String)
-pushRelease = setupDirs >>
-              ensureRepositoryPushed >>
-              updateCacheRepo >>
-              cleanReleases >>
-              cloneToRelease
+pushRelease = do
+  setupDirs
+  ensureRepositoryPushed
+  updateCacheRepo
+  cleanReleases
+  cloneToRelease
 
 -- | Switches the current symlink to point to the release specified in
 -- the configuration.
