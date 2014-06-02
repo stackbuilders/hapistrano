@@ -15,14 +15,9 @@ module Hapistrano
        , currentTimestamp
        ) where
 
-
-import System.Locale (defaultTimeLocale)
-import Data.Time (getCurrentTime)
-import Data.Time.Format (formatTime)
-import System.Process (readProcessWithExitCode)
-import System.Exit (ExitCode(..))
 import Control.Lens (makeLenses, use, (^.))
 import Control.Monad (unless)
+import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.State (StateT, evalStateT, runStateT, get)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Either ( EitherT(..)
@@ -30,12 +25,15 @@ import Control.Monad.Trans.Either ( EitherT(..)
                                   , right
                                   , runEitherT
                                   , eitherT )
-
-import Control.Monad.IO.Class (MonadIO(liftIO))
-import System.IO (hPutStrLn, stderr)
-import Data.List (intercalate, sortBy)
 import Data.Char (isNumber)
-
+import Data.List (intercalate, sortBy)
+import Data.Time (getCurrentTime)
+import Data.Time.Format (formatTime)
+import System.Exit (ExitCode(..))
+import System.FilePath.Posix (joinPath)
+import System.IO (hPutStrLn, stderr)
+import System.Locale (defaultTimeLocale)
+import System.Process (readProcessWithExitCode)
 
 -- ^ Config stuff that will be replaced by config file reading
 data Config = Config { _deployPath :: String
@@ -86,7 +84,7 @@ defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
 setupDirs :: RC (Maybe String)
 setupDirs = do
   pathName <- use $ config . deployPath
-  remoteT $ "mkdir -p " ++ pathName ++ "/releases"
+  remoteT $ "mkdir -p " ++ joinPath [pathName, "releases"]
 
 remoteT :: String -- ^ The command to run remotely
         -> RC (Maybe String)
@@ -118,7 +116,6 @@ currentTimestamp = do
   curTime <- getCurrentTime
   return $ formatTime defaultTimeLocale "%Y%m%d%H%M%S" curTime
 
-
 echoMessage :: String -> RC (Maybe String)
 echoMessage msg = do
   liftIO $ putStrLn msg
@@ -133,9 +130,9 @@ printCommandError server cmd (errCode, Just errMsg) =
   server ++ "' with error code " ++ show errCode ++ " and message '" ++
   errMsg ++ "'."
 
-directoryExists :: String -> RC (Maybe String)
+directoryExists :: FilePath -> RC (Maybe String)
 directoryExists path =
-  remoteT $ "ls " ++  path
+  remoteT $ "ls " ++ path
 
 -- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: RC (Maybe String)
@@ -156,8 +153,8 @@ maybeString possibleString =
   if null possibleString then Nothing else Just possibleString
 
 -- | Returns the full path of the folder containing all of the release builds.
-releasesPath :: Config -> String
-releasesPath conf = (conf ^. deployPath) ++ "/releases"
+releasesPath :: Config -> FilePath
+releasesPath conf = joinPath [(conf ^. deployPath), "releases"]
 
 -- | Clones the repository to the next releasePath timestamp.
 cloneToRelease :: RC (Maybe String)
@@ -165,13 +162,12 @@ cloneToRelease = do
   conf <- use config
   releaseTimestamp <- use timestamp
   remoteT $
-    "git clone " ++ cacheRepoPath conf ++ " " ++ releasesPath conf ++ "/" ++
-    releaseTimestamp
+    "git clone " ++ cacheRepoPath conf ++ " " ++ joinPath [releasesPath conf, releaseTimestamp]
 
 -- | Returns the full path to the git repo used for cache purposes on the
 -- target host filesystem.
-cacheRepoPath :: Config -> String
-cacheRepoPath conf = conf ^. deployPath ++ "/repo"
+cacheRepoPath :: Config -> FilePath
+cacheRepoPath conf = joinPath [conf ^. deployPath, "repo"]
 
 -- | Returns a list of Strings representing the currently deployed releases.
 releases :: RC [String]
@@ -192,11 +188,11 @@ releases = do
 -- | Given a list of release strings, takes the last five in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
-oldReleases :: Config -> [String] -> [String]
+oldReleases :: Config -> [String] -> [FilePath]
 oldReleases conf rs = map mergePath toDelete
   where sorted             = sortBy (flip compare) rs
         toDelete           = drop 5 sorted
-        mergePath fileName = releasesPath conf ++ "/" ++ fileName
+        mergePath fileName = joinPath [releasesPath conf, fileName]
 
 -- | Removes releases older than the last five to avoid filling up the target
 -- host filesystem.
@@ -212,7 +208,7 @@ cleanReleases = do
     Right xs -> do
       let deletable = oldReleases conf xs
 
-      remoteT $ "rm -rf " ++ foldr (\a b -> a ++ " " ++ b) ""
+      remoteT $ "rm -rf --" ++ foldr (\a b -> a ++ " " ++ b) ""
         deletable
 
 -- | Returns a Bool indicating if the given String is in the proper release
@@ -230,8 +226,8 @@ createCacheRepo = do
 
 -- | Returns the full path of the symlink pointing to the current
 -- release.
-currentSymlinkPath :: Config -> String
-currentSymlinkPath conf = conf ^. deployPath ++ "/current"
+currentSymlinkPath :: Config -> FilePath
+currentSymlinkPath conf = joinPath [conf ^. deployPath, "current"]
 
 -- | Removes the current symlink in preparation for a new release being
 -- activated.
@@ -251,7 +247,7 @@ symlinkCurrent = do
     Left err -> lift $ left err
     Right [] -> lift $ left (1, Just "No releases to symlink!")
     Right rls -> do
-      let latest = releasesPath conf ++ "/" ++ maximum rls
+      let latest = joinPath [releasesPath conf, maximum rls]
       remoteT $ "ln -s " ++  latest ++ " " ++ currentSymlinkPath conf
 
 -- | Updates the git repo used as a cache in the target host filesystem.
@@ -272,7 +268,7 @@ defaultBuildRelease  = do
   conf <- use config
   releaseTimestamp <- use timestamp
   remoteT $ intercalate " && "
-              [ "cd " ++ releasesPath conf ++ "/" ++ releaseTimestamp
+              [ "cd " ++ joinPath [releasesPath conf, releaseTimestamp]
               , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
               , "git fetch --all"
               , "git reset --hard " ++ conf ^. revision
