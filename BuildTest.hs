@@ -14,12 +14,11 @@ main :: IO ()
 main = do
   initState <- Hap.initialState testConfig
 
-  void $ Hap.runRC errorHandler successHandler initState $
+  Hap.runRC errorHandler successHandler initState $
     do
       Hap.pushRelease
       Hap.defaultBuildRelease
-      Hap.activateRelease
-      return ()
+      void Hap.activateRelease
 
   where
     errorHandler   = Hap.defaultErrorHandler
