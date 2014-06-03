@@ -10,10 +10,11 @@ module Hapistrano
        , runRC
 
        , activateRelease
-       , defaultBuildRelease
+       , buildRelease
        , defaultSuccessHandler
        , defaultErrorHandler
        , pushRelease
+       , restartServerCommand
        , rollback
        ) where
 
@@ -37,11 +38,13 @@ import System.IO (hPutStrLn, stderr)
 import System.Locale (defaultTimeLocale)
 import System.Process (readProcessWithExitCode)
 
--- ^ Config stuff that will be replaced by config file reading
+-- | Config stuff that will be replaced by config file reading
 data Config = Config { _deployPath :: String
                      , _host       :: String
                      , _repository :: String -- ^ The remote git repo
                      , _revision   :: String -- ^ A SHA1 or branch to release
+                     , _buildScript    :: Maybe FilePath
+                     , _restartCommand :: Maybe String
                      } deriving (Show)
 
 makeLenses ''Config
@@ -80,6 +83,8 @@ defaultErrorHandler _ = putStrLn "Deploy failed."
 
 defaultSuccessHandler :: a -> IO ()
 defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
+
+
 
 -- | Creates necessary directories for the hapistrano project. Should
 -- only need to run the first time the project is deployed on a given
@@ -161,7 +166,7 @@ maybeString possibleString =
 
 -- | Returns the full path of the folder containing all of the release builds.
 releasesPath :: Config -> FilePath
-releasesPath conf = joinPath [(conf ^. deployPath), "releases"]
+releasesPath conf = joinPath [conf ^. deployPath, "releases"]
 
 -- | Figures out the most recent release if possible, and sets the
 -- StateT monad with the correct timestamp. This function is used
@@ -188,7 +193,7 @@ cloneToRelease = do
 
   rls <- case releaseTimestamp of
            Nothing -> do
-             ts <- liftIO $ currentTimestamp
+             ts <- liftIO currentTimestamp
              timestamp .= Just ts
              return ts
 
@@ -234,6 +239,9 @@ previousReleases = do
       let currentRel = (head . lines . pathToRelease) c
       return $ filter (< currentRel) rls
 
+releasePath :: Config -> Release -> FilePath
+releasePath conf rls = joinPath [releasesPath conf, rls]
+
 -- | Given a list of release strings, takes the last four in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
@@ -241,7 +249,7 @@ oldReleases :: Config -> [Release] -> [FilePath]
 oldReleases conf rs = map mergePath toDelete
   where sorted             = sortBy (flip compare) rs
         toDelete           = drop 4 sorted
-        mergePath fileName = joinPath [releasesPath conf, fileName]
+        mergePath = releasePath conf
 
 -- | Removes releases older than the last five to avoid filling up the target
 -- host filesystem.
@@ -298,6 +306,13 @@ remoteIsLinux = do
     Right (Just output) -> lift $ right $ "Linux" `isInfixOf` output
     _ -> lift $ left (1, Just "Unable to determine remote host type")
 
+restartServerCommand :: RC (Maybe String)
+restartServerCommand = do
+  conf <- use config
+  case conf ^. restartCommand of
+    Nothing -> return $ Just "No command given for restart action."
+    Just cmd -> remoteCommand cmd
+
 -- | Returns the best 'mv' command for a symlink given the target platform.
 mvCommand ::
   Bool -- ^ Whether the target host is Linux
@@ -330,35 +345,40 @@ updateCacheRepo = do
     [ "cd " ++ cacheRepoPath conf
     , "git fetch origin +refs/heads/*:refs/heads/*" ]
 
--- | Does a default, conservative build of the project directory by
--- completely re-installing all dependencies in a sandbox. This exact
--- process is likely to be different depending on your application and
--- environment, so feel free to create your own version of this
--- function.
-defaultBuildRelease :: RC (Maybe String)
-defaultBuildRelease  = do
+-- | Sets the release to the correct revision by resetting the
+-- head of the git repo.
+setReleaseRevision :: RC (Maybe String)
+setReleaseRevision = do
   conf <- use config
   releaseTimestamp <- use timestamp
   case releaseTimestamp of
     Nothing -> lift $ left (1, Just "No releases to symlink!")
     Just rls ->
       remoteCommand $ intercalate " && "
-      [ "cd " ++ joinPath [releasesPath conf, rls]
-      , "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
+      [ "cd " ++ releasePath conf rls
       , "git fetch --all"
       , "git reset --hard " ++ conf ^. revision
-      , "rm -rf .cabal-sandbox"
-      , "cabal sandbox init"
-      , "cabal clean"
-      , "cabal update"
-      , "cabal install --only-dependencies -j"
-      , "cabal build -j"
       ]
+
+-- | Returns a command that builds this application. Sets the context
+-- of the build by switching to the release directory before running
+-- the script.
+buildRelease :: [String] -- ^ A path to a file containing a list of
+                         -- build commands, to be intercalated with "&&"
+             -> RC (Maybe String)
+buildRelease commands = do
+  conf <- use config
+  releaseTimestamp <- use timestamp
+  case releaseTimestamp of
+    Nothing -> lift $ left (1, Just "No releases to symlink!")
+    Just rls -> do
+      let cdCmd = "cd " ++ releasePath conf rls
+      remoteCommand $ intercalate " && " $ cdCmd : commands
 
 -- | A safe version of the `maximum` function in Data.List.
 biggest :: Ord a => [a] -> Maybe a
 biggest rls =
-  case (reverse . sort) rls of
+  case sortBy (flip compare) rls of
     []  -> Nothing
     r:_ -> Just r
 
@@ -367,7 +387,7 @@ biggest rls =
 -- SHA1 or branch specified in the configuration.
 pushRelease :: RC (Maybe String)
 pushRelease = setupDirs >> ensureRepositoryPushed >> updateCacheRepo >>
-              cleanReleases >> cloneToRelease
+              cleanReleases >> cloneToRelease >> setReleaseRevision
 
 -- | Switches the current symlink to point to the release specified in
 -- the configuration. Maybe used in either deploy or rollback cases.
