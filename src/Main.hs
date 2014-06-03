@@ -25,18 +25,7 @@ deploy :: Hap.Config -> IO ()
 deploy cfg =
   Hap.runRC errorHandler successHandler (Hap.initialState cfg) $ do
     Hap.pushRelease
-
-    case Hap._buildScript cfg of
-      Nothing ->
-        return $
-        putStrLn "No build file given in BUILD_SCRIPT, skipping build step."
-
-      Just scr -> do
-        fl <- liftIO $ readFile scr
-        let commands = lines fl
-        Hap.buildRelease commands
-        return $ putStrLn "Done with build, activating release..."
-
+    Hap.runBuild
     Hap.activateRelease
 
     void Hap.restartServerCommand

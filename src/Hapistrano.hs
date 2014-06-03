@@ -10,7 +10,7 @@ module Hapistrano
        , runRC
 
        , activateRelease
-       , buildRelease
+       , runBuild
        , defaultSuccessHandler
        , defaultErrorHandler
        , pushRelease
@@ -310,6 +310,19 @@ restartServerCommand = do
   case conf ^. restartCommand of
     Nothing -> return $ Just "No command given for restart action."
     Just cmd -> remoteCommand cmd
+
+runBuild :: RC (Maybe String)
+runBuild = do
+  conf <- use config
+  case conf ^. buildScript of
+    Nothing -> do
+      liftIO $ putStrLn "No build script specified, skipping build step."
+      return Nothing
+
+    Just scr -> do
+      fl <- liftIO $ readFile scr
+      let commands = lines fl
+      buildRelease commands
 
 -- | Returns the best 'mv' command for a symlink given the target platform.
 mvCommand ::
