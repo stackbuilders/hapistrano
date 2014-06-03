@@ -12,8 +12,9 @@ import Control.Monad.IO.Class (MonadIO(liftIO))
 rollback :: Hap.Config -> IO ()
 rollback cfg =
   Hap.runRC errorHandler successHandler (Hap.initialState cfg) $ do
-    Hap.restartServerCommand
-    void Hap.rollback
+
+    Hap.rollback
+    void Hap.restartServerCommand
 
   where
     errorHandler   = Hap.defaultErrorHandler
@@ -36,9 +37,9 @@ deploy cfg =
         Hap.buildRelease commands
         return $ putStrLn "Done with build, activating release..."
 
-    Hap.restartServerCommand
+    Hap.activateRelease
 
-    void Hap.activateRelease
+    void Hap.restartServerCommand
 
   where
     errorHandler   = Hap.defaultErrorHandler
