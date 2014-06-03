@@ -10,15 +10,19 @@ testConfig = Hap.Config { Hap._deployPath = "/tmp/project"
                         , Hap._revision    = "origin/transformer-refactor"
                         }
 
+rollback :: IO ()
+rollback = do
+  Hap.runRC errorHandler successHandler (Hap.initialState testConfig) $
+    void Hap.rollback
+
+  where
+    errorHandler   = Hap.defaultErrorHandler
+    successHandler = Hap.defaultSuccessHandler
+
 main :: IO ()
 main = do
-  initState <- Hap.initialState testConfig
-
-  Hap.runRC errorHandler successHandler initState $
-    do
-      Hap.pushRelease
-      Hap.defaultBuildRelease
-      void Hap.activateRelease
+  Hap.runRC errorHandler successHandler (Hap.initialState testConfig) $
+    void $ Hap.pushRelease >> Hap.defaultBuildRelease >> Hap.activateRelease
 
   where
     errorHandler   = Hap.defaultErrorHandler
