@@ -297,17 +297,15 @@ removeCurrentSymlink = do
   conf <- use config
   remoteCommand $ "rm -rf " ++ currentSymlinkPath conf
 
+-- | Determines whether the target host OS is Linux
 remoteIsLinux :: RC (Bool)
 remoteIsLinux = do
   st <- get
   res <- liftIO $ runEitherT $ evalStateT (remoteCommand ("uname")) st
 
   case res of
-     Left _ -> lift $ left (1, Just "Unable to determine remote host type")
-     Right Nothing ->
-       lift $ left (1, Just "Unable to determine remote host type")
-
-     Right (Just output) -> lift $ right $ "Linux" `isInfixOf` output
+    Right (Just output) -> lift $ right $ "Linux" `isInfixOf` output
+    _ -> lift $ left (1, Just "Unable to determine remote host type")
 
 -- | Returns the best 'mv' command for a symlink given the target platform.
 mvCommand ::
@@ -371,6 +369,7 @@ defaultBuildRelease  = do
       , "cabal build -j"
       ]
 
+-- | A safe version of the `maximum` function in Data.List.
 biggest :: Ord a => [a] -> Maybe a
 biggest rls =
   case (reverse . sort) rls of
