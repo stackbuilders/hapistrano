@@ -22,7 +22,7 @@ rollback = do
 main :: IO ()
 main = do
   Hap.runRC errorHandler successHandler (Hap.initialState testConfig) $
-    void $ Hap.pushRelease >> Hap.defaultBuildRelease >> Hap.activateRelease
+    void (Hap.pushRelease >> Hap.defaultBuildRelease >> Hap.activateRelease)
 
   where
     errorHandler   = Hap.defaultErrorHandler

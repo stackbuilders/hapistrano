@@ -52,6 +52,7 @@ data HapistranoState = HapistranoState { _config    :: Config
                                        }
 makeLenses ''HapistranoState
 
+type Release = String
 
 type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
 
@@ -89,7 +90,7 @@ setupDirs = do
   remoteCommand $ "mkdir -p " ++ joinPath [pathName, "releases"]
 
 remoteCommand :: String -- ^ The command to run remotely
-        -> RC (Maybe String)
+              -> RC (Maybe String)
 remoteCommand command = do
   server <- use $ config . host
   liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server
@@ -165,9 +166,8 @@ releasesPath conf = joinPath [(conf ^. deployPath), "releases"]
 -- | Figures out the most recent release if possible, and sets the
 -- StateT monad with the correct timestamp. This function is used
 -- before rollbacks.
-detectPrevious :: RC (Maybe String)
-detectPrevious = do
-  rs <- previousReleases
+detectPrevious :: [String] -> RC (Maybe String)
+detectPrevious rs = do
   let mostRecentRls = biggest rs
   case mostRecentRls of
     Nothing -> lift $ left (1, Just "No previous releases detected!")
@@ -177,7 +177,7 @@ detectPrevious = do
 
 -- | Activates the previous detected release.
 rollback :: RC (Maybe String)
-rollback = detectPrevious >> activateRelease
+rollback = previousReleases >>= detectPrevious >> activateRelease
 
 -- | Clones the repository to the next releasePath timestamp. Makes a new
 -- timestamp if one doesn't yet exist in the HapistranoState.
@@ -208,11 +208,11 @@ currentPath :: Config -> FilePath
 currentPath conf = joinPath [conf ^. deployPath, "current"]
 
 -- | Take the release timestamp from the end of a filepath.
-pathToRelease :: FilePath -> String
+pathToRelease :: FilePath -> Release
 pathToRelease = last . splitPath
 
 -- | Returns a list of Strings representing the currently deployed releases.
-releases :: RC [String]
+releases :: RC [Release]
 releases = do
   conf <- use config
   res  <- remoteCommand $ "find " ++ releasesPath conf ++ " -type d -maxdepth 1"
@@ -223,7 +223,7 @@ releases = do
       lift $ right $ filter isReleaseString . map pathToRelease
       $ lines s
 
-previousReleases :: RC [String]
+previousReleases :: RC [Release]
 previousReleases = do
   rls <- releases
   currentRelease <- readCurrentLink
@@ -237,7 +237,7 @@ previousReleases = do
 -- | Given a list of release strings, takes the last four in the sequence.
 -- Assumes a list of folders that has been determined to be a proper release
 -- path.
-oldReleases :: Config -> [String] -> [FilePath]
+oldReleases :: Config -> [Release] -> [FilePath]
 oldReleases conf rs = map mergePath toDelete
   where sorted             = sortBy (flip compare) rs
         toDelete           = drop 4 sorted
