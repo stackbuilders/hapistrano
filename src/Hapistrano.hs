@@ -255,14 +255,12 @@ oldReleases conf rs = map mergePath toDelete
 -- host filesystem.
 cleanReleases :: RC (Maybe String)
 cleanReleases = do
-  st <- get
   conf <- use config
-  allReleases <- liftIO $ runEitherT $ evalStateT releases st
+  allReleases <- releases
 
   case allReleases of
-    Left err -> lift $ left err
-    Right [] -> echoMessage "There are no old releases to prune."
-    Right xs -> do
+    [] -> echoMessage "There are no old releases to prune."
+    xs -> do
       let deletable = oldReleases conf xs
 
       remoteCommand $ "rm -rf -- " ++ foldr (\a b -> a ++ " " ++ b) ""
