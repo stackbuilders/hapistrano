@@ -300,10 +300,10 @@ removeCurrentSymlink = do
 remoteIsLinux :: RC Bool
 remoteIsLinux = do
   st <- get
-  res <- liftIO $ runEitherT $ evalStateT (remoteCommand "uname") st
+  res <- remoteCommand "uname"
 
   case res of
-    Right (Just output) -> lift $ right $ "Linux" `isInfixOf` output
+    Just output -> lift $ right $ "Linux" `isInfixOf` output
     _ -> lift $ left (1, Just "Unable to determine remote host type")
 
 restartServerCommand :: RC (Maybe String)
