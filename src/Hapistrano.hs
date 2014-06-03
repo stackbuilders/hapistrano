@@ -20,7 +20,7 @@ module Hapistrano
 import Control.Lens (makeLenses, use, (^.), (.=))
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.Trans.State (StateT, evalStateT, runStateT, get)
+import Control.Monad.Trans.State (StateT, evalStateT, get)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Either ( EitherT(..)
                                   , left
@@ -145,14 +145,12 @@ readCurrentLink = do
 -- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: RC (Maybe String)
 ensureRepositoryPushed = do
-  st <- get
   conf <- use config
-  let e = runStateT (directoryExists (cacheRepoPath conf)) st
-  res <- liftIO $ runEitherT e
+  res <- directoryExists $ cacheRepoPath conf
 
   case res of
-    Left _ -> createCacheRepo
-    Right _ -> lift $ right $ Just "Repo already existed"
+    Nothing -> createCacheRepo
+    Just _ -> lift $ right $ Just "Repo already existed"
 
 -- | Returns a Just String or Nothing based on whether the input is null or
 -- has contents.
@@ -216,30 +214,23 @@ pathToRelease = last . splitPath
 -- | Returns a list of Strings representing the currently deployed releases.
 releases :: RC [String]
 releases = do
-  st  <- get
   conf <- use config
-  res  <- liftIO $ runEitherT
-          (evalStateT (remoteCommand ("find " ++ releasesPath conf ++
-                                      " -type d -maxdepth 1")) st)
+  res  <- remoteCommand $ "find " ++ releasesPath conf ++ " -type d -maxdepth 1"
 
   case res of
-    Left r -> lift $ left r
-    Right Nothing -> lift $ right []
-    Right (Just s) ->
+    Nothing -> lift $ right []
+    Just s ->
       lift $ right $ filter isReleaseString . map pathToRelease
       $ lines s
 
 previousReleases :: RC [String]
 previousReleases = do
-  st <- get
   rls <- releases
-
-  currentRelease <- liftIO $ runEitherT $ evalStateT readCurrentLink st
+  currentRelease <- readCurrentLink
 
   case currentRelease of
-    Left _ -> lift $ left (1, Just "Unable to read current pointer")
-    Right Nothing -> lift $ left (1, Just "Bad pointer from current link")
-    Right (Just c) -> do
+    Nothing -> lift $ left (1, Just "Bad pointer from current link")
+    Just c -> do
       let currentRel = (head . lines . pathToRelease) c
       return $ filter (< currentRel) rls
 
@@ -298,10 +289,10 @@ removeCurrentSymlink = do
   remoteCommand $ "rm -rf " ++ currentSymlinkPath conf
 
 -- | Determines whether the target host OS is Linux
-remoteIsLinux :: RC (Bool)
+remoteIsLinux :: RC Bool
 remoteIsLinux = do
   st <- get
-  res <- liftIO $ runEitherT $ evalStateT (remoteCommand ("uname")) st
+  res <- liftIO $ runEitherT $ evalStateT (remoteCommand "uname") st
 
   case res of
     Right (Just output) -> lift $ right $ "Linux" `isInfixOf` output
@@ -323,18 +314,13 @@ symlinkCurrent = do
   case releaseTimestamp of
     Nothing  -> lift $ left (1, Just "No releases to symlink!")
     Just rls -> do
-      st <- get
-      isLnx <- liftIO $ runEitherT $ evalStateT remoteIsLinux st
-      case isLnx of
-        Left _ -> lift $ left (1, Just "Unable to determine host OS type")
-        Right targetIsLinux -> do
-          let cmd = "ln -s " ++ rls ++ " " ++
-                    currentTempSymlinkPath conf ++
-                    " && " ++ mvCommand targetIsLinux ++ " " ++
-                    currentTempSymlinkPath conf
-                    ++ " " ++ currentSymlinkPath conf
+      isLnx <- remoteIsLinux
 
-          remoteCommand cmd
+      remoteCommand $ "ln -s " ++ rls ++ " " ++
+        currentTempSymlinkPath conf ++
+        " && " ++ mvCommand isLnx ++ " " ++
+        currentTempSymlinkPath conf
+        ++ " " ++ currentSymlinkPath conf
 
 -- | Updates the git repo used as a cache in the target host filesystem.
 updateCacheRepo :: RC (Maybe String)
