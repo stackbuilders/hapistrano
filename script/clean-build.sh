@@ -1,5 +1,5 @@
 export PATH=~/.cabal/bin:/usr/local/bin:$PATH
-rm -rf .cabal-sandbox
+cabal sandbox delete
 cabal sandbox init
 cabal clean
 cabal update
