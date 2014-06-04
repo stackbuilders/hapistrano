@@ -91,8 +91,12 @@ defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
 -- system.
 setupDirs :: RC (Maybe String)
 setupDirs = do
-  pathName <- use $ config . deployPath
-  remoteCommand $ "mkdir -p " ++ joinPath [pathName, "releases"]
+  conf <- use config
+
+  remoteCommand $ intercalate " && "
+    [ "mkdir -p " ++ releasesPath conf
+    , "mkdir -p " ++ cacheRepoPath conf
+    ]
 
 remoteCommand :: String -- ^ The command to run remotely
               -> RC (Maybe String)
