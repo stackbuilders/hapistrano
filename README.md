@@ -13,12 +13,6 @@ We created Hapistrano because:
   to the last-deployed state.
 * Deploys shouldn't fail because of dependency problems.
 
-## Limitations
-
-Currently Hapistrano is only useful if your application uses git, and
-you'd have to do some light hacking to make it useful with another
-version control system. Pull requests accepted.
-
 ## How it Works
 
 Hapistrano (like Capistrano for Ruby) deploys applications to a new
@@ -78,3 +72,6 @@ MIT, see [the LICENSE file](LICENSE).
 Pull requests for modifications to this program are welcome. Fork and
 open a PR. Feel free to [email me](mailto:justin@stackbuilders.com) if
 you have questions about what may be accepted before working on a PR.
+
+If you're looking for a place to start, you may want to check the
+[open issue](https://github.com/stackbuilders/hapistrano/issues).
