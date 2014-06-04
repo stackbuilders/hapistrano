@@ -1,0 +1,9 @@
+language: haskell
+ghc:
+  - 7.6
+
+script:
+ - cabal configure
+ - cabal build   # this builds all libraries and executables
+ - cabal check   # check for warnings
+ - cabal sdist   # tests that a source-distribution can be generated
