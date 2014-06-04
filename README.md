@@ -62,12 +62,16 @@ you `export` these variables so that they're available in the shell
 after you run the script. For example, you could use the following to
 configure your deploy:
 
-    export DEPLOY_PATH="/tmp/project"
-    export HOST="localhost"
-    export REPOSITORY="/tmp/testrepo"
-    export REVISION="origin/transformer-refactor"
+    export DEPLOY_PATH="/var/project"
+    export HOST="my-app-staging"
+    export REPOSITORY="git@github.com:yourorg/yourrepo.com.git"
+    export REVISION="origin/staging"
     export BUILD_SCRIPT="/home/you/Code/hapistrano/script/clean-build.sh"
-    export RESTART_COMMAND="echo Hi restarting now!"
+    export RESTART_COMMAND="echo Replace me with your restart command"
+
+# License
+
+MIT, see [the LICENSE file](LICENSE).
 
 # Contributing
 
