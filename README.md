@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/stackbuilders/hapistrano.svg)](https://travis-ci.org/stackbuilders/hapistrano)
+
 # Hapistrano
 
 Hapistrano is a deployment library for Haskell applications similar to
