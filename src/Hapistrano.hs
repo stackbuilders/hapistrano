@@ -346,7 +346,7 @@ symlinkCurrent = do
     Just rls -> do
       isLnx <- remoteIsLinux
 
-      remoteCommand $ "ln -s " ++ rls ++ " " ++
+      remoteCommand $ "ln -s " ++ releasePath conf rls ++ " " ++
         currentTempSymlinkPath conf ++
         " && " ++ mvCommand isLnx ++ " " ++
         currentTempSymlinkPath conf
