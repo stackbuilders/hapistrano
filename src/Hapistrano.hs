@@ -374,8 +374,9 @@ setReleaseRevision = do
 -- | Returns a command that builds this application. Sets the context
 -- of the build by switching to the release directory before running
 -- the script.
-buildRelease :: [String] -- ^ A path to a file containing a list of
-                         -- build commands, to be intercalated with "&&"
+buildRelease :: [String] -- ^ Commands to be run. List intercalated
+                         -- with "&&" so that failure aborts the
+                         -- sequence.
              -> RC (Maybe String)
 buildRelease commands = do
   conf <- use config
