@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            A deployment library for Haskell applications
 description:         Hapistrano makes it easy to reliably deploy Haskell
                      applications.
