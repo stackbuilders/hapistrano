@@ -20,6 +20,8 @@ module Hapistrano
 
 import Control.Lens (makeLenses, use, (^.), (.=))
 import Control.Monad (unless)
+import System.Exit (ExitCode(..), exitWith)
+
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.State (StateT, evalStateT, get)
 import Control.Monad.Trans.Class (lift)
@@ -59,6 +61,19 @@ type Release = String
 
 type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
 
+-- | Does basic project setup for a project, including making sure
+-- some directories exist, and pushing a new release directory with the
+-- SHA1 or branch specified in the configuration.
+pushRelease :: RC (Maybe String)
+pushRelease = setupDirs >> ensureRepositoryPushed >> updateCacheRepo >>
+              cleanReleases >> cloneToRelease >> setReleaseRevision
+
+-- | Switches the current symlink to point to the release specified in
+-- the configuration. Maybe used in either deploy or rollback cases.
+activateRelease :: RC (Maybe String)
+activateRelease = removeCurrentSymlink >> symlinkCurrent
+
+
 -- | Returns an initial state for the deploy.
 initialState :: Config -> HapistranoState
 initialState cfg = HapistranoState { _config    = cfg
@@ -79,11 +94,11 @@ runRC errorHandler successHandler initState remoteCmd =
             (evalStateT remoteCmd initState)
 
 defaultErrorHandler :: (Int, Maybe String) -> IO ()
-defaultErrorHandler _ = putStrLn "Deploy failed."
+defaultErrorHandler _ =
+  hPutStrLn stderr "Deploy failed." >> exitWith (ExitFailure 1)
 
 defaultSuccessHandler :: a -> IO ()
 defaultSuccessHandler _ = putStrLn "Deploy completed successfully."
-
 
 
 -- | Creates necessary directories for the hapistrano project. Should
@@ -397,15 +412,3 @@ biggest rls =
   case sortBy (flip compare) rls of
     []  -> Nothing
     r:_ -> Just r
-
--- | Does basic project setup for a project, including making sure
--- some directories exist, and pushing a new release directory with the
--- SHA1 or branch specified in the configuration.
-pushRelease :: RC (Maybe String)
-pushRelease = setupDirs >> ensureRepositoryPushed >> updateCacheRepo >>
-              cleanReleases >> cloneToRelease >> setReleaseRevision
-
--- | Switches the current symlink to point to the release specified in
--- the configuration. Maybe used in either deploy or rollback cases.
-activateRelease :: RC (Maybe String)
-activateRelease = removeCurrentSymlink >> symlinkCurrent
