@@ -25,6 +25,8 @@ executable hap
                        , lens >= 4.1
                        , filepath
                        , either
+                       , base-compat
+
   default-language:    Haskell2010
 
 library
@@ -38,6 +40,7 @@ library
                        , lens >= 4.1
                        , filepath
                        , either
+                       , base-compat
 
   hs-source-dirs:      src
   default-language:    Haskell2010

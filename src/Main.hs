@@ -2,7 +2,8 @@ module Main where
 
 import qualified Hapistrano as Hap
 import Control.Monad (void)
-import System.Environment (getArgs, getEnv, lookupEnv)
+import System.Environment (getArgs, getEnv)
+import System.Environment.Compat (lookupEnv)
 import System.IO (hPutStrLn, stderr)
 import System.Exit (exitFailure, exitSuccess)
 import Control.Applicative ((<$>))
