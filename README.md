@@ -32,23 +32,23 @@ filesystem and deletes previous releases to avoid filling up the disk.
 
 The deploy requires the following environment variables:
 
-* DEPLOY_PATH - The root of the deploy target on the remote host
-* HOST - The target host
-* REPOSITORY - The origin repository
-* REVISION - The SHA1 or branch to deploy. If a branch, you will need
+* `DEPLOY_PATH` - The root of the deploy target on the remote host
+* `HOST` - The target host
+* `REPOSITORY` - The origin repository
+* `REVISION` - The SHA1 or branch to deploy. If a branch, you will need
   to specify it as origin/branch_name due to the way that the cache
   repo is configured.
 
 The following environment variables are *optional* and affect the
 deploy process:
 
-* BUILD_SCRIPT - The local path to a file that should be executed on
+* `BUILD_SCRIPT` - The local path to a file that should be executed on
   the remote server to build the application. The script isn't
   executed verbatim - instead, every line is joined with `&&` so that
   the script aborts if any component fails. See a sample script for a
   clean build of a Haskell/Cabal application in this project under
   [script/clean-build.sh].
-* RESTART_COMMAND - If you need to restart a remote web server after a
+* `RESTART_COMMAND` - If you need to restart a remote web server after a
   successful deploy, specify the command that you use in this
   variable. It will be run after both deploy and rollback.
 
