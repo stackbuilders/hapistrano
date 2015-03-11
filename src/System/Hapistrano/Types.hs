@@ -37,9 +37,10 @@ data ReleaseFormat = Short -- ^ Standard release path following Capistrano
                    | Long  -- ^ Long release path including picoseconds for testing or people seriously into continuous deployment
                    deriving (Show)
 
-data HapistranoState = HapistranoState { config    :: Config
-                                       , timestamp :: Maybe String
-                                       } deriving Show
+data HapistranoState =
+  HapistranoState { config    :: Config -- ^ Record containing Hapistrano configuration
+                  , timestamp :: Maybe String -- ^ Timestamp of this release
+                  } deriving Show
 
 type Release = String
 
