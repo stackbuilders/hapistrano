@@ -319,7 +319,7 @@ cleanReleases = do
 
     else
       runCommand (host conf) $
-      "rm -rf -- " ++ foldr (\a b -> a ++ " " ++ b) "" deletable
+      "rm -rf -- " ++ unwords deletable
 
 -- | Returns a Bool indicating if the given String is in the proper release
 -- format.
