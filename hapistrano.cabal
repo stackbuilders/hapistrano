@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.1.0.2
+version:             0.2.0.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -14,7 +14,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
 maintainer:          justin@stackbuilders.com
-copyright:           2014 Stack Builders Inc.
+copyright:           2015 Stack Builders Inc.
 category:            System
 build-type:          Simple
 cabal-version:       >=1.10
