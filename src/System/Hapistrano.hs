@@ -21,7 +21,7 @@ module System.Hapistrano
 
        ) where
 
-import Control.Monad.Reader (ReaderT(..), ask, asks)
+import Control.Monad.Reader (ReaderT(..), ask)
 
 import System.Hapistrano.Types (
   Config(..), Hapistrano, Release, ReleaseFormat(..))
@@ -29,11 +29,7 @@ import System.Hapistrano.Types (
 import Control.Monad (unless, void)
 import System.Exit (ExitCode(..), exitWith)
 
-import Control.Monad.State.Lazy (gets, put)
-
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.Trans.State (evalStateT, get)
-import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Either ( left
                                   , right
                                   , eitherT )
@@ -159,15 +155,6 @@ echoMessage :: String -> Hapistrano (Maybe String)
 echoMessage msg = do
   liftIO $ putStrLn msg
   right Nothing
-
-printCommandError :: String -> String -> (Int, Maybe String) -> IO ()
-printCommandError server cmd (errCode, Nothing) =
-  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
-  server ++ "' with error code " ++ show errCode ++ " and no STDERR output."
-printCommandError server cmd (errCode, Just errMsg) =
-  hPutStrLn stderr $ "Command " ++ " '" ++ cmd ++ "' failed on host '" ++
-  server ++ "' with error code " ++ show errCode ++ " and message '" ++
-  errMsg ++ "'."
 
 -- | Returns the FilePath pointed to by the current symlink.
 readCurrentLink :: Maybe String -> FilePath -> IO FilePath

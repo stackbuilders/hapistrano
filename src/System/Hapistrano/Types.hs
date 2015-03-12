@@ -46,8 +46,3 @@ type Release = String
 type FailureResult = (Int, String)
 
 type Hapistrano a = EitherT FailureResult (ReaderT Config IO) a
-
--- | Executes a computation built within the Hapistrano monad returning an
--- Either within the IO data type using the provided configuration.
-runHapistrano :: Hapistrano a -> Config -> IO (Either FailureResult a)
-runHapistrano comp = runReaderT (runEitherT comp)
