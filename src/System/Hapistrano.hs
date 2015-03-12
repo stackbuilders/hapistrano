@@ -118,8 +118,7 @@ runCommand Nothing command = do
 
       right $ maybeString stdout
 
-    ExitFailure int -> do
-      left (int, err)
+    ExitFailure int -> left (int, err)
 
 runCommand (Just server) command = do
   liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server
@@ -137,8 +136,7 @@ runCommand (Just server) command = do
 
       right $ maybeString stdout
 
-    ExitFailure int -> do
-      left (int, err)
+    ExitFailure int -> left (int, err)
 
 
 -- | Returns a timestamp in the default format for build directories.
@@ -167,8 +165,7 @@ readCurrentLink hst path = do
 
   case (code, stdout) of
     (ExitSuccess, out) -> return $ trim out
-    (ExitFailure _, _) -> do
-      error "Unable to read current symlink"
+    (ExitFailure _, _) -> error "Unable to read current symlink"
 
   where trim = reverse . dropWhile (=='\n') . reverse
 
@@ -197,7 +194,7 @@ releasesPath conf = joinPath [deployPath conf, "releases"]
 -- StateT monad with the correct timestamp. This function is used
 -- before rollbacks.
 detectPrevious :: [String] -> Hapistrano (Maybe String)
-detectPrevious rs = do
+detectPrevious rs =
   case biggest rs of
     Nothing -> left (1, "No previous releases detected")
     Just rls -> right $ Just rls
@@ -345,7 +342,7 @@ runBuild rel = do
   conf <- ask
 
   case buildScript conf of
-    Nothing -> do
+    Nothing ->
       liftIO $ putStrLn "No build script specified, skipping build step."
 
     Just scr -> do
@@ -373,8 +370,7 @@ symlinkCurrent rel = do
   conf <- ask
 
   case rel of
-    Nothing  -> do
-      left (1, "No releases to symlink!")
+    Nothing  -> left (1, "No releases to symlink!")
 
     Just rls -> do
       isLnx <- targetIsLinux
@@ -382,7 +378,7 @@ symlinkCurrent rel = do
       let tmpLnCmd =
             lnCommand (releasePath conf rls) (currentTempSymlinkPath conf)
 
-      _ <- runCommand (host conf) $ tmpLnCmd
+      _ <- runCommand (host conf) tmpLnCmd
 
       runCommand (host conf) $ unwords [ mvCommand isLnx
                                        , currentTempSymlinkPath conf
