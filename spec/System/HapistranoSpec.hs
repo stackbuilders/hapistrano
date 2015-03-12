@@ -12,7 +12,7 @@ import qualified System.Hapistrano as Hap
 import System.Hapistrano.Types
 import Data.List (sort)
 
-rollback :: HapistranoState -> IO ()
+rollback :: Hap.Config -> IO ()
 rollback cfg =
   Hap.runRC errorHandler successHandler cfg $ do
 
@@ -25,7 +25,7 @@ rollback cfg =
 
 
 -- | Deploys the current release with Config options.
-deployOnly :: HapistranoState -> IO ()
+deployOnly :: Hap.Config -> IO ()
 deployOnly cfg =
   Hap.runRC errorHandler successHandler cfg $ void Hap.pushRelease
 
@@ -34,30 +34,30 @@ deployOnly cfg =
     successHandler = Hap.defaultSuccessHandler
 
 -- | Deploys the current release with Config options.
-deployAndActivate :: HapistranoState -> IO ()
+deployAndActivate :: Hap.Config -> IO ()
 deployAndActivate cfg =
   Hap.runRC errorHandler successHandler cfg $ do
-    _ <- Hap.pushRelease
-    _ <- Hap.runBuild
+    rel <- Hap.pushRelease
+    _ <- Hap.runBuild rel
 
-    void Hap.activateRelease
+    void $ Hap.activateRelease rel
 
   where
     errorHandler   = Hap.defaultErrorHandler
     successHandler = Hap.defaultSuccessHandler
 
-defaultState :: FilePath -> HapistranoState
-defaultState tmpDir = Hap.initialState
-               Hap.Config { Hap.deployPath     = tmpDir
-                          , Hap.host           = Nothing
-                          , Hap.repository     =
-                            "https://github.com/stackbuilders/atomic-write.git"
+defaultState :: FilePath -> Hap.Config
+defaultState tmpDir =
+  Hap.Config { Hap.deployPath     = tmpDir
+             , Hap.host           = Nothing
+             , Hap.repository     =
+               "https://github.com/stackbuilders/atomic-write.git"
 
-                          , Hap.releaseFormat  = Long
-                          , Hap.revision       = "master"
-                          , Hap.buildScript    = Nothing
-                          , Hap.restartCommand = Nothing
-                          }
+             , Hap.releaseFormat  = Long
+             , Hap.revision       = "master"
+             , Hap.buildScript    = Nothing
+             , Hap.restartCommand = Nothing
+             }
 
 spec :: Spec
 spec = describe "hapistrano" $ do

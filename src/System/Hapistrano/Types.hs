@@ -1,13 +1,11 @@
 module System.Hapistrano.Types
        ( Config(..)
-       , HapistranoState(..)
-       , RC
+       , Hapistrano
        , Release
        , ReleaseFormat(..)
        ) where
 
-import Control.Monad.Trans.State (StateT)
-
+import Control.Monad.Reader (ReaderT(..))
 import Control.Monad.Trans.Either (EitherT(..))
 
 -- | Config stuff that will be replaced by config file reading
@@ -33,15 +31,23 @@ data Config =
 
          } deriving (Show)
 
-data ReleaseFormat = Short -- ^ Standard release path following Capistrano
-                   | Long  -- ^ Long release path including picoseconds for testing or people seriously into continuous deployment
+data ReleaseFormat = Short
+                     -- ^ Standard release path following Capistrano's format
+
+                   | Long
+                     -- ^ Long release path including picoseconds for testing
+                     -- or people seriously into continuous deployment
+
                    deriving (Show)
 
-data HapistranoState =
-  HapistranoState { config    :: Config -- ^ Record containing Hapistrano configuration
-                  , timestamp :: Maybe String -- ^ Timestamp of this release
-                  } deriving Show
 
 type Release = String
 
-type RC a = StateT HapistranoState (EitherT (Int, Maybe String) IO) a
+type FailureResult = (Int, String)
+
+type Hapistrano a = EitherT FailureResult (ReaderT Config IO) a
+
+-- | Executes a computation built within the Hapistrano monad returning an
+-- Either within the IO data type using the provided configuration.
+runHapistrano :: Hapistrano a -> Config -> IO (Either FailureResult a)
+runHapistrano comp = runReaderT (runEitherT comp)

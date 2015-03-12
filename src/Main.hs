@@ -12,7 +12,7 @@ import System.Hapistrano.Types (ReleaseFormat(..))
 -- | Rolls back to previous release.
 rollback :: Hap.Config -> IO ()
 rollback cfg =
-  Hap.runRC errorHandler successHandler (Hap.initialState cfg) $ do
+  Hap.runRC errorHandler successHandler cfg $ do
 
     _ <- Hap.rollback
     void Hap.restartServerCommand
@@ -24,10 +24,10 @@ rollback cfg =
 -- | Deploys the current release with Config options.
 deploy :: Hap.Config -> IO ()
 deploy cfg =
-  Hap.runRC errorHandler successHandler (Hap.initialState cfg) $ do
-    _ <- Hap.pushRelease
-    _ <- Hap.runBuild
-    _ <- Hap.activateRelease
+  Hap.runRC errorHandler successHandler cfg $ do
+    rel <- Hap.pushRelease
+    _ <- Hap.runBuild rel
+    _ <- Hap.activateRelease rel
 
     void Hap.restartServerCommand
 
