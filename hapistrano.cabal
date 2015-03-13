@@ -3,19 +3,29 @@ version:             0.2.0.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
-  Hapistrano makes it easy to reliably deploy Haskell applications.
+  Hapistrano makes it easy to reliably deploy Haskell applications
+  to a server.
   .
-  Following popular libraries like Ruby's <http://capistranorb.com/ Capistrano>,
-  Hapistrano simply creates a new sandbox, installs dependencies, builds, and
-  then symlinks to the new build directory when installation is done.
+  Following popular libraries like Ruby's <http://capistranorb.com/
+  Capistrano>, Hapistrano does the work of building the application
+  with dependencies into a distinct folder, and then atomically moves
+  a symlink to the latest complete build.
   .
-  This process makes deploy atomic, without allowing for dependency problems.
+  This allows for atomic switchovers to new application code after the
+  build is complete. Rollback is even simpler, since Hapistrano can
+  just point the `current` symlink to the previous release.
+  .
+  See <https://github.com/stackbuilders/hapistrano the project readme on GitHub>
+  for more information.
+  .
 license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
 maintainer:          justin@stackbuilders.com
 copyright:           2015 Stack Builders Inc.
 category:            System
+Homepage:            https://github.com/stackbuilders/hapistrano
+Bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
 cabal-version:       >=1.10
 

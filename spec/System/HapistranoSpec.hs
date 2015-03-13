@@ -6,6 +6,10 @@ import System.IO.Temp (withSystemTempDirectory)
 
 import System.Directory (getDirectoryContents)
 import Control.Monad (void, replicateM_)
+import Control.Monad.Trans.Either (runEitherT)
+
+import Control.Monad.Reader (ReaderT(..))
+
 import System.FilePath.Posix (joinPath)
 
 import qualified System.Hapistrano as Hap
@@ -89,6 +93,12 @@ defaultState tmpDir testRepo =
              , Hap.restartCommand = Nothing
              }
 
+-- | The 'fromRight' function extracts the element out of a 'Right' and
+-- throws an error if its argument take the form  @Left _@.
+fromRight           :: Either a b -> b
+fromRight (Left _)  = error "fromRight: Argument takes form 'Left _'" -- yuck
+fromRight (Right x) = x
+
 spec :: Spec
 spec = describe "hapistrano" $ do
   describe "readCurrentLink" $
@@ -99,9 +109,11 @@ spec = describe "hapistrano" $ do
 
         deployAndActivate $ defaultState tmpDir testRepoPath
 
-        ltarget <- Hap.readCurrentLink Nothing (Hap.currentPath tmpDir)
+        ltarget <-
+          runReaderT (runEitherT Hap.readCurrentLink) $
+          defaultState tmpDir testRepoPath
 
-        last ltarget /= '\n' `shouldBe` True
+        last (fromRight ltarget) /= '\n' `shouldBe` True
 
   describe "deploying" $ do
     it "a simple deploy" $
@@ -148,10 +160,9 @@ spec = describe "hapistrano" $ do
         let firstRelease = head $ filter (Hap.isReleaseString Long) contents
 
         firstReleaseLinkTarget <-
-          Hap.readCurrentLink Nothing (Hap.currentPath tmpDir)
+          runReaderT (runEitherT Hap.readCurrentLink) deployState
 
-        putStrLn $ "the first: " ++ show firstReleaseLinkTarget
-        firstRelease `shouldBe` Hap.pathToRelease firstReleaseLinkTarget
+        firstRelease `shouldBe` Hap.pathToRelease (fromRight firstReleaseLinkTarget)
 
         -- deploy a second version
         deployAndActivate deployState
@@ -164,15 +175,15 @@ spec = describe "hapistrano" $ do
               sort (filter (Hap.isReleaseString Long) conts) !! 1
 
         secondReleaseLinkTarget <-
-          Hap.readCurrentLink Nothing (Hap.currentPath tmpDir)
+          runReaderT (runEitherT Hap.readCurrentLink) deployState
 
-        secondRelease `shouldBe` Hap.pathToRelease secondReleaseLinkTarget
+        secondRelease `shouldBe` Hap.pathToRelease (fromRight secondReleaseLinkTarget)
 
         -- roll back, and current symlink should point to first release again
 
         rollback deployState
 
         afterRollbackLinkTarget <-
-          Hap.readCurrentLink Nothing (Hap.currentPath tmpDir)
+          runReaderT (runEitherT Hap.readCurrentLink) deployState
 
-        Hap.pathToRelease afterRollbackLinkTarget `shouldBe` firstRelease
+        Hap.pathToRelease (fromRight afterRollbackLinkTarget) `shouldBe` firstRelease
