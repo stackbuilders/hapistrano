@@ -46,7 +46,7 @@ import System.Process (readProcessWithExitCode)
 -- | Does basic project setup for a project, including making sure
 -- some directories exist, and pushing a new release directory with the
 -- SHA1 or branch specified in the configuration.
-pushRelease :: Hapistrano (Release)
+pushRelease :: Hapistrano Release
 pushRelease = setupDirs >> ensureRepositoryPushed >> updateCacheRepo >>
               cleanReleases >> cloneToRelease >>= setReleaseRevision
 
@@ -107,10 +107,8 @@ runCommand :: Maybe String -- ^ The host on which to run the command
            -> String -- ^ The command to run, either on the local or remote host
            -> Hapistrano (Maybe String)
 
-runCommand Nothing command = do
-  execCommand command
-
-runCommand (Just server) command = do
+runCommand Nothing command = execCommand command
+runCommand (Just server) command =
   execCommand $ unwords ["ssh", server, command]
 
 
@@ -186,11 +184,11 @@ releasesPath conf = joinPath [deployPath conf, "releases"]
 
 -- | Figures out the most recent release if possible.
 detectPrevious :: [String] -- ^ The releases in `releases` path
-               -> Hapistrano (String)
+               -> Hapistrano String
 detectPrevious rs =
   case biggest rs of
     Nothing -> left (1, "No previous releases detected!")
-    Just rls -> right $ rls
+    Just rls -> right rls
 
 -- | Activates the previous detected release.
 rollback :: Hapistrano (Maybe String)
@@ -199,7 +197,7 @@ rollback = previousReleases >>= detectPrevious >>= activateRelease
 -- | Clones the repository to the next releasePath timestamp. Makes a new
 -- timestamp if one doesn't yet exist in the HapistranoState. Returns the
 -- timestamp of the release that we cloned to.
-cloneToRelease :: Hapistrano (Release)
+cloneToRelease :: Hapistrano Release
 cloneToRelease = do
   conf <- ask
   rls  <- liftIO $ currentTimestamp (releaseFormat conf)
@@ -330,7 +328,7 @@ restartServerCommand = do
     Just cmd -> runCommand (host conf) cmd
 
 -- | Runs a build script if one is provided.
-runBuild :: Release -> Hapistrano (Release)
+runBuild :: Release -> Hapistrano Release
 runBuild rel = do
   conf <- ask
 
@@ -387,7 +385,7 @@ updateCacheRepo = do
 
 -- | Sets the release to the correct revision by resetting the
 -- head of the git repo.
-setReleaseRevision :: Release -> Hapistrano (Release)
+setReleaseRevision :: Release -> Hapistrano Release
 setReleaseRevision rel = do
   conf <- ask
 
