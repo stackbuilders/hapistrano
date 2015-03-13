@@ -23,8 +23,8 @@ module System.Hapistrano
 
 import Control.Monad.Reader (ReaderT(..), ask)
 
-import System.Hapistrano.Types (
-  Config(..), Hapistrano, Release, ReleaseFormat(..))
+import System.Hapistrano.Types
+  (Config(..), FailureResult, Hapistrano, Release, ReleaseFormat(..))
 
 import Control.Monad (unless, void)
 import System.Exit (ExitCode(..), exitWith)
@@ -68,9 +68,11 @@ runRC errorHandler successHandler config command =
 
 -- | Default method to run on deploy failure. Emits a failure message
 -- and exits with a status code of 1.
-defaultErrorHandler :: a -> ReaderT Config IO ()
-defaultErrorHandler _ =
-  liftIO $ hPutStrLn stderr "Deploy failed." >> exitWith (ExitFailure 1)
+defaultErrorHandler :: FailureResult -> ReaderT Config IO ()
+defaultErrorHandler res =
+  liftIO $ hPutStrLn stderr
+  ("Deploy failed with (status, message): " ++ show res)
+  >> exitWith (ExitFailure 1)
 
 -- | Default method to run on deploy success.
 defaultSuccessHandler :: a -> ReaderT Config IO ()
@@ -106,38 +108,28 @@ runCommand :: Maybe String -- ^ The host on which to run the command
            -> Hapistrano (Maybe String)
 
 runCommand Nothing command = do
-  liftIO $ putStrLn $ "Going to execute " ++ command ++ " locally."
-
-  let (cmd, args) = (head (words command), tail (words command))
-
-  (code, stdout, err) <- liftIO $ readProcessWithExitCode cmd args ""
-
-  case code of
-    ExitSuccess -> do
-      unless (null stdout) (liftIO $ putStrLn $ "Output:\n" ++ stdout)
-
-      right $ maybeString stdout
-
-    ExitFailure int -> left (int, err)
+  execCommand command
 
 runCommand (Just server) command = do
-  liftIO $ putStrLn $ "Going to execute " ++ command ++ " on host " ++ server
-           ++ "."
+  execCommand $ unwords ["ssh", server, command]
 
-  (code, stdout, err) <-
-    liftIO $ readProcessWithExitCode "ssh" (server : words command) ""
+
+execCommand :: String -> Hapistrano (Maybe String)
+execCommand cmd = do
+  let wds         = words cmd
+      (cmd', args) = (head wds, tail wds)
+
+  liftIO $ putStrLn $ "Executing: " ++ cmd
+
+  (code, stdout, err) <- liftIO $ readProcessWithExitCode cmd' args ""
 
   case code of
     ExitSuccess -> do
-      liftIO $ putStrLn $ "Command '" ++ command ++
-        "' was successful on host '" ++ server ++ "'."
-
-      unless (null stdout) (liftIO $ putStrLn $ "Output:\n" ++ stdout)
+      unless (null stdout) (liftIO $ putStrLn $ "Output: " ++ stdout)
 
       right $ maybeString stdout
 
-    ExitFailure int -> left (int, err)
-
+    ExitFailure int -> left (int, trim err)
 
 -- | Returns a timestamp in the default format for build directories.
 currentTimestamp :: ReleaseFormat -> IO String
@@ -167,7 +159,9 @@ readCurrentLink hst path = do
     (ExitSuccess, out) -> return $ trim out
     (ExitFailure _, _) -> error "Unable to read current symlink"
 
-  where trim = reverse . dropWhile (=='\n') . reverse
+
+trim :: String -> String
+trim = reverse . dropWhile (=='\n') . reverse
 
 -- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: Hapistrano (Maybe String)

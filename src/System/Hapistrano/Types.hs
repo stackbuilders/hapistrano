@@ -1,5 +1,6 @@
 module System.Hapistrano.Types
        ( Config(..)
+       , FailureResult
        , Hapistrano
        , Release
        , ReleaseFormat(..)
