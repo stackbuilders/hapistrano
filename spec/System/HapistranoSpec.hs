@@ -26,7 +26,7 @@ runCommand command = do
   res <- readProcessWithExitCode cmd args ""
   putStrLn $ "GIT res: " ++ show res
 
--- ^ Generate a source git repo as test fixture. Push an initial commit
+-- | Generate a source git repo as test fixture. Push an initial commit
 -- to the bare repo by making a clone and committing a trivial change and
 -- pushing to the bare repo.
 genSourceRepo :: FilePath -> IO FilePath
