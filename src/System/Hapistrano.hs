@@ -46,13 +46,13 @@ import System.Process (readProcessWithExitCode)
 -- | Does basic project setup for a project, including making sure
 -- some directories exist, and pushing a new release directory with the
 -- SHA1 or branch specified in the configuration.
-pushRelease :: Hapistrano (Maybe Release)
+pushRelease :: Hapistrano (Release)
 pushRelease = setupDirs >> ensureRepositoryPushed >> updateCacheRepo >>
               cleanReleases >> cloneToRelease >>= setReleaseRevision
 
 -- | Switches the current symlink to point to the release specified in
 -- the configuration. Maybe used in either deploy or rollback cases.
-activateRelease :: Maybe Release -> Hapistrano (Maybe String)
+activateRelease :: Release -> Hapistrano (Maybe String)
 activateRelease rel = removeCurrentSymlink >> symlinkCurrent rel
 
 -- | Given a pair of actions, one to perform in case of failure, and
@@ -184,14 +184,13 @@ maybeString possibleString =
 releasesPath :: Config -> FilePath
 releasesPath conf = joinPath [deployPath conf, "releases"]
 
--- | Figures out the most recent release if possible, and sets the
--- StateT monad with the correct timestamp. This function is used
--- before rollbacks.
-detectPrevious :: [String] -> Hapistrano (Maybe String)
+-- | Figures out the most recent release if possible.
+detectPrevious :: [String] -- ^ The releases in `releases` path
+               -> Hapistrano (String)
 detectPrevious rs =
   case biggest rs of
-    Nothing -> left (1, "No previous releases detected")
-    Just rls -> right $ Just rls
+    Nothing -> left (1, "No previous releases detected!")
+    Just rls -> right $ rls
 
 -- | Activates the previous detected release.
 rollback :: Hapistrano (Maybe String)
@@ -200,7 +199,7 @@ rollback = previousReleases >>= detectPrevious >>= activateRelease
 -- | Clones the repository to the next releasePath timestamp. Makes a new
 -- timestamp if one doesn't yet exist in the HapistranoState. Returns the
 -- timestamp of the release that we cloned to.
-cloneToRelease :: Hapistrano (Maybe String)
+cloneToRelease :: Hapistrano (Release)
 cloneToRelease = do
   conf <- ask
   rls  <- liftIO $ currentTimestamp (releaseFormat conf)
@@ -208,7 +207,7 @@ cloneToRelease = do
   void $ runCommand (host conf) $ "git clone " ++ cacheRepoPath conf ++
     " " ++ joinPath [ releasesPath conf, rls ]
 
-  return $ Just rls
+  return rls
 
 
 -- | Returns the full path to the git repo used for cache purposes on the
@@ -305,11 +304,11 @@ currentTempSymlinkPath conf = joinPath [deployPath conf, "current_tmp"]
 
 -- | Removes the current symlink in preparation for a new release being
 -- activated.
-removeCurrentSymlink :: Hapistrano (Maybe String)
+removeCurrentSymlink :: Hapistrano ()
 removeCurrentSymlink = do
   conf <- ask
 
-  runCommand (host conf) $ "rm -rf " ++ currentSymlinkPath conf
+  void $ runCommand (host conf) $ "rm -rf " ++ currentSymlinkPath conf
 
 -- | Determines whether the target host OS is Linux
 targetIsLinux :: Hapistrano Bool
@@ -331,7 +330,7 @@ restartServerCommand = do
     Just cmd -> runCommand (host conf) cmd
 
 -- | Runs a build script if one is provided.
-runBuild :: Maybe Release -> Hapistrano ()
+runBuild :: Release -> Hapistrano (Release)
 runBuild rel = do
   conf <- ask
 
@@ -342,6 +341,8 @@ runBuild rel = do
     Just scr -> do
       fl <- liftIO $ readFile scr
       buildRelease rel $ lines fl
+
+  right rel
 
 -- | Returns the best 'mv' command for a symlink given the target platform.
 mvCommand :: Bool   -- ^ Whether the target host is Linux
@@ -359,24 +360,20 @@ lnCommand rlsPath symlinkPath = unwords ["ln -s", rlsPath, symlinkPath]
 -- | Creates a symlink to the directory indicated by the release timestamp.
 -- hapistrano does this by creating a temporary symlink and doing an atomic
 -- mv (1) operation to activate the new release.
-symlinkCurrent :: Maybe Release -> Hapistrano (Maybe String)
+symlinkCurrent :: Release -> Hapistrano (Maybe String)
 symlinkCurrent rel = do
   conf <- ask
 
-  case rel of
-    Nothing  -> left (1, "No releases to symlink!")
+  isLnx <- targetIsLinux
 
-    Just rls -> do
-      isLnx <- targetIsLinux
+  let tmpLnCmd =
+        lnCommand (releasePath conf rel) (currentTempSymlinkPath conf)
 
-      let tmpLnCmd =
-            lnCommand (releasePath conf rls) (currentTempSymlinkPath conf)
+  _ <- runCommand (host conf) tmpLnCmd
 
-      _ <- runCommand (host conf) tmpLnCmd
-
-      runCommand (host conf) $ unwords [ mvCommand isLnx
-                                       , currentTempSymlinkPath conf
-                                       , currentSymlinkPath conf ]
+  runCommand (host conf) $ unwords [ mvCommand isLnx
+                                   , currentTempSymlinkPath conf
+                                   , currentSymlinkPath conf ]
 
 
 -- | Updates the git repo used as a cache in the target host filesystem.
@@ -390,41 +387,33 @@ updateCacheRepo = do
 
 -- | Sets the release to the correct revision by resetting the
 -- head of the git repo.
-setReleaseRevision :: Maybe Release -> Hapistrano (Maybe Release)
+setReleaseRevision :: Release -> Hapistrano (Release)
 setReleaseRevision rel = do
   conf <- ask
 
-  case rel of
-    Nothing -> do
-      liftIO $ putStrLn "No release path in which to set revision."
-      left (1, "No release path in which to set revision.")
+  liftIO $ putStrLn "Setting revision in release path."
 
-    Just rls -> do
-      liftIO $ putStrLn "Setting revision in release path."
-      void $ runCommand (host conf) $ intercalate " && "
-        [ "cd " ++ releasePath conf rls
-        , "git fetch --all"
-        , "git reset --hard " ++ revision conf
-        ]
+  void $ runCommand (host conf) $ intercalate " && "
+    [ "cd " ++ releasePath conf rel
+    , "git fetch --all"
+    , "git reset --hard " ++ revision conf
+    ]
 
-      right rel
+  return rel
 
 -- | Returns a command that builds this application. Sets the context
 -- of the build by switching to the release directory before running
 -- the script.
-buildRelease :: Maybe Release
+buildRelease :: Release  -- ^ The Release to build
              -> [String] -- ^ Commands to be run. List intercalated
                          -- with "&&" so that failure aborts the
                          -- sequence.
              -> Hapistrano ()
 buildRelease rel commands = do
   conf <- ask
+  let cdCmd = "cd " ++ releasePath conf rel
+  void $ runCommand (host conf) $ intercalate " && " $ cdCmd : commands
 
-  case rel of
-    Nothing -> left (1, "No releases to symlink!")
-    Just rls -> do
-      let cdCmd = "cd " ++ releasePath conf rls
-      void $ runCommand (host conf) $ intercalate " && " $ cdCmd : commands
 
 -- | A safe version of the `maximum` function in Data.List.
 biggest :: Ord a => [a] -> Maybe a

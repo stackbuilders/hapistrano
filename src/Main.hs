@@ -25,9 +25,7 @@ rollback cfg =
 deploy :: Hap.Config -> IO ()
 deploy cfg =
   Hap.runRC errorHandler successHandler cfg $ do
-    rel <- Hap.pushRelease
-    _ <- Hap.runBuild rel
-    _ <- Hap.activateRelease rel
+    _ <- Hap.pushRelease >>= Hap.runBuild >>= Hap.activateRelease
 
     void Hap.restartServerCommand
 
