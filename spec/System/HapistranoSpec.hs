@@ -25,7 +25,7 @@ runCommand command = do
 -- ^ Generate a source git repo as test fixture. Push an initial commit
 -- to the bare repo by making a clone and committing a trivial change and
 -- pushing to the bare repo.
-genSourceRepo :: FilePath -> IO (FilePath)
+genSourceRepo :: FilePath -> IO FilePath
 genSourceRepo path = do
   let fullRepoPath = joinPath [path, "testRepo"]
       clonePath    = joinPath [path, "testRepoClone"]
@@ -169,7 +169,6 @@ spec = describe "hapistrano" $ do
         secondRelease `shouldBe` Hap.pathToRelease secondReleaseLinkTarget
 
         -- roll back, and current symlink should point to first release again
-
 
         rollback deployState
 
