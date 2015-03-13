@@ -11,6 +11,38 @@ import System.FilePath.Posix (joinPath)
 import qualified System.Hapistrano as Hap
 import System.Hapistrano.Types
 import Data.List (sort)
+import System.Process (readProcessWithExitCode)
+
+runCommand :: String -> IO ()
+runCommand command = do
+  let cmdParts = words command
+      (cmd, args) = (head cmdParts, tail cmdParts)
+
+  putStrLn $ "GIT running: " ++ command
+  res <- readProcessWithExitCode cmd args ""
+  putStrLn $ "GIT res: " ++ show res
+
+-- ^ Generate a source git repo as test fixture. Push an initial commit
+-- to the bare repo by making a clone and committing a trivial change and
+-- pushing to the bare repo.
+genSourceRepo :: FilePath -> IO (FilePath)
+genSourceRepo path = do
+  let fullRepoPath = joinPath [path, "testRepo"]
+      clonePath    = joinPath [path, "testRepoClone"]
+
+      commands =
+        [ "mkdir -p " ++ fullRepoPath
+        , "git init --bare " ++ fullRepoPath
+        , "git clone " ++ fullRepoPath ++ " " ++ clonePath
+        , "echo testing > " ++ joinPath [clonePath, "README"]
+        , "cd " ++ clonePath ++ " && git add -A"
+        , "cd " ++ clonePath ++ " && git commit -m\"First commit\""
+        , "cd " ++ clonePath ++ " && git push"
+        ]
+
+  mapM_ runCommand commands
+
+  return fullRepoPath
 
 rollback :: Hap.Config -> IO ()
 rollback cfg =
@@ -46,13 +78,11 @@ deployAndActivate cfg =
     errorHandler   = Hap.defaultErrorHandler
     successHandler = Hap.defaultSuccessHandler
 
-defaultState :: FilePath -> Hap.Config
-defaultState tmpDir =
+defaultState :: FilePath -> FilePath -> Hap.Config
+defaultState tmpDir testRepo =
   Hap.Config { Hap.deployPath     = tmpDir
              , Hap.host           = Nothing
-             , Hap.repository     =
-               "https://github.com/stackbuilders/atomic-write.git"
-
+             , Hap.repository     = testRepo
              , Hap.releaseFormat  = Long
              , Hap.revision       = "master"
              , Hap.buildScript    = Nothing
@@ -65,7 +95,9 @@ spec = describe "hapistrano" $ do
     it "trims trailing whitespace" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
 
-        deployAndActivate (defaultState tmpDir)
+        testRepoPath <- genSourceRepo tmpDir
+
+        deployAndActivate $ defaultState tmpDir testRepoPath
 
         ltarget <- Hap.readCurrentLink Nothing (Hap.currentPath tmpDir)
 
@@ -75,7 +107,9 @@ spec = describe "hapistrano" $ do
     it "a simple deploy" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
 
-        deployOnly (defaultState tmpDir)
+        testRepoPath <- genSourceRepo tmpDir
+
+        deployOnly $ defaultState tmpDir testRepoPath
 
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
         length (filter (Hap.isReleaseString Long) contents) `shouldBe` 1
@@ -83,15 +117,18 @@ spec = describe "hapistrano" $ do
     it "activates the release" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
 
-        deployAndActivate (defaultState tmpDir)
+        testRepoPath <- genSourceRepo tmpDir
+
+        deployAndActivate $ defaultState tmpDir testRepoPath
 
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
         length (filter (Hap.isReleaseString Long) contents) `shouldBe` 1
 
     it "cleans up old releases" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
+        testRepoPath <- genSourceRepo tmpDir
 
-        replicateM_ 7 $ deployAndActivate (defaultState tmpDir)
+        replicateM_ 7 $ deployAndActivate $ defaultState tmpDir testRepoPath
 
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
         length (filter (Hap.isReleaseString Long) contents) `shouldBe` 5
@@ -100,7 +137,8 @@ spec = describe "hapistrano" $ do
     it "rolls back to the previous release" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
 
-        let deployState = defaultState tmpDir
+        testRepoPath <- genSourceRepo tmpDir
+        let deployState = defaultState tmpDir testRepoPath
 
         deployAndActivate deployState
 
