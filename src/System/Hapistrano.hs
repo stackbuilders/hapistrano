@@ -239,7 +239,7 @@ oldReleases conf rs = map mergePath toDelete
 
 -- | Removes releases older than the last five to avoid filling up the target
 -- host filesystem.
-cleanReleases :: Hapistrano [String]
+cleanReleases :: Hapistrano [String] -- ^ Deleted Release directories
 cleanReleases = do
   conf        <- ask
   allReleases <- releases
@@ -257,7 +257,9 @@ cleanReleases = do
 
 -- | Returns a Bool indicating if the given String is in the proper release
 -- format.
-isReleaseString :: ReleaseFormat -> String -> Bool
+isReleaseString :: ReleaseFormat -- ^ Format of Release directories
+                -> String -- ^ String to check against Release format
+                -> Bool -- ^ Whether the given String adheres to the specified Release format
 isReleaseString format s = all isNumber s && length s == releaseLength
   where releaseLength = case format of
           Short -> 14
@@ -265,7 +267,7 @@ isReleaseString format s = all isNumber s && length s == releaseLength
 
 -- | Creates the git repository that is used on the target host for
 -- cache purposes.
-createCacheRepo :: Hapistrano String
+createCacheRepo :: Hapistrano String -- ^ Output of the git command used to create the bare cache repo
 createCacheRepo = do
   conf <- ask
 
