@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stackbuilders/hapistrano.svg)](https://travis-ci.org/stackbuilders/hapistrano)
+[![Build Status](https://travis-ci.org/stackbuilders/hapistrano.svg)](https://travis-ci.org/stackbuilders/hapistrano) [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 
 # Hapistrano
 
@@ -64,6 +64,10 @@ configure your deploy:
     export REVISION="origin/staging"
     export BUILD_SCRIPT="/home/you/Code/hapistrano/script/clean-build.sh"
     export RESTART_COMMAND="echo Replace me with your restart command"
+
+After creating a configuration script as above, deploying is as simple as:
+
+    source your-config-script.sh && hap deploy
 
 # License
 
