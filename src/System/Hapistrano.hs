@@ -38,9 +38,10 @@ import Control.Monad.Trans.Either ( left
 import Data.Char (isNumber)
 import Data.List (intercalate, sortBy, isInfixOf)
 import Data.Time (getCurrentTime)
-import Data.Time.Format (formatTime, defaultTimeLocale)
+import Data.Time.Format (formatTime)
 import System.FilePath.Posix (joinPath, splitPath)
 import System.IO (hPutStrLn, stderr)
+import System.Locale (defaultTimeLocale)
 import System.Process (readProcessWithExitCode)
 
 -- | Does basic project setup for a project, including making sure

@@ -33,7 +33,7 @@ executable hap
   main-is:        Main.hs
   hs-source-dirs: src
   build-depends:         base >=4.5 && <4.9
-                       , time
+                       , time < 1.5
                        , old-locale
                        , process
                        , either
