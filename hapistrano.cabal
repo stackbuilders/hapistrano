@@ -33,7 +33,7 @@ executable hap
   main-is:        Main.hs
   hs-source-dirs: src
   build-depends:         base >=4.5 && <4.9
-                       , time < 1.5
+                       , time ==1.4.*
                        , old-locale
                        , process
                        , either
@@ -50,7 +50,8 @@ library
   other-modules:       System.Hapistrano.Types
 
   build-depends:         base >=4.5 && <4.9
-                       , time
+                       , time ==1.4.*
+
                        , old-locale
                        , process
                        , either
@@ -69,7 +70,7 @@ test-suite hapistrano-test
   main-is: Spec.hs
 
   build-depends:       base >=4.5 && <4.9
-                       , time
+                       , time  ==1.4.*
                        , old-locale
                        , process
                        , either
@@ -77,10 +78,9 @@ test-suite hapistrano-test
                        , mtl
                        , filepath
                        , base-compat
-
-                     , hspec
-                     , temporary
-                     , directory
+                       , hspec
+                       , temporary
+                       , directory
 
   default-language:    Haskell2010
   ghc-options:         -Wall

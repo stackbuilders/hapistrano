@@ -19,8 +19,7 @@ install:
   - cabal install --only-dependencies --enable-tests
 
 script:
- - cabal configure --enable-tests
+ - cabal configure
  - cabal build   # this builds all libraries and executables
  - cabal check   # check for warnings
- - cabal test
  - cabal sdist   # tests that a source-distribution can be generated
