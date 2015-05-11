@@ -39,9 +39,9 @@ import Data.Char (isNumber)
 import Data.List (intercalate, sortBy, isInfixOf)
 import Data.Time (getCurrentTime)
 import Data.Time.Format (formatTime)
+import Data.Time.Locale.Compat (defaultTimeLocale)
 import System.FilePath.Posix (joinPath, splitPath)
 import System.IO (hPutStrLn, stderr)
-import System.Locale (defaultTimeLocale)
 import System.Process (readProcessWithExitCode)
 
 -- | Does basic project setup for a project, including making sure

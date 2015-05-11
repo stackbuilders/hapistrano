@@ -33,7 +33,8 @@ executable hap
   main-is:        Main.hs
   hs-source-dirs: src
   build-depends:         base >=4.5 && <4.9
-                       , time ==1.4.*
+                       , time-locale-compat
+                       , time
                        , old-locale
                        , process
                        , either
@@ -50,8 +51,8 @@ library
   other-modules:       System.Hapistrano.Types
 
   build-depends:         base >=4.5 && <4.9
-                       , time ==1.4.*
-
+                       , time-locale-compat
+                       , time
                        , old-locale
                        , process
                        , either
@@ -70,7 +71,8 @@ test-suite hapistrano-test
   main-is: Spec.hs
 
   build-depends:       base >=4.5 && <4.9
-                       , time  ==1.4.*
+                       , time-locale-compat
+                       , time
                        , old-locale
                        , process
                        , either
