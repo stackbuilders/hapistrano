@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stackbuilders/hapistrano.svg)](https://travis-ci.org/stackbuilders/hapistrano) [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
+[![Build Status](https://travis-ci.org/stackbuilders/hapistrano.svg?branch=master)](https://travis-ci.org/stackbuilders/hapistrano) [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 
 # Hapistrano
 
