@@ -7,7 +7,7 @@ import System.Environment.Compat (lookupEnv)
 import System.IO (hPutStrLn, stderr)
 import System.Exit (exitFailure)
 
-import System.Hapistrano.Types (ReleaseFormat(..))
+import System.Hapistrano (ReleaseFormat(..))
 
 -- | Rolls back to previous release.
 rollback :: Hap.Config -> IO ()

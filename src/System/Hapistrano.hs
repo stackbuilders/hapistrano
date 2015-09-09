@@ -4,6 +4,7 @@
 -- applications.
 module System.Hapistrano
        ( Config(..)
+       , ReleaseFormat(..)
 
        , activateRelease
        , currentPath
