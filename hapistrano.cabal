@@ -69,7 +69,7 @@ test-suite hapistrano-test
   type: exitcode-stdio-1.0
   hs-source-dirs: spec, src
   main-is: Spec.hs
-
+  other-modules: System.HapistranoSpec
   build-depends:       base >=4.5 && <4.9
                        , time-locale-compat
                        , time
