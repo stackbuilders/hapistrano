@@ -2,6 +2,10 @@ language: c
 
 sudo: false
 
+cache:
+  directories:
+    - $HOME/.cabal/packages
+
 matrix:
   include:
     - env: CABALVER=1.16 GHCVER=7.6.3
