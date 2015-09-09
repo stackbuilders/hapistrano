@@ -1,25 +1,26 @@
-language: haskell
+language: c
 
-env:
-  matrix:
-    - GHC_VERSION=7.4.2  CABAL_VERSION=1.18
-    - GHC_VERSION=7.6.3  CABAL_VERSION=1.20
-    - GHC_VERSION=7.8.4  CABAL_VERSION=1.20
-    - GHC_VERSION=7.10.1 CABAL_VERSION=1.22
+sudo: false
+
+matrix:
+  include:
+    - env: CABALVER=1.16 GHCVER=7.6.3
+      addons: {apt: {packages: [cabal-install-1.16,ghc-7.6.3], sources: [hvr-ghc]}}
+    - env: CABALVER=1.18 GHCVER=7.8.4
+      addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.4], sources: [hvr-ghc]}}
+    - env: CABALVER=1.22 GHCVER=7.10.2
+      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.2],sources: [hvr-ghc]}}
 
 before_install:
-  - sudo apt-add-repository -y ppa:hvr/ghc
-  - sudo apt-get update
-  - sudo apt-get install -y ghc-$GHC_VERSION cabal-install-$CABAL_VERSION
-  - export PATH=/opt/ghc/$GHC_VERSION/bin:/opt/cabal/$CABAL_VERSION/bin:$PATH
+  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 
 install:
   - cabal update
-  - cabal sandbox init
-  - cabal install --only-dependencies --enable-tests
+  - cabal install --only-dependencies
 
 script:
- - cabal configure
- - cabal build   # this builds all libraries and executables
- - cabal check   # check for warnings
- - cabal sdist   # tests that a source-distribution can be generated
+  - cabal configure
+  - cabal build
+#  - cabal test
+  - cabal check
+  - cabal sdist
