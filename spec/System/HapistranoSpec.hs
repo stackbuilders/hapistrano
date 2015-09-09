@@ -13,7 +13,6 @@ import Control.Monad.Reader (ReaderT(..))
 import System.FilePath.Posix (joinPath)
 
 import qualified System.Hapistrano as Hap
-import System.Hapistrano.Types
 import Data.List (sort)
 import System.Process (readProcessWithExitCode)
 
@@ -87,7 +86,7 @@ defaultState tmpDir testRepo =
   Hap.Config { Hap.deployPath     = tmpDir
              , Hap.host           = Nothing
              , Hap.repository     = testRepo
-             , Hap.releaseFormat  = Long
+             , Hap.releaseFormat  = Hap.Long
              , Hap.revision       = "master"
              , Hap.buildScript    = Nothing
              , Hap.restartCommand = Nothing
@@ -124,7 +123,7 @@ spec = describe "hapistrano" $ do
         deployOnly $ defaultState tmpDir testRepoPath
 
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-        length (filter (Hap.isReleaseString Long) contents) `shouldBe` 1
+        length (filter (Hap.isReleaseString Hap.Long) contents) `shouldBe` 1
 
     it "activates the release" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
@@ -134,7 +133,7 @@ spec = describe "hapistrano" $ do
         deployAndActivate $ defaultState tmpDir testRepoPath
 
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-        length (filter (Hap.isReleaseString Long) contents) `shouldBe` 1
+        length (filter (Hap.isReleaseString Hap.Long) contents) `shouldBe` 1
 
     it "cleans up old releases" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
@@ -143,7 +142,7 @@ spec = describe "hapistrano" $ do
         replicateM_ 7 $ deployAndActivate $ defaultState tmpDir testRepoPath
 
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-        length (filter (Hap.isReleaseString Long) contents) `shouldBe` 5
+        length (filter (Hap.isReleaseString Hap.Long) contents) `shouldBe` 5
 
   describe "rollback" $
     it "rolls back to the previous release" $
@@ -157,7 +156,7 @@ spec = describe "hapistrano" $ do
         -- current symlink should point to the last release directory
         contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
 
-        let firstRelease = head $ filter (Hap.isReleaseString Long) contents
+        let firstRelease = head $ filter (Hap.isReleaseString Hap.Long) contents
 
         firstReleaseLinkTarget <-
           runReaderT (runEitherT Hap.readCurrentLink) deployState
@@ -172,7 +171,7 @@ spec = describe "hapistrano" $ do
         conts <- getDirectoryContents (joinPath [tmpDir, "releases"])
 
         let secondRelease =
-              sort (filter (Hap.isReleaseString Long) conts) !! 1
+              sort (filter (Hap.isReleaseString Hap.Long) conts) !! 1
 
         secondReleaseLinkTarget <-
           runReaderT (runEitherT Hap.readCurrentLink) deployState
