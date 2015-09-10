@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | A module for easily creating reliable deploy processes for Haskell
@@ -44,6 +45,12 @@ import Data.Time.Locale.Compat (defaultTimeLocale)
 import System.FilePath.Posix (joinPath, splitPath)
 import System.IO (hPutStrLn, stderr)
 import System.Process (readProcessWithExitCode)
+
+#if MIN_VERSION_process(1,2,3)
+import System.Process (readCreateProcessWithExitCode, shell)
+#else
+import System.Process (system)
+#endif
 
 -- | Does basic project setup for a project, including making sure
 -- some directories exist, and pushing a new release directory with the
@@ -119,7 +126,12 @@ execCommand cmd = do
 
   liftIO $ putStrLn $ "Executing: " ++ cmd
 
-  (code, stdout, err) <- liftIO $ readProcessWithExitCode cmd' args ""
+#if MIN_VERSION_process(1,2,3)
+  (code, stdout, err) <- liftIO $ readCreateProcessWithExitCode (shell cmd) ""
+#else
+  code <- liftIO $ system cmd
+  let (stdout, err) = ([], "")
+#endif
 
   case code of
     ExitSuccess -> do
