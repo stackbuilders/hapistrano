@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module System.HapistranoSpec (spec) where
 
 import Test.Hspec (it, describe, shouldBe, Spec)
@@ -14,7 +16,12 @@ import System.FilePath.Posix (joinPath)
 
 import qualified System.Hapistrano as Hap
 import Data.List (sort)
-import System.Process (readProcessWithExitCode)
+
+#if MIN_VERSION_process(1,2,3)
+import System.Process (readCreateProcessWithExitCode, shell)
+#else
+import System.Process (system)
+#endif
 
 runCommand :: String -> IO ()
 runCommand command = do
@@ -22,7 +29,11 @@ runCommand command = do
       (cmd, args) = (head cmdParts, tail cmdParts)
 
   putStrLn $ "GIT running: " ++ command
-  res <- readProcessWithExitCode cmd args ""
+#if MIN_VERSION_process(1,2,3)
+  res <- readCreateProcessWithExitCode (shell command) ""
+#else
+  res <- system command
+#endif
   putStrLn $ "GIT res: " ++ show res
 
 -- | Generate a source git repo as test fixture. Push an initial commit
@@ -40,7 +51,7 @@ genSourceRepo path = do
         , "echo testing > " ++ joinPath [clonePath, "README"]
         , "cd " ++ clonePath ++ " && git add -A"
         , "cd " ++ clonePath ++ " && git commit -m\"First commit\""
-        , "cd " ++ clonePath ++ " && git push"
+        , "cd " ++ clonePath ++ " && git push origin master"
         ]
 
   mapM_ runCommand commands
