@@ -14,13 +14,13 @@ import System.FilePath.Posix (joinPath)
 
 import qualified System.Hapistrano as Hap
 import Data.List (sort)
-import System.Process (readProcessWithExitCode)
 
 import qualified System.IO as IO
 import qualified System.Process as Process
 
 runCommand :: String -> IO ()
 runCommand command = do
+  putStrLn ("GIT running: " ++ command)
   let process = Process.shell command
   (_, Just outHandle, Just errHandle, processHandle) <-
     Process.createProcess process { Process.std_err = Process.CreatePipe
@@ -30,17 +30,7 @@ runCommand command = do
   exitCode <- fmap show (Process.waitForProcess processHandle)
   out <- IO.hGetContents outHandle
   err <- IO.hGetContents errHandle
-  putStrLn ("GIT running: " ++ command)
   putStrLn ("GIT res: " ++ show (exitCode, out, err))
-
--- runCommand :: String -> IO ()
--- runCommand command = do
---   let cmdParts = words command
---       (cmd, args) = (head cmdParts, tail cmdParts)
-
---   putStrLn $ "GIT running: " ++ command
---   res <- readProcessWithExitCode cmd args ""
---   putStrLn $ "GIT res: " ++ show res
 
 -- | Generate a source git repo as test fixture. Push an initial commit
 -- to the bare repo by making a clone and committing a trivial change and

@@ -116,6 +116,7 @@ runCommand (Just server) command =
 
 execShellCommand :: String -> Hapistrano String
 execShellCommand command = do
+  liftIO $ putStrLn ("Executing: " ++ command)
   let process = Process.shell command
   (_, Just outHandle, Just errHandle, processHandle) <-
     liftIO $
@@ -123,7 +124,6 @@ execShellCommand command = do
                                     , Process.std_in = Process.CreatePipe
                                     , Process.std_out = Process.CreatePipe
                                     }
-  liftIO $ putStrLn ("Executing: " ++ command)
   exitCode <- liftIO $ Process.waitForProcess processHandle
   case exitCode of
     ExitFailure code -> do
