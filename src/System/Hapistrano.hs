@@ -45,6 +45,9 @@ import System.FilePath.Posix (joinPath, splitPath)
 import System.IO (hPutStrLn, stderr)
 import System.Process (readProcessWithExitCode)
 
+import qualified System.IO as IO
+import qualified System.Process as Process
+
 -- | Does basic project setup for a project, including making sure
 -- some directories exist, and pushing a new release directory with the
 -- SHA1 or branch specified in the configuration.
@@ -107,10 +110,29 @@ runCommand :: Maybe String -- ^ The host on which to run the command
            -> String -- ^ The command to run, either on the local or remote host
            -> Hapistrano String
 
-runCommand Nothing command = execCommand command
+runCommand Nothing command = execShellCommand command
 runCommand (Just server) command =
   execCommand $ unwords ["ssh", server, command]
 
+execShellCommand :: String -> Hapistrano String
+execShellCommand command = do
+  let process = Process.shell command
+  (_, Just outHandle, Just errHandle, processHandle) <-
+    liftIO $
+      Process.createProcess process { Process.std_err = Process.CreatePipe
+                                    , Process.std_in = Process.CreatePipe
+                                    , Process.std_out = Process.CreatePipe
+                                    }
+  liftIO $ putStrLn ("Executing: " ++ command)
+  exitCode <- liftIO $ Process.waitForProcess processHandle
+  case exitCode of
+    ExitFailure code -> do
+      err <- liftIO $ IO.hGetContents errHandle
+      left (code, trim err)
+    ExitSuccess -> do
+      out <- liftIO $ IO.hGetContents outHandle
+      unless (null out) (liftIO $ putStrLn ("Output: " ++ out))
+      right (trim out)
 
 execCommand :: String -> Hapistrano String
 execCommand cmd = do
