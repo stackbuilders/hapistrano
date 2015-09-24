@@ -70,9 +70,6 @@ script:
   - if [ -f configure.ac ]; then autoreconf -i; fi
   - cabal configure --enable-tests -v2
   - cabal build
-  - git config --global push.default simple
-  - git config --global user.email hapistrano@travis-ci
-  - git config --global user.name Hapistrano
   - cabal test
   - cabal check
   - cabal sdist

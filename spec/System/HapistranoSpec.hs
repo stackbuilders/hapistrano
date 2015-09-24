@@ -13,7 +13,7 @@ import Control.Monad.Reader (ReaderT(..))
 import System.FilePath.Posix (joinPath)
 
 import qualified System.Hapistrano as Hap
-import Data.List (sort)
+import Data.List (intercalate, sort)
 
 import qualified System.IO as IO
 import qualified System.Process as Process
@@ -40,14 +40,32 @@ genSourceRepo path = do
   let fullRepoPath = joinPath [path, "testRepo"]
       clonePath    = joinPath [path, "testRepoClone"]
 
+      gitConfigReplace =
+        intercalate
+          " && "
+          [ "git config --local --replace-all push.default simple"
+          , "git config --local --replace-all user.email hap@hap"
+          , "git config --local --replace-all user.name Hap"
+          ]
+
+      gitConfigUnset =
+        intercalate
+          " && "
+          [ "git config --local --unset push.default"
+          , "git config --local --unset user.email"
+          , "git config --local --unset user.name"
+          ]
+
       commands =
         [ "mkdir -p " ++ fullRepoPath
         , "git init --bare " ++ fullRepoPath
         , "git clone " ++ fullRepoPath ++ " " ++ clonePath
         , "echo testing > " ++ joinPath [clonePath, "README"]
+        , "cd " ++ clonePath ++ " && " ++ gitConfigReplace
         , "cd " ++ clonePath ++ " && git add -A"
         , "cd " ++ clonePath ++ " && git commit -m\"First commit\""
         , "cd " ++ clonePath ++ " && git push"
+        , "cd " ++ clonePath ++ " && " ++ gitConfigUnset
         ]
 
   mapM_ runCommand commands
