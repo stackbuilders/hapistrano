@@ -4,12 +4,12 @@ module Main (main) where
 
 import qualified System.Hapistrano as Hap
 import Control.Monad (void)
-import System.Environment (getEnv)
 import System.Environment.Compat (lookupEnv)
 
 import System.Hapistrano (ReleaseFormat(..))
 
 import qualified Control.Monad as Monad
+import qualified Data.Maybe as Maybe
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
@@ -43,14 +43,17 @@ deploy cfg =
 -- | Retrieves the configuration from environment variables.
 configFromEnv :: IO Hap.Config
 configFromEnv = do
-  deployPath     <- getEnv    "DEPLOY_PATH"
-  repository     <- getEnv    "REPOSITORY"
-  revision       <- getEnv    "REVISION"
+  maybeDeployPath <- lookupEnv "DEPLOY_PATH"
+  maybeRepository <- lookupEnv "REPOSITORY"
+  maybeRevision <- lookupEnv "REVISION"
+
+  deployPath <- maybe (Exit.die (noEnv "DEPLOY_PATH")) return maybeDeployPath
+  repository <- maybe (Exit.die (noEnv "REPOSITORY")) return maybeRepository
+  revision <- maybe (Exit.die (noEnv "REVISION")) return maybeRevision
 
   host           <- lookupEnv "HOST"
   buildScript    <- lookupEnv "BUILD_SCRIPT"
   restartCommand <- lookupEnv "RESTART_COMMAND"
-
 
   return Hap.Config { Hap.deployPath     = deployPath
                     , Hap.host           = host
@@ -60,6 +63,8 @@ configFromEnv = do
                     , Hap.buildScript    = buildScript
                     , Hap.restartCommand = restartCommand
                     }
+  where
+    noEnv env = env ++ " environment variable does not exist"
 
 data HapCommand
   = HapDeploy
@@ -114,7 +119,7 @@ parseHapOptions args =
 
 hapHelpAction :: Maybe HapCommand -> IO ()
 hapHelpAction _ =
-  IO.hPutStrLn IO.stdout hapUsage >> Exit.exitSuccess
+  putStrLn hapUsage >> Exit.exitSuccess
 
 hapUsage :: String
 hapUsage =
