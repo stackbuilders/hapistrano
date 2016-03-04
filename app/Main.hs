@@ -51,7 +51,7 @@ configFromEnv = do
   repository <- maybe (Exit.die (noEnv "REPOSITORY")) return maybeRepository
   revision <- maybe (Exit.die (noEnv "REVISION")) return maybeRevision
 
-  host           <- lookupEnv "HOST"
+  host           <- fmap parseHostWithPort $ lookupEnv "HOST"
   buildScript    <- lookupEnv "BUILD_SCRIPT"
   restartCommand <- lookupEnv "RESTART_COMMAND"
 
@@ -145,3 +145,17 @@ main = do
     Just HapRollback -> rollback hapConfiguration
 
     Nothing -> hapHelpAction Nothing
+
+splitInColon :: String -> (String, String)
+splitInColon = break (== ':')
+
+parseHostWithPort :: Maybe String -> Maybe String
+parseHostWithPort Nothing = Nothing
+parseHostWithPort (Just server) =
+  let
+    (host, port) = splitInColon server
+  in
+    if null port then
+      Just host
+    else
+      Just (unwords [host, "-p", tail port])
