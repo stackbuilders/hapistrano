@@ -8,6 +8,7 @@ import System.Environment.Compat (lookupEnv)
 
 import System.Hapistrano (ReleaseFormat(..))
 
+import qualified Control.Applicative as Applicative
 import qualified Control.Monad as Monad
 import qualified Data.Maybe as Maybe
 import qualified System.Console.GetOpt as GetOpt
@@ -51,7 +52,7 @@ configFromEnv = do
   repository <- maybe (Exit.die (noEnv "REPOSITORY")) return maybeRepository
   revision <- maybe (Exit.die (noEnv "REVISION")) return maybeRevision
 
-  host           <- fmap parseHostWithPort $ lookupEnv "HOST"
+  host           <- fmap parseHostWithPort Applicative.<$> lookupEnv "HOST"
   buildScript    <- lookupEnv "BUILD_SCRIPT"
   restartCommand <- lookupEnv "RESTART_COMMAND"
 
@@ -146,16 +147,8 @@ main = do
 
     Nothing -> hapHelpAction Nothing
 
-splitInColon :: String -> (String, String)
-splitInColon = break (== ':')
-
-parseHostWithPort :: Maybe String -> Maybe String
-parseHostWithPort Nothing = Nothing
-parseHostWithPort (Just server) =
-  let
-    (host, port) = splitInColon server
-  in
-    if null port then
-      Just host
-    else
-      Just (unwords [host, "-p", tail port])
+parseHostWithPort :: String -> String
+parseHostWithPort server =
+    case break (== ':') server of
+        (host, []) -> host
+        (host, _:port) -> unwords [host, "-p", port]
