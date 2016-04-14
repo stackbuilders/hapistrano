@@ -115,6 +115,7 @@ defaultState tmpDir testRepo =
              , Hap.revision       = "master"
              , Hap.buildScript    = Nothing
              , Hap.restartCommand = Nothing
+             , Hap.port           = Nothing
              }
 
 -- | The 'fromRight' function extracts the element out of a 'Right' and

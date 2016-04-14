@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE CPP #-}
 
 module Main (main) where
 
@@ -8,13 +8,22 @@ import System.Environment.Compat (lookupEnv)
 
 import System.Hapistrano (ReleaseFormat(..))
 
-import Control.Applicative (pure, (<*>))
-import qualified System.Exit.Compat as Exit
+import System.Exit
 
 import Options
 
 import Paths_hapistrano (version)
 import Data.Version (showVersion)
+
+import qualified Text.Read as Read
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative
+import System.IO
+
+die :: String -> IO a
+die err = hPutStrLn stderr err >> exitFailure
+#endif
 
 -- | Rolls back to previous release.
 rollback :: Hap.Config -> IO ()
@@ -47,10 +56,11 @@ configFromEnv = do
   maybeRepository <- lookupEnv "REPOSITORY"
   maybeRevision <- lookupEnv "REVISION"
 
-  deployPath <- maybe (Exit.die (noEnv "DEPLOY_PATH")) return maybeDeployPath
-  repository <- maybe (Exit.die (noEnv "REPOSITORY")) return maybeRepository
-  revision <- maybe (Exit.die (noEnv "REVISION")) return maybeRevision
+  deployPath <- maybe (die (noEnv "DEPLOY_PATH")) return maybeDeployPath
+  repository <- maybe (die (noEnv "REPOSITORY")) return maybeRepository
+  revision <- maybe (die (noEnv "REVISION")) return maybeRevision
 
+  port           <- lookupEnv "PORT"
   host           <- lookupEnv "HOST"
   buildScript    <- lookupEnv "BUILD_SCRIPT"
   restartCommand <- lookupEnv "RESTART_COMMAND"
@@ -62,9 +72,11 @@ configFromEnv = do
                     , Hap.revision       = revision
                     , Hap.buildScript    = buildScript
                     , Hap.restartCommand = restartCommand
+                    , Hap.port           = parsePort port
                     }
   where
     noEnv env = env ++ " environment variable does not exist"
+    parsePort maybePort = maybePort >>= Read.readMaybe
 
 main :: IO ()
 main = execParser (info (helper <*> opts) hapistranoDesc) >>= runOption
@@ -82,4 +94,3 @@ runFlag Version = printVersion
 
 printVersion :: IO ()
 printVersion = putStrLn $ "Hapistrano " ++ showVersion version
-
