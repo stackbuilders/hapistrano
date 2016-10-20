@@ -140,6 +140,11 @@ spec = describe "hapistrano" $ do
         last (fromRight ltarget) /= '\n' `shouldBe` True
 
   describe "deploying" $ do
+    it "reads a common build script with comments and new lines" $ do
+      scriptLines <- lines `fmap` IO.readFile "./script/clean-build.sh"
+      let validBBuildScriptLines = Hap.cleanBuildScript scriptLines
+      length validBBuildScriptLines `shouldBe` 7
+
     it "a simple deploy" $
       withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
 
