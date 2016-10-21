@@ -9,12 +9,14 @@ import System.Environment.Compat (lookupEnv)
 import System.Hapistrano (ReleaseFormat(..))
 
 import qualified Control.Monad as Monad
-import qualified Data.Maybe as Maybe
-import qualified System.Console.GetOpt as GetOpt
-import qualified System.Environment as Environment
-import qualified System.Exit as Exit
 import qualified System.Exit.Compat as Exit
-import qualified System.IO as IO
+
+import Data.Monoid((<>))
+import Options.Applicative(ParserPrefs(..))
+import qualified Options.Applicative as Opt
+
+import Paths_hapistrano (version)
+import Data.Version (showVersion)
 
 -- | Rolls back to previous release.
 rollback :: Hap.Config -> IO ()
@@ -66,82 +68,23 @@ configFromEnv = do
   where
     noEnv env = env ++ " environment variable does not exist"
 
-data HapCommand
-  = HapDeploy
-  | HapRollback
-  deriving Show
-
-parseHapCommand :: String -> Maybe HapCommand
-parseHapCommand "deploy" = Just HapDeploy
-parseHapCommand "rollback" = Just HapRollback
-parseHapCommand _ = Nothing
-
-data HapOptions =
-  HapOptions
-    { hapCommand :: Maybe HapCommand
-    , hapHelp :: Bool
-    }
-  deriving Show
-
-defaultHapOptions :: HapOptions
-defaultHapOptions =
-  HapOptions
-    { hapCommand = Nothing
-    , hapHelp = False
-    }
-
-hapOptionDescriptions :: [GetOpt.OptDescr (HapOptions -> HapOptions)]
-hapOptionDescriptions =
-  [ GetOpt.Option
-      ['h']
-      ["help"]
-      (GetOpt.NoArg (\hapOptions -> hapOptions { hapHelp = True }))
-      "Show this help text"
-
-  ]
-
-parseHapOptions :: [String] -> Either String HapOptions
-parseHapOptions args =
-  case GetOpt.getOpt GetOpt.Permute hapOptionDescriptions args of
-    (options, [], []) ->
-      Right (foldl (flip id) defaultHapOptions options)
-
-    (options, [command], []) ->
-      case parseHapCommand command of
-        Nothing ->
-          Left ("Invalid argument: " ++ command)
-
-        maybeHC ->
-          Right (foldl (flip id) defaultHapOptions {hapCommand = maybeHC} options)
-
-    _ ->
-      Left "First argument must be either 'deploy' or 'rollback'."
-
-hapHelpAction :: Maybe HapCommand -> IO ()
-hapHelpAction _ =
-  putStrLn hapUsage >> Exit.exitSuccess
-
-hapUsage :: String
-hapUsage =
-  GetOpt.usageInfo hapUsageHeader hapOptionDescriptions
-
-hapUsageHeader :: String
-hapUsageHeader =
-  "usage: hap [-h | --help] <command>\n"
-
 main :: IO ()
 main = do
-  eitherHapOptions <- fmap parseHapOptions Environment.getArgs
-
-  HapOptions{..} <- either Exit.die return eitherHapOptions
-
-  Monad.when hapHelp (hapHelpAction hapCommand)
-
   hapConfiguration <- configFromEnv
+  Monad.join $ Opt.customExecParser prefs (Opt.info (opts hapConfiguration) Opt.idm)
+    where
+      opts hapConfig =
+        Opt.helper
+          Opt.<*> Opt.subparser (commands hapConfig)
+          Opt.<|> Opt.flag' printVersion (Opt.long "version" <> Opt.short 'v' <> Opt.help "Diplay the version of Hapistrano")
+      commands hapConfig =
+        Opt.command "deploy" (Opt.info (Opt.pure $ deploy hapConfig) Opt.idm)
+        <> Opt.command "rollback"  (Opt.info (Opt.pure $ rollback hapConfig) Opt.idm)
 
-  case hapCommand of
-    Just HapDeploy -> deploy hapConfiguration
+prefs :: ParserPrefs
+prefs =
+  Opt.defaultPrefs { prefShowHelpOnEmpty = True }
 
-    Just HapRollback -> rollback hapConfiguration
+printVersion :: IO ()
+printVersion = putStrLn $ "Hapistrano " ++ showVersion version
 
-    Nothing -> hapHelpAction Nothing
