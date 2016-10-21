@@ -78,8 +78,10 @@ main = do
           Opt.<*> Opt.subparser (commands hapConfig)
           Opt.<|> Opt.flag' printVersion (Opt.long "version" <> Opt.short 'v' <> Opt.help "Diplay the version of Hapistrano")
       commands hapConfig =
-        Opt.command "deploy" (Opt.info (Opt.pure $ deploy hapConfig) Opt.idm)
-        <> Opt.command "rollback"  (Opt.info (Opt.pure $ rollback hapConfig) Opt.idm)
+        Opt.command "deploy"
+          (Opt.info (Opt.pure $ deploy hapConfig) (Opt.progDesc "Deploys the current release with the configure options"))
+        <> Opt.command "rollback"
+          (Opt.info (Opt.pure $ rollback hapConfig) (Opt.progDesc "Rolls back to the previous release"))
 
 prefs :: ParserPrefs
 prefs =
