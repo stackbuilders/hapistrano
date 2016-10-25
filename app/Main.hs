@@ -12,7 +12,7 @@ import qualified Control.Monad as Monad
 import qualified System.Exit.Compat as Exit
 
 import Data.Monoid((<>))
-import Options.Applicative(ParserPrefs(..))
+import Options.Applicative(ParserPrefs(..), (<|>))
 import qualified Options.Applicative as Opt
 
 import Paths_hapistrano (version)
@@ -69,23 +69,49 @@ configFromEnv = do
     noEnv env = env ++ " environment variable does not exist"
 
 main :: IO ()
-main = do
-  hapConfiguration <- configFromEnv
-  Monad.join $ Opt.customExecParser prefs (Opt.info (opts hapConfiguration) Opt.idm)
+main =
+  Monad.join $ Opt.customExecParser prefs (Opt.info opts Opt.idm)
     where
-      opts hapConfig =
-        Opt.helper
-          Opt.<*> Opt.subparser (commands hapConfig)
-          Opt.<|> Opt.flag' printVersion (Opt.long "version" <> Opt.short 'v' <> Opt.help "Diplay the version of Hapistrano")
-      commands hapConfig =
-        Opt.command "deploy"
-          (Opt.info (Opt.pure $ deploy hapConfig) (Opt.progDesc "Deploys the current release with the configure options"))
-        <> Opt.command "rollback"
-          (Opt.info (Opt.pure $ rollback hapConfig) (Opt.progDesc "Rolls back to the previous release"))
+      opts =
+        Opt.subparser commands
+        <|> Opt.flag' printVersion (Opt.long "version" <> Opt.short 'v' <> Opt.help "Diplay the version of Hapistrano")
+      commands =
+        addCommand deployCommand
+        <> addCommand rollbackCommand
+
+data Command =
+  Command
+    { name :: String
+    , effect :: IO ()
+    , description :: String
+    }
+
+deployCommand :: Command
+deployCommand =
+  Command
+    { name = "deploy"
+    , effect = configFromEnv >>= deploy
+    , description =  "Deploys the current release with the configure options"
+    }
+
+rollbackCommand :: Command
+rollbackCommand =
+  Command
+    { name = "rollback"
+    , effect = configFromEnv >>= rollback
+    , description = "Rolls back to the previous release"
+    }
+
+addCommand :: Command -> Opt.Mod Opt.CommandFields (IO ())
+addCommand Command{..} =
+  Opt.command name (Opt.info (Opt.pure effect) (Opt.progDesc description))
 
 prefs :: ParserPrefs
 prefs =
-  Opt.defaultPrefs { prefShowHelpOnEmpty = True }
+  Opt.defaultPrefs
+    { prefShowHelpOnEmpty = True
+    , prefShowHelpOnError = True
+    }
 
 printVersion :: IO ()
 printVersion = putStrLn $ "Hapistrano " ++ showVersion version
