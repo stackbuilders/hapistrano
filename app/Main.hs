@@ -3,17 +3,33 @@
 module Main (main) where
 
 import qualified System.Hapistrano as Hap
-import Control.Monad (void)
+import Control.Monad (join, void)
 import System.Environment.Compat (lookupEnv)
 
 import System.Hapistrano (ReleaseFormat(..))
 
-import qualified Control.Monad as Monad
+import Control.Applicative (pure, (<*>))
 import qualified System.Exit.Compat as Exit
 
-import Data.Monoid((<>))
-import Options.Applicative(ParserPrefs(..), (<|>))
-import qualified Options.Applicative as Opt
+import Data.Monoid ((<>))
+import Options.Applicative
+  ( CommandFields
+  , InfoMod
+  , Mod
+  , command
+  , header
+  , help
+  , helper
+  , execParser
+  , subparser
+  , flag'
+  , footer
+  , info
+  , long
+  , progDesc
+  , fullDesc
+  , short
+  , (<|>))
 
 import Paths_hapistrano (version)
 import Data.Version (showVersion)
@@ -70,14 +86,21 @@ configFromEnv = do
 
 main :: IO ()
 main =
-  Monad.join $ Opt.customExecParser prefs (Opt.info opts Opt.idm)
+  join $ execParser (info (helper <*> opts) hapistranoDesc)
     where
       opts =
-        Opt.subparser commands
-        <|> Opt.flag' printVersion (Opt.long "version" <> Opt.short 'v' <> Opt.help "Diplay the version of Hapistrano")
+        subparser commands
+        <|> flag' printVersion (long "version" <> short 'v' <> help "Diplay the version of Hapistrano")
       commands =
         addCommand deployCommand
         <> addCommand rollbackCommand
+
+hapistranoDesc :: InfoMod a
+hapistranoDesc =
+  fullDesc
+    <> header "Hapistrano - A deployment library for Haskell applications"
+    <> progDesc "Deploy tool for Haskell applications"
+    <> footer "Run 'hap -h' for available commands"
 
 data Command =
   Command
@@ -102,16 +125,9 @@ rollbackCommand =
     , description = "Rolls back to the previous release"
     }
 
-addCommand :: Command -> Opt.Mod Opt.CommandFields (IO ())
+addCommand :: Command -> Mod CommandFields (IO ())
 addCommand Command{..} =
-  Opt.command name (Opt.info (Opt.pure effect) (Opt.progDesc description))
-
-prefs :: ParserPrefs
-prefs =
-  Opt.defaultPrefs
-    { prefShowHelpOnEmpty = True
-    , prefShowHelpOnError = True
-    }
+  command name (info (pure effect) (progDesc description))
 
 printVersion :: IO ()
 printVersion = putStrLn $ "Hapistrano " ++ showVersion version

@@ -1,4 +1,1 @@
 resolver: lts-3.5
-
-extra-deps:
-- optparse-applicative-0.13.0.0
