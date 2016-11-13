@@ -70,9 +70,15 @@ main :: IO ()
 main = execParser (info (helper <*> opts) hapistranoDesc) >>= runOption
 
 runOption :: Option -> IO ()
-runOption Deploy = configFromEnv >>= deploy
-runOption Rollback = configFromEnv >>= rollback
-runOption Version = printVersion
+runOption (Command command) = runCommand command
+runOption (Flag flag) = runFlag flag
+
+runCommand :: Command -> IO ()
+runCommand Deploy = configFromEnv >>= deploy
+runCommand Rollback = configFromEnv >>= rollback
+
+runFlag :: Flag -> IO ()
+runFlag Version = printVersion
 
 printVersion :: IO ()
 printVersion = putStrLn $ "Hapistrano " ++ showVersion version

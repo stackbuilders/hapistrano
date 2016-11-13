@@ -6,38 +6,27 @@ module Options (
   , execParser
   , info
   , helper
+  -- | Imports from other internal modules
+  , module Command
+  , module Flag
   )
   where
+
+import Command as Command
+import Flag as Flag
 
 import Options.Applicative
 
 -- | Flags and commands
 opts :: Parser Option
 opts
-  = flags
-  <|> commands
-
-flags :: Parser Option
-flags =
-  flag' Version (long "version" <> short 'v' <> help "Diplay the version of Hapistrano")
+  = fmap Flag flags
+  <|> fmap Command commands
 
 data Option
-  = Deploy
-  | Rollback
-  | Version
+  = Command (Command.Command)
+  | Flag (Flag.Flag)
   deriving Show
-
-addCommand :: Option -> String -> String -> Mod CommandFields Option
-addCommand command' name description =
-  command name (info (pure command') (progDesc description))
-
-commands :: Parser Option
-commands
-  = subparser
-    (
-    addCommand Deploy "deploy" "Deploys the current release with the configure options"
-    <> addCommand Rollback "rollback" "Rolls back to the previous release"
-    )
 
 hapistranoDesc :: InfoMod a
 hapistranoDesc =
