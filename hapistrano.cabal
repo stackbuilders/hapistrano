@@ -48,6 +48,7 @@ library
 executable hap
   hs-source-dirs:      app
   main-is:             Main.hs
+  other-modules:       Options
   build-depends:       base
                      , hapistrano
                      , base-compat

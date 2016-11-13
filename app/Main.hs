@@ -3,7 +3,7 @@
 module Main (main) where
 
 import qualified System.Hapistrano as Hap
-import Control.Monad (join, void)
+import Control.Monad (void)
 import System.Environment.Compat (lookupEnv)
 
 import System.Hapistrano (ReleaseFormat(..))
@@ -11,25 +11,7 @@ import System.Hapistrano (ReleaseFormat(..))
 import Control.Applicative (pure, (<*>))
 import qualified System.Exit.Compat as Exit
 
-import Data.Monoid ((<>))
-import Options.Applicative
-  ( CommandFields
-  , InfoMod
-  , Mod
-  , command
-  , header
-  , help
-  , helper
-  , execParser
-  , subparser
-  , flag'
-  , footer
-  , info
-  , long
-  , progDesc
-  , fullDesc
-  , short
-  , (<|>))
+import Options
 
 import Paths_hapistrano (version)
 import Data.Version (showVersion)
@@ -85,49 +67,12 @@ configFromEnv = do
     noEnv env = env ++ " environment variable does not exist"
 
 main :: IO ()
-main =
-  join $ execParser (info (helper <*> opts) hapistranoDesc)
-    where
-      opts =
-        subparser commands
-        <|> flag' printVersion (long "version" <> short 'v' <> help "Diplay the version of Hapistrano")
-      commands =
-        addCommand deployCommand
-        <> addCommand rollbackCommand
+main = execParser (info (helper <*> opts) hapistranoDesc) >>= runOption
 
-hapistranoDesc :: InfoMod a
-hapistranoDesc =
-  fullDesc
-    <> header "Hapistrano - A deployment library for Haskell applications"
-    <> progDesc "Deploy tool for Haskell applications"
-    <> footer "Run 'hap -h' for available commands"
-
-data Command =
-  Command
-    { name :: String
-    , effect :: IO ()
-    , description :: String
-    }
-
-deployCommand :: Command
-deployCommand =
-  Command
-    { name = "deploy"
-    , effect = configFromEnv >>= deploy
-    , description =  "Deploys the current release with the configure options"
-    }
-
-rollbackCommand :: Command
-rollbackCommand =
-  Command
-    { name = "rollback"
-    , effect = configFromEnv >>= rollback
-    , description = "Rolls back to the previous release"
-    }
-
-addCommand :: Command -> Mod CommandFields (IO ())
-addCommand Command{..} =
-  command name (info (pure effect) (progDesc description))
+runOption :: Option -> IO ()
+runOption Deploy = configFromEnv >>= deploy
+runOption Rollback = configFromEnv >>= rollback
+runOption Version = printVersion
 
 printVersion :: IO ()
 printVersion = putStrLn $ "Hapistrano " ++ showVersion version
