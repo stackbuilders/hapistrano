@@ -42,6 +42,7 @@ library
                      , time-locale-compat
                      , time
                      , transformers
+                     , shake
   ghc-options:         -Wall
   default-language:    Haskell2010
 
