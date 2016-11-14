@@ -43,6 +43,7 @@ library
                      , time
                      , transformers
                      , shake
+                     , text
   ghc-options:         -Wall
   default-language:    Haskell2010
 
