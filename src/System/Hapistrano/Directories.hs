@@ -11,3 +11,8 @@ main' = shake shakeOptions $ do
   setupDirs $ RemoteHost "welly" 
 -}
 
+
+data Config = undefined
+
+ensureRepositoryPushed :: Config -> Either String String 
+ensureRepositoryPushed = undefined 

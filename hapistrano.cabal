@@ -34,7 +34,10 @@ library
   hs-source-dirs:      src
   exposed-modules:     System.Hapistrano
                      , System.Hapistrano.Directories
-  other-modules:       System.Hapistrano.Types
+                     , System.Hapistrano.Helpers
+  other-modules:     System.Hapistrano.Types
+                     
+                    
   build-depends:       base >= 4.5 && < 4.10
                      , either
                      , filepath
