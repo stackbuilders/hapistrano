@@ -11,7 +11,6 @@ import           Development.Shake
 
 createRelease :: FilePath -> FilePath -> Action String
 createRelease repoPath releasesPath = do
-  need [repoPath]
   release <- liftIO getRelease
   let releasePath = releasesPath <//> release
   cmd "git clone " [repoPath, releasePath] :: Action ()
@@ -24,7 +23,6 @@ getRelease = fmap(formatTime defaultTimeLocale format) getCurrentTime
 
 buildRelease :: FilePath -> FilePath -> Action ()
 buildRelease releasePath scriptPath = do
-  need [scriptPath]
   cmd [Cwd releasePath] "source" scriptPath
 
 removePreviousReleases :: FilePath -> Int -> Action ()
@@ -33,6 +31,5 @@ removePreviousReleases releasesPath keepReleases =
 
 getPreviousReleases :: FilePath -> Int -> Action [FilePath]
 getPreviousReleases releasesPath keepReleases = do
-  need [releasesPath]
   fmap (drop keepReleases . reverse . sort . map (releasesPath <//>)) $
     getDirectoryDirs releasesPath

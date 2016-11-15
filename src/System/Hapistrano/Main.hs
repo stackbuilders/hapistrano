@@ -20,6 +20,6 @@ main = do
     action $ do
       createOrUpdateRepo repository repoPath
       releasePath <- createRelease repoPath releasesPath
-      buildRelease releasePath scriptPath
+      -- buildRelease releasePath scriptPath
       symlinkCurrent releasePath currentPath
       removePreviousReleases releasesPath keepReleases
