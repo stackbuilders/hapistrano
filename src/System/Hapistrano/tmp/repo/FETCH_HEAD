@@ -1,0 +1,5 @@
+4204c1e1328a3590520469d327fb55f15fbe09c9		branch 'deploy_different_ssh_port' of github.com:stackbuilders/hapistrano
+0d935503dadb1574c598a3dd751749ad95f843fd		branch 'issue-41-support-comments-and-empty-lines' of github.com:stackbuilders/hapistrano
+1b6e2c1010a6ac63dace0097de1298fea6dc2a14		branch 'master' of github.com:stackbuilders/hapistrano
+f6ecae04c392852e22dcfce2ea2349190afb4dba		branch 'parse-port' of github.com:stackbuilders/hapistrano
+fb24fef4289407438845d6c89364b2a2ad327fbb		branch 'shake-migration-pairing' of github.com:stackbuilders/hapistrano

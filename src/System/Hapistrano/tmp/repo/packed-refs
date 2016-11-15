@@ -1,0 +1,14 @@
+# pack-refs with: peeled fully-peeled 
+4204c1e1328a3590520469d327fb55f15fbe09c9 refs/heads/deploy_different_ssh_port
+0d935503dadb1574c598a3dd751749ad95f843fd refs/heads/issue-41-support-comments-and-empty-lines
+1b6e2c1010a6ac63dace0097de1298fea6dc2a14 refs/heads/master
+f6ecae04c392852e22dcfce2ea2349190afb4dba refs/heads/parse-port
+fb24fef4289407438845d6c89364b2a2ad327fbb refs/heads/shake-migration-pairing
+5f57f8cd0965d4e258243be9f6fa071d5b679133 refs/tags/v0.1.0.1
+905df490b0ac229de12b0305b3cfa99d537f7f61 refs/tags/v0.1.0.2
+526e820c517e99df4e4194ea4ba66f93ccdc359f refs/tags/v0.2.0.0
+93018219d123cf079ddb074e476c33ec648007c9 refs/tags/v0.2.0.1
+4253a3906a7c4df9027db5b104b28a989c3f0be1 refs/tags/v0.2.0.2
+2574758102655fb8f9a8228f5a7d232386511be9 refs/tags/v0.2.1
+5646acc44e13de77028b9122e49b34ca557c8940 refs/tags/v0.2.1.1
+e68b2ab052d6cf0b9577c9c6bdd45a3affadc039 refs/tags/v0.2.1.2
