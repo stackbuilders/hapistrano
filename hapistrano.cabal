@@ -35,9 +35,9 @@ library
   exposed-modules:     System.Hapistrano
   other-modules:       System.Hapistrano.Types
   build-depends:       base >= 4.5 && < 4.10
-                     , either
+                     , either >= 4.0 && < 4.6
+                     , mtl >= 2.0 && < 3.0
                      , filepath
-                     , mtl
                      , process
                      , time-locale-compat
                      , time
@@ -53,7 +53,7 @@ executable hap
                       , Flag
   build-depends:       base
                      , hapistrano
-                     , base-compat
+                     , base-compat >= 0.6 && < 1.0
                      , optparse-applicative >= 0.11 && < 0.14
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
@@ -63,15 +63,15 @@ test-suite hapistrano-test
   hs-source-dirs:      spec
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
-  build-depends:       base
+  build-depends:       base >= 4.5 && < 4.10
                      , hapistrano
-                     , directory
-                     , either
-                     , filepath
-                     , hspec
-                     , mtl
-                     , process
+                     , either >= 4.0 && < 4.6
+                     , hspec > 2.0 && < 2.5
+                     , mtl >= 2.0 && < 3.0
                      , temporary
+                     , directory
+                     , filepath
+                     , process
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
