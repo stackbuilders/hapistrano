@@ -8,11 +8,12 @@ import           Control.Monad.Reader
 import           Data.List
 import           Data.Time
 import           Development.Shake
+import           Development.Shake.FilePath
 
 createRelease :: FilePath -> FilePath -> Action String
 createRelease repoPath releasesPath = do
   release <- liftIO getRelease
-  let releasePath = releasesPath <//> release
+  let releasePath = releasesPath </> release
   cmd "git clone " [repoPath, releasePath] :: Action ()
   return releasePath
 
@@ -31,5 +32,5 @@ removePreviousReleases releasesPath keepReleases =
 
 getPreviousReleases :: FilePath -> Int -> Action [FilePath]
 getPreviousReleases releasesPath keepReleases = do
-  fmap (drop keepReleases . reverse . sort . map (releasesPath <//>)) $
+  fmap (drop keepReleases . reverse . sort . map (releasesPath </>)) $
     getDirectoryDirs releasesPath

@@ -1,8 +1,9 @@
-module System.Hapistrano.Current where
+module System.Hapistrano.Current
+  ( linkCurrent
+  ) where
 
 import           Development.Shake
 
 -- FIXME: Convert paths to absolute paths
-symlinkCurrent :: FilePath -> FilePath -> Action ()
-symlinkCurrent releasePath currentPath =
-  cmd "ln -s" releasePath currentPath
+linkCurrent :: FilePath -> FilePath -> Action ()
+linkCurrent = cmd "ln -sfT"
