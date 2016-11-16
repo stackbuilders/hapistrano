@@ -3,14 +3,13 @@
 module Hapistrano.Paths where
 
 import           Development.Shake.FilePath
+import           System.Directory
 
-import           Hapistrano.Types
+getCurrentPath :: FilePath -> IO FilePath
+getCurrentPath deployPath = makeAbsolute (deployPath </> "current")
 
-getCurrentPath :: DeployPath -> CurrentPath
-getCurrentPath DeployPath{..} = CurrentPath $ unDeployPath </> "current"
+getReleasesPath :: FilePath -> IO FilePath
+getReleasesPath deployPath = makeAbsolute (deployPath </> "releases")
 
-getReleasesPath :: DeployPath -> ReleasesPath
-getReleasesPath DeployPath{..} = ReleasesPath $ unDeployPath </> "releases"
-
-getRepoPath :: DeployPath -> RepoPath
-getRepoPath DeployPath{..} = RepoPath $ unDeployPath </> "repo"
+getRepoPath :: FilePath -> IO FilePath
+getRepoPath deployPath = makeAbsolute (deployPath </> "repo")

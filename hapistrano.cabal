@@ -43,17 +43,17 @@ library
                      , Hapistrano.Types
                      , System.Hapistrano.Types
   build-depends:       base >= 4.5 && < 4.10
+                     , directory
                      , either
                      , filepath
                      , mtl
                      , process
-                     , time-locale-compat
-                     , time
-                     , transformers
                      , shake
                      , text
+                     , time
+                     , time-locale-compat
+                     , transformers
                      , url
-                     , data-default
   ghc-options:         -Wall
   default-language:    Haskell2010
 
@@ -89,7 +89,6 @@ test-suite tests
   main-is:             Spec.hs
   other-modules:       HapistranoSpec
   build-depends:       base
-                     , data-default
                      , directory
                      , hapistrano
                      , hspec

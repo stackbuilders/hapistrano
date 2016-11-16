@@ -4,9 +4,7 @@ module Hapistrano.Current where
 
 import           Development.Shake
 
-import           Hapistrano.Types
-
-linkCurrent :: ReleasePath -> CurrentPath -> Action ()
-linkCurrent ReleasePath{..} CurrentPath{..} = do
-  cmd "rm -f" unCurrentPath :: Action ()
-  cmd "ln -s" unReleasePath unCurrentPath
+linkCurrent :: FilePath -> FilePath -> Action ()
+linkCurrent releasePath currentPath = do
+  cmd "rm -rf" currentPath :: Action ()
+  cmd "ln -s" releasePath currentPath

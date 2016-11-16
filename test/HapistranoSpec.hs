@@ -2,7 +2,6 @@
 
 module HapistranoSpec where
 
-import           Data.Default
 import           Data.Maybe
 import           Network.URL
 import           System.Directory
@@ -17,24 +16,24 @@ spec =
     it "symlinks the current directory" $
       withConfig $ \config@Config{..} -> do
         deploy config
-        isSymbolicLink (unCurrentPath $ getCurrentPath configDeployPath)
-          `shouldReturn` True
+        currentPath <- getCurrentPath configDeployPath
+        isSymbolicLink currentPath `shouldReturn` True
 
     it "creates a cache repo" $
       withConfig $ \config@Config{..} -> do
         deploy config
-        doesDirectoryExist (unRepoPath $ getRepoPath configDeployPath)
-          `shouldReturn` True
+        repoPath <- getRepoPath configDeployPath
+        doesDirectoryExist repoPath `shouldReturn` True
 
 withConfig :: (Config -> IO a) -> IO a
-withConfig f = withSystemTempDirectory "hapistrano" (f . getConfig . DeployPath)
+withConfig f = withSystemTempDirectory "hapistrano" (f . getConfig)
 
-getConfig :: DeployPath -> Config
+getConfig :: FilePath -> Config
 getConfig deployPath =
   Config
     { configDeployPath = deployPath
     , configRepoUrl = getRepoUrl
-    , configKeepReleases = def
+    , configKeepReleases = 5
     }
 
 getRepoUrl :: URL
