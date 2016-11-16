@@ -2,6 +2,7 @@
 
 module HapistranoSpec where
 
+import           Control.Monad
 import           Data.Default
 import           Data.Maybe
 import           Network.URL
@@ -26,6 +27,13 @@ spec =
         repoPath <- getRepoPath configDeployPath
         doesDirectoryExist repoPath `shouldReturn` True
 
+    it "cleanup the old releases" $
+      withConfig $ \config@Config{..} -> do
+        replicateM_ 3 $ deploy config { configKeepReleases = KeepReleases 2 }
+        releasesPath <- getReleasesPath configDeployPath
+        releases <- listDirectory releasesPath
+        length releases `shouldBe` 2
+
 withConfig :: (Config -> IO a) -> IO a
 withConfig f = withSystemTempDirectory "hapistrano" (f . getConfig)
 
@@ -39,4 +47,5 @@ getConfig deployPath =
     }
 
 getRepoUrl :: RepoUrl
-getRepoUrl = RepoUrl $ fromJust $ importURL "https://github.com/stackbuilders/hapistrano"
+getRepoUrl =
+  RepoUrl $ fromJust $ importURL "https://github.com/stackbuilders/hapistrano"
