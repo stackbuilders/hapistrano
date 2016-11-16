@@ -1,1 +1,0 @@
-module Hapistrano.Shared where

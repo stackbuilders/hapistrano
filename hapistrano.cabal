@@ -40,7 +40,6 @@ library
                      , Hapistrano.Paths
                      , Hapistrano.Releases
                      , Hapistrano.Repo
-                     , Hapistrano.Shared
                      , Hapistrano.Types
                      , System.Hapistrano.Types
   build-depends:       base >= 4.5 && < 4.10
