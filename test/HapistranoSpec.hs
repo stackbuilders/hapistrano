@@ -5,6 +5,7 @@ module HapistranoSpec where
 import           Control.Monad
 import           Data.Default
 import           Data.Maybe
+import           Development.Shake (Verbosity (..))
 import           Network.URL
 import           System.Directory
 import           System.IO.Temp
@@ -42,8 +43,9 @@ getConfig deployPath =
   Config
     { configBranch = def
     , configDeployPath = deployPath
-    , configRepoUrl = getRepoUrl
     , configKeepReleases = def
+    , configLogLevel = LogLevel Silent
+    , configRepoUrl = getRepoUrl
     }
 
 getRepoUrl :: RepoUrl

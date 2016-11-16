@@ -95,6 +95,7 @@ test-suite tests
                      , directory
                      , hapistrano
                      , hspec
+                     , shake
                      , temporary
                      , url
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N

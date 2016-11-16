@@ -21,7 +21,7 @@ deploy Config{..} = do
 
   let releasePath = releasesPath </> release
 
-  shakeArgs shakeOptions $ do
+  withShake configLogLevel $ do
     wantLockFile releasePath
 
     withReleasePath releasesPath $ \f -> do
@@ -33,3 +33,6 @@ deploy Config{..} = do
       linkCurrent f currentPath
 
     withLockFile repoPath $ createRepo configRepoUrl
+
+withShake :: LogLevel -> Rules () -> IO ()
+withShake LogLevel{..} = shake shakeOptions { shakeVerbosity = unLogLevel }
