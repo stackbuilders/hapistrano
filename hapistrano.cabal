@@ -33,7 +33,7 @@ extra-source-files:  changes.md README.md
 library
   hs-source-dirs:      src
   exposed-modules:     System.Hapistrano
-                     , System.Hapistrano.Directories
+                     , System.Hapistrano.PushRelease
                      , System.Hapistrano.Helpers
   other-modules:     System.Hapistrano.Types
                      
