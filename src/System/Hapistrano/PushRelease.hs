@@ -7,12 +7,13 @@ import           Development.Shake
 import           System.Hapistrano.Helpers
 
 
-pushRelease :: IO ()
-pushRelease = shake shakeOptions $ do  
-  let config = Config
-      { repository = "git@github.com:stackbuilders/hapistrano.git"
+simRelease :: IO ()
+simRelease = shake shakeOptions $ do  
+  let config = Config {
+        repository = "git@github.com:stackbuilders/hapistrano.git"
       , deployPath = "tmp"
-      , revision = " 1b6e2c1010a6ac63dace0097de1298fea6dc2a14"   }
+      , revision = " 1b6e2c1010a6ac63dace0097de1298fea6dc2a14"
+        }
   action $ (`runReaderT` config) $ do
       createOrUpdateRepo
       stamp <- createRelease
@@ -54,10 +55,13 @@ setReleaseRevison rel = do
   lift $ (cmd [Cwd $ releasesPath conf ++ rel] "git fetch --all" :: Action ())
   lift $ (cmd [Cwd $ releasesPath conf ++ rel] "git reset --hard" :: Action ())
   return rel
-    
+
+
+{-    
 readCurrentLink :: ReaderT Config Action String
 readCurrentLink = do
-  conf <- ask
-  let releasePath = (currentPath . deployPath) conf 
+  config <- ask
+  let releasePath = ?? 
   lift (cmd $ "readlink " ++ "tmp/current" :: Action ()) 
   return releasePath
+-}
