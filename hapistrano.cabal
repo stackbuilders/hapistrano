@@ -90,6 +90,7 @@ test-suite tests
   other-modules:       HapistranoSpec
   build-depends:       base
                      , data-default
+                     , directory
                      , hapistrano
                      , hspec
                      , temporary

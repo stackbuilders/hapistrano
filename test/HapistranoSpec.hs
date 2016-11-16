@@ -3,6 +3,7 @@ module HapistranoSpec where
 import           Data.Default
 import           Data.Maybe
 import           Network.URL
+import           System.Directory
 import           System.IO.Temp
 import           Test.Hspec
 
@@ -11,9 +12,9 @@ import           Hapistrano
 spec :: Spec
 spec =
   describe "deploy" $
-    it "..." $ withDeployTo $ \deployTo -> do
+    it "symlinks the latest release on the current directory" $ withDeployTo $ \deployTo -> do
       deploy $ config deployTo
-      pending
+      isSymbolicLink (unCurrentPath $ getCurrentPath deployTo) `shouldReturn` True
 
 withDeployTo :: (DeployTo -> IO a) -> IO a
 withDeployTo f = withSystemTempDirectory "hapistrano" (f . DeployTo)

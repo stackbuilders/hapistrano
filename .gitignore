@@ -15,4 +15,3 @@ cabal.sandbox.config
 *.hp
 .stack-work/
 .shake
-tmp/
