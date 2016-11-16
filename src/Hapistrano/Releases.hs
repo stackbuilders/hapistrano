@@ -18,10 +18,9 @@ getRelease = fmap (formatTime defaultTimeLocale format) getCurrentTime
 withReleasePath :: FilePath -> (FilePath -> Action ()) -> Rules ()
 withReleasePath releasesPath = withLockFile (releasesPath </> "*")
 
-createRelease :: FilePath -> FilePath -> Action ()
-createRelease repoPath releasePath = do
-  cmd "rm -rf" releasePath :: Action ()
-  cmd "git clone" repoPath releasePath
+createRelease :: FilePath -> FilePath -> Branch -> Action ()
+createRelease repoPath releasePath Branch{..} =
+  cmd "git clone -b" unBranch repoPath releasePath
 
 removePreviousReleases :: FilePath -> KeepReleases -> Action ()
 removePreviousReleases releasesPath keepReleases =

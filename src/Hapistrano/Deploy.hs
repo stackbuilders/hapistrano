@@ -27,7 +27,7 @@ deploy Config{..} = do
     withReleasePath releasesPath $ \f -> do
       needLockFile repoPath
       updateRepo repoPath
-      createRelease repoPath f
+      createRelease repoPath f configBranch
       -- Link shared files
       -- Run build script
       removePreviousReleases releasesPath configKeepReleases

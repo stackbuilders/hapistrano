@@ -32,7 +32,8 @@ withConfig f = withSystemTempDirectory "hapistrano" (f . getConfig)
 getConfig :: FilePath -> Config
 getConfig deployPath =
   Config
-    { configDeployPath = deployPath
+    { configBranch = def
+    , configDeployPath = deployPath
     , configRepoUrl = getRepoUrl
     , configKeepReleases = def
     }
