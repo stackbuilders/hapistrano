@@ -5,10 +5,15 @@ import           Data.Time
 import           Development.Shake
 import           Development.Shake.FilePath
 
+import           Hapistrano.Lock
+
 getRelease :: IO String
 getRelease = fmap (formatTime defaultTimeLocale format) getCurrentTime
   where
     format = "%Y%m%d%H%M%S"
+
+withReleasePath :: FilePath -> (FilePath -> Action ()) -> Rules ()
+withReleasePath releasesPath = withLockFile (releasesPath </> "*")
 
 createRelease :: FilePath -> FilePath -> Action ()
 createRelease repoPath releasePath = do

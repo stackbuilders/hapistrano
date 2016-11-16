@@ -35,7 +35,8 @@ library
   exposed-modules:     Hapistrano
                      , System.Hapistrano
   other-modules:       Hapistrano.Current
-                     , Hapistrano.Internal
+                     , Hapistrano.Deploy
+                     , Hapistrano.Lock
                      , Hapistrano.Paths
                      , Hapistrano.Releases
                      , Hapistrano.Repo

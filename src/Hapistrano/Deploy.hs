@@ -1,11 +1,12 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Hapistrano.Internal where
+module Hapistrano.Deploy where
 
 import           Development.Shake
 import           Development.Shake.FilePath
 
 import           Hapistrano.Current
+import           Hapistrano.Lock
 import           Hapistrano.Paths
 import           Hapistrano.Releases
 import           Hapistrano.Repo
@@ -21,14 +22,15 @@ deploy Config{..} = do
   let releasePath = releasesPath </> release
 
   shakeArgs shakeOptions $ do
-    want [joinPath [releasePath, ".git", "HEAD"]]
+    wantLockFile releasePath
 
-    joinPath [releasePath, ".git", "HEAD"] %> \_ -> do
-      need [joinPath [repoPath, "HEAD"]]
+    withReleasePath releasesPath $ \f -> do
+      needLockFile repoPath
       updateRepo repoPath
-      createRelease repoPath releasePath
+      createRelease repoPath f
+      -- Link shared files
+      -- Run build script
       removePreviousReleases releasesPath configKeepReleases
-      linkCurrent releasePath currentPath
+      linkCurrent f currentPath
 
-    joinPath [repoPath, "HEAD"] %> \_ ->
-      createRepo configRepoUrl repoPath
+    withLockFile repoPath $ createRepo configRepoUrl
