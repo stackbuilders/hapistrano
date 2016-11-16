@@ -9,6 +9,7 @@ import           Data.Time.Clock
 import           Data.List (sort)
 import qualified Data.Text as T
 
+
 -- This data type represents the configuration provided from
 -- the Environment of the local machine.
 data Config = Config

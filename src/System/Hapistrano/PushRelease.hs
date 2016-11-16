@@ -38,12 +38,11 @@ createRelease = do
   let releasePath = deployPath ++ "/releases/" ++ release
   lift (cmd "git clone " [deployPath ++ "/repo", releasePath] :: Action ())
   return release
-  
 
+  
 deleteOldReleases :: ReaderT Config Action ()
-deleteOldReleases = do
-  delRels <- deletableRels
-  mapM_ deleteRelease delRels
+deleteOldReleases = deletableRels >>= \delRels -> mapM_ deleteRelease delRels 
+
 
 
 setReleaseRevison :: Release -> ReaderT Config Action Release
