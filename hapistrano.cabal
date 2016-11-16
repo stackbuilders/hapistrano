@@ -35,6 +35,7 @@ library
   exposed-modules:     Hapistrano
                      , System.Hapistrano
   other-modules:       Hapistrano.Current
+                     , Hapistrano.Internal
                      , Hapistrano.Paths
                      , Hapistrano.Releases
                      , Hapistrano.Repo
@@ -79,6 +80,20 @@ test-suite hapistrano-test
                      , mtl
                      , process
                      , temporary
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+test-suite tests
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  other-modules:       HapistranoSpec
+  build-depends:       base
+                     , data-default
+                     , hapistrano
+                     , hspec
+                     , temporary
+                     , url
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

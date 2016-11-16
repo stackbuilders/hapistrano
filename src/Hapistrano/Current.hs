@@ -8,5 +8,5 @@ import           Hapistrano.Types
 
 linkCurrent :: ReleasePath -> CurrentPath -> Action ()
 linkCurrent ReleasePath{..} CurrentPath{..} = do
-  cmd "rm -f" unReleasePath :: Action ()
+  cmd "rm -f" unCurrentPath :: Action ()
   cmd "ln -s" unReleasePath unCurrentPath
