@@ -1,20 +1,25 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module System.Hapistrano.Repo
   ( createOrUpdateRepo
   ) where
 
 import           Development.Shake
+import           Network.URL
 
-createOrUpdateRepo :: String -> FilePath -> Action ()
-createOrUpdateRepo repository repoPath = do
-  exists <- doesDirectoryExist repoPath
+import           System.Hapistrano.NewTypes
+
+createOrUpdateRepo :: URL -> RepoPath -> Action ()
+createOrUpdateRepo repoUrl repoPath@RepoPath{..} = do
+  exists <- doesDirectoryExist unRepoPath
   if exists
     then updateRepo repoPath
-    else createRepo repository repoPath
+    else createRepo repoUrl repoPath
 
-createRepo :: String -> FilePath -> Action ()
-createRepo repository repoPath =
-  cmd "git clone --bare" [repository, repoPath]
+createRepo :: URL -> RepoPath -> Action ()
+createRepo repoUrl RepoPath{..} =
+  cmd "git clone --bare" [exportURL repoUrl, unRepoPath]
 
-updateRepo :: String -> Action ()
-updateRepo repoPath =
-  cmd [Cwd repoPath] "git fetch origin +refs/heads/*:refs/heads/*"
+updateRepo :: RepoPath -> Action ()
+updateRepo RepoPath{..} =
+  cmd [Cwd unRepoPath] "git fetch origin +refs/heads/*:refs/heads/*"

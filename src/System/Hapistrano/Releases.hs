@@ -1,6 +1,7 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module System.Hapistrano.Releases
   ( createRelease
-  , buildRelease
   , removePreviousReleases
   ) where
 
@@ -10,27 +11,25 @@ import           Data.Time
 import           Development.Shake
 import           Development.Shake.FilePath
 
-createRelease :: FilePath -> FilePath -> Action String
-createRelease repoPath releasesPath = do
+import           System.Hapistrano.NewTypes
+
+createRelease :: RepoPath -> ReleasesPath -> Action ReleasePath
+createRelease RepoPath{..} ReleasesPath{..} = do
   release <- liftIO getRelease
-  let releasePath = releasesPath </> release
-  cmd "git clone " [repoPath, releasePath] :: Action ()
-  return releasePath
+  let releasePath = unReleasesPath </> release
+  cmd "git clone " [unRepoPath, releasePath] :: Action ()
+  return $ ReleasePath releasePath
 
 getRelease :: IO String
 getRelease = fmap(formatTime defaultTimeLocale format) getCurrentTime
   where
     format = "%Y%m%d%H%M%S"
 
-buildRelease :: FilePath -> FilePath -> Action ()
-buildRelease releasePath scriptPath = do
-  cmd [Cwd releasePath] "source" scriptPath
-
-removePreviousReleases :: FilePath -> Int -> Action ()
+removePreviousReleases :: ReleasesPath -> KeepReleases -> Action ()
 removePreviousReleases releasesPath keepReleases =
   getPreviousReleases releasesPath keepReleases >>= cmd "rm -rf"
 
-getPreviousReleases :: FilePath -> Int -> Action [FilePath]
-getPreviousReleases releasesPath keepReleases = do
-  fmap (drop keepReleases . reverse . sort . map (releasesPath </>)) $
-    getDirectoryDirs releasesPath
+getPreviousReleases :: ReleasesPath -> KeepReleases -> Action [FilePath]
+getPreviousReleases ReleasesPath{..} KeepReleases{..} = do
+  fmap (drop unKeepReleases . reverse . sort . map (unReleasesPath </>)) $
+    getDirectoryDirs unReleasesPath
