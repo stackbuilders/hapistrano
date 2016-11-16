@@ -1,4 +1,4 @@
-module System.Hapistrano.NewTypes where
+module Hapistrano.Types where
 
 import           Data.Default
 import           Network.URL

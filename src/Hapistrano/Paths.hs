@@ -1,14 +1,10 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module System.Hapistrano.Paths
-  ( getCurrentPath
-  , getReleasesPath
-  , getRepoPath
-  ) where
+module Hapistrano.Paths where
 
 import           Development.Shake.FilePath
 
-import           System.Hapistrano.NewTypes
+import           Hapistrano.Types
 
 getCurrentPath :: DeployTo -> CurrentPath
 getCurrentPath DeployTo{..} = CurrentPath $ unDeployTo </> "current"

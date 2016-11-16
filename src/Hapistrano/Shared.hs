@@ -1,4 +1,4 @@
-module System.Hapistrano.Shared where
+module Hapistrano.Shared where
 
 import           Control.Monad
 import           Development.Shake

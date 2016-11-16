@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module System.Hapistrano.Releases
+module Hapistrano.Releases
   ( createRelease
   , removePreviousReleases
   ) where
@@ -11,7 +11,7 @@ import           Data.Time
 import           Development.Shake
 import           Development.Shake.FilePath
 
-import           System.Hapistrano.NewTypes
+import           Hapistrano.Types
 
 createRelease :: RepoPath -> ReleasesPath -> Action ReleasePath
 createRelease RepoPath{..} ReleasesPath{..} = do

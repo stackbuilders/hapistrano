@@ -1,12 +1,10 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module System.Hapistrano.Current
-  ( linkCurrent
-  ) where
+module Hapistrano.Current where
 
 import           Development.Shake
 
-import           System.Hapistrano.NewTypes
+import           Hapistrano.Types
 
 linkCurrent :: ReleasePath -> CurrentPath -> Action ()
 linkCurrent ReleasePath{..} CurrentPath{..} = do

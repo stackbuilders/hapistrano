@@ -1,16 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module System.NewHapistrano
-  ( deploy
-  ) where
+module Hapistrano where
 
 import           Development.Shake
 
-import           System.Hapistrano.Current
-import           System.Hapistrano.NewTypes
-import           System.Hapistrano.Paths
-import           System.Hapistrano.Releases
-import           System.Hapistrano.Repo
+import           Hapistrano.Current
+import           Hapistrano.Paths
+import           Hapistrano.Releases
+import           Hapistrano.Repo
+import           Hapistrano.Types
 
 deploy :: Config -> Action ()
 deploy Config{..} = do

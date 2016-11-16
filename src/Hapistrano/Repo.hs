@@ -1,13 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module System.Hapistrano.Repo
+module Hapistrano.Repo
   ( createOrUpdateRepo
   ) where
 
 import           Development.Shake
 import           Network.URL
 
-import           System.Hapistrano.NewTypes
+import           Hapistrano.Types
 
 createOrUpdateRepo :: URL -> RepoPath -> Action ()
 createOrUpdateRepo repoUrl repoPath@RepoPath{..} = do
