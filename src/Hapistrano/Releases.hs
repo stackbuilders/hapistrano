@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Hapistrano.Releases where
 
 import           Data.List
@@ -6,6 +8,7 @@ import           Development.Shake
 import           Development.Shake.FilePath
 
 import           Hapistrano.Lock
+import           Hapistrano.Types
 
 getRelease :: IO String
 getRelease = fmap (formatTime defaultTimeLocale format) getCurrentTime
@@ -20,11 +23,11 @@ createRelease repoPath releasePath = do
   cmd "rm -rf" releasePath :: Action ()
   cmd "git clone" repoPath releasePath
 
-removePreviousReleases :: FilePath -> Int -> Action ()
+removePreviousReleases :: FilePath -> KeepReleases -> Action ()
 removePreviousReleases releasesPath keepReleases =
   getPreviousReleases releasesPath keepReleases >>= cmd "rm -rf"
 
-getPreviousReleases :: FilePath -> Int -> Action [FilePath]
-getPreviousReleases releasesPath keepReleases =
-  fmap (drop keepReleases . reverse . sort . map (releasesPath </>)) $
+getPreviousReleases :: FilePath -> KeepReleases -> Action [FilePath]
+getPreviousReleases releasesPath KeepReleases{..} =
+  fmap (drop unKeepReleases . reverse . sort . map (releasesPath </>)) $
     getDirectoryDirs releasesPath

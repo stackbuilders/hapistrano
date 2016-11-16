@@ -2,6 +2,7 @@
 
 module HapistranoSpec where
 
+import           Data.Default
 import           Data.Maybe
 import           Network.URL
 import           System.Directory
@@ -33,7 +34,7 @@ getConfig deployPath =
   Config
     { configDeployPath = deployPath
     , configRepoUrl = getRepoUrl
-    , configKeepReleases = 5
+    , configKeepReleases = def
     }
 
 getRepoUrl :: URL
