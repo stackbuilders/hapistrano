@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module HapistranoSpec where
 
 import           Data.Default
@@ -12,26 +14,28 @@ import           Hapistrano
 spec :: Spec
 spec =
   describe "deploy" $ do
+    it "symlinks the current directory" $
+      withConfig $ \config@Config{..} -> do
+        deploy config
+        isSymbolicLink (unCurrentPath $ getCurrentPath configDeployPath)
+          `shouldReturn` True
+
     it "creates a cache repo" $
-      withDeployPath $ \deployPath -> do
-        deploy $ config deployPath
-        doesDirectoryExist (unRepoPath $ getRepoPath deployPath) `shouldReturn` True
+      withConfig $ \config@Config{..} -> do
+        deploy config
+        doesDirectoryExist (unRepoPath $ getRepoPath configDeployPath)
+          `shouldReturn` True
 
-    it "symlinks the latest release on the current directory" $
-      withDeployPath $ \deployPath -> do
-        deploy $ config deployPath
-        isSymbolicLink (unCurrentPath $ getCurrentPath deployPath) `shouldReturn` True
+withConfig :: (Config -> IO a) -> IO a
+withConfig f = withSystemTempDirectory "hapistrano" (f . getConfig . DeployPath)
 
-withDeployPath :: (DeployPath -> IO a) -> IO a
-withDeployPath f = withSystemTempDirectory "hapistrano" (f . DeployPath)
-
-config :: DeployPath -> Config
-config deployPath =
+getConfig :: DeployPath -> Config
+getConfig deployPath =
   Config
     { configDeployPath = deployPath
-    , configRepoUrl = repoUrl
+    , configRepoUrl = getRepoUrl
     , configKeepReleases = def
     }
 
-repoUrl :: URL
-repoUrl = fromJust $ importURL "https://github.com/stackbuilders/hapistrano"
+getRepoUrl :: URL
+getRepoUrl = fromJust $ importURL "https://github.com/stackbuilders/hapistrano"
