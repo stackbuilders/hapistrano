@@ -54,8 +54,10 @@ getConfig deployPath =
     { configBranch = def
     , configDeployPath = deployPath
     , configKeepReleases = def
+    , configLinkedFiles = ["build.sh"]
     , configLogLevel = LogLevel Silent
     , configRepoUrl = getRepoUrl
+    , configScriptPath = "build.sh"
     }
 
 getRepoUrl :: RepoUrl

@@ -14,8 +14,10 @@ data Config = Config
   { configBranch       :: Branch
   , configDeployPath   :: FilePath
   , configKeepReleases :: KeepReleases
+  , configLinkedFiles  :: [FilePath]
   , configLogLevel     :: LogLevel
   , configRepoUrl      :: RepoUrl
+  , configScriptPath   :: FilePath
   } deriving (Eq, Show)
 
 instance FromJSON Config where
@@ -23,8 +25,10 @@ instance FromJSON Config where
     Config <$> o .:? "branch" .!= def
            <*> o .: "deployPath"
            <*> o .:? "keepReleases" .!= def
+           <*> o .: "linkedFiles"
            <*> o .:? "logLevel" .!= def
            <*> o .: "repoUrl"
+           <*> o .: "scriptPath"
 
 newtype Branch = Branch { unBranch :: String }
   deriving (Eq, Show, FromJSON)

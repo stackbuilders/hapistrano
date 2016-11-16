@@ -22,6 +22,11 @@ createRelease :: FilePath -> FilePath -> Branch -> Action ()
 createRelease repoPath releasePath Branch{..} =
   cmd "git clone -b" unBranch repoPath releasePath
 
+buildRelease :: FilePath -> FilePath -> Action ()
+buildRelease releasePath scriptPath = do
+  need [releasePath </> scriptPath]
+  cmd [Cwd releasePath] "source"
+
 removePreviousReleases :: FilePath -> KeepReleases -> Action ()
 removePreviousReleases releasesPath keepReleases =
   getPreviousReleases releasesPath keepReleases >>= cmd "rm -rf"

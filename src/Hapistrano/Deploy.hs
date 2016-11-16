@@ -20,6 +20,7 @@ deploy Config{..} = do
   release <- getRelease
 
   let releasePath = releasesPath </> release
+  let linkedFiles = map (releasePath </>) configLinkedFiles
 
   withShake configLogLevel $ do
     wantLockFile releasePath
@@ -28,11 +29,15 @@ deploy Config{..} = do
       needLockFile repoPath
       updateRepo repoPath
       createRelease repoPath f configBranch
-      -- Run build script
+      need linkedFiles
+      buildRelease releasePath configScriptPath
       removePreviousReleases releasesPath configKeepReleases
       linkCurrent f currentPath
 
     withLockFile repoPath $ createRepo configRepoUrl
+
+    linkedFiles &%> \_ -> do
+      undefined
 
   return releasePath
 
