@@ -12,7 +12,7 @@ import           Hapistrano.Releases
 import           Hapistrano.Repo
 import           Hapistrano.Types
 
-deploy :: Config -> IO ()
+deploy :: Config -> IO FilePath
 deploy Config{..} = do
   currentPath <- getCurrentPath configDeployPath
   releasesPath <- getReleasesPath configDeployPath
@@ -33,6 +33,8 @@ deploy Config{..} = do
       linkCurrent f currentPath
 
     withLockFile repoPath $ createRepo configRepoUrl
+
+  return releasePath
 
 withShake :: LogLevel -> Rules () -> IO ()
 withShake LogLevel{..} = shake shakeOptions { shakeVerbosity = unLogLevel }
