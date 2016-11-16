@@ -43,6 +43,7 @@ library
                      , Hapistrano.Types
                      , System.Hapistrano.Types
   build-depends:       base >= 4.5 && < 4.10
+                     , aeson
                      , data-default
                      , directory
                      , either

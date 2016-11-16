@@ -28,7 +28,6 @@ deploy Config{..} = do
       needLockFile repoPath
       updateRepo repoPath
       createRelease repoPath f configBranch
-      -- Link shared files
       -- Run build script
       removePreviousReleases releasesPath configKeepReleases
       linkCurrent f currentPath

@@ -38,5 +38,5 @@ getConfig deployPath =
     , configKeepReleases = def
     }
 
-getRepoUrl :: URL
-getRepoUrl = fromJust $ importURL "https://github.com/stackbuilders/hapistrano"
+getRepoUrl :: RepoUrl
+getRepoUrl = RepoUrl $ fromJust $ importURL "https://github.com/stackbuilders/hapistrano"
