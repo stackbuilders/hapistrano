@@ -4,10 +4,10 @@ module System.Hapistrano.Directories where
 
 import           Control.Monad.Reader
 import           Development.Shake
-import           Data.List (intercalate)
-import qualified Data.Time as TM
-
-
+import           Data.List (sort)
+import           Data.Time.Clock 
+import           Data.Time.Calendar (showGregorian)          
+import           Control.Monad (mapM_)
 
 data Config = Config
   { deployPath :: FilePath
@@ -29,9 +29,9 @@ main' = shake shakeOptions $ do
   action $ (`runReaderT` config) $ do
       createOrUpdateRepo
       stamp <- createRelease
-      setReleaseRevison stamp 
-
-  
+      setReleaseRevison stamp
+      deleteOldReleases
+      
 createOrUpdateRepo :: ReaderT Config Action ()
 createOrUpdateRepo = do
   Config{..} <- ask
@@ -41,16 +41,13 @@ createOrUpdateRepo = do
     then updateRepo repoPath
     else createRepo repository repoPath
 
-
 createRepo :: String -> FilePath -> Action ()
 createRepo repository repoPath =
   cmd "git clone --bare" [repository, repoPath]
 
-
 updateRepo :: String -> Action ()
 updateRepo repoPath =
   cmd [Cwd $ repoPath] "git fetch origin +refs/heads/*:refs/heads/*"
-
 
 createRelease :: ReaderT Config Action ReleasePath
 createRelease = do
@@ -59,26 +56,38 @@ createRelease = do
   let releasePath = deployPath ++ "/releases/" ++ release
   lift (cmd "git clone " [deployPath ++ "/repo", releasePath] :: Action ())
   return release
-
   
 getTimestamp :: IO Release
 getTimestamp = do
-  (TM.UTCTime _ time) <- TM.getCurrentTime
-  return $ show (time * 1000000)
-
+  (UTCTime date time) <- getCurrentTime
+  return $ (filter (\s -> s /= '-') (showGregorian date)  ++  (init . show) (time * 1000000))
 
 currentPath :: FilePath -> FilePath
 currentPath depPath = depPath ++ "/releases" 
 
-
 releasesPath :: Config -> FilePath
 releasesPath conf = deployPath conf ++ "/releases/"  
-
 
 releasePath :: Config -> Release -> FilePath
 releasePath conf rel = releasesPath conf ++ "/" ++ rel 
 
-  
+deletableRels :: ReaderT Config Action [Release] 
+deletableRels = do
+  conf <- ask 
+  rels <- lift $ getDirectoryDirs (releasesPath conf)
+  let ordered = show <$> (sort $ (read <$> rels :: [Int]))
+      size = length ordered 
+  return $ if size > 5 then take (length ordered - 5) ordered else []
+
+deleteRelease :: Release -> ReaderT Config Action ()
+deleteRelease rel = ask >>= \conf -> lift $ cmd [Cwd $ releasesPath conf] ("rm -rf " ++ rel)  
+
+deleteOldReleases :: ReaderT Config Action ()
+deleteOldReleases = do
+  delRels <- deletableRels
+  mapM_ deleteRelease delRels
+
+
 setReleaseRevison :: Release -> ReaderT Config Action Release
 setReleaseRevison rel = do
   conf <- ask
@@ -88,7 +97,6 @@ setReleaseRevison rel = do
   lift $ (cmd [Cwd $ releasesPath conf ++ rel] "git fetch --all" :: Action ())
   lift $ (cmd [Cwd $ releasesPath conf ++ rel] "git reset --hard" :: Action ())
   return rel
-
     
 readCurrentLink :: ReaderT Config Action String
 readCurrentLink = do
