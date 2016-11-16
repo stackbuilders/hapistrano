@@ -6,11 +6,11 @@ import           Development.Shake.FilePath
 
 import           Hapistrano.Types
 
-getCurrentPath :: DeployTo -> CurrentPath
-getCurrentPath DeployTo{..} = CurrentPath $ unDeployTo </> "current"
+getCurrentPath :: DeployPath -> CurrentPath
+getCurrentPath DeployPath{..} = CurrentPath $ unDeployPath </> "current"
 
-getReleasesPath :: DeployTo -> ReleasesPath
-getReleasesPath DeployTo{..} = ReleasesPath $ unDeployTo </> "releases"
+getReleasesPath :: DeployPath -> ReleasesPath
+getReleasesPath DeployPath{..} = ReleasesPath $ unDeployPath </> "releases"
 
-getRepoPath :: DeployTo -> RepoPath
-getRepoPath DeployTo{..} = RepoPath $ unDeployTo </> "repo"
+getRepoPath :: DeployPath -> RepoPath
+getRepoPath DeployPath{..} = RepoPath $ unDeployPath </> "repo"

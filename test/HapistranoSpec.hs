@@ -13,22 +13,22 @@ spec :: Spec
 spec =
   describe "deploy" $ do
     it "creates a cache repo" $
-      withDeployTo $ \deployTo -> do
-        deploy $ config deployTo
-        doesDirectoryExist (unRepoPath $ getRepoPath deployTo) `shouldReturn` True
+      withDeployPath $ \deployPath -> do
+        deploy $ config deployPath
+        doesDirectoryExist (unRepoPath $ getRepoPath deployPath) `shouldReturn` True
 
     it "symlinks the latest release on the current directory" $
-      withDeployTo $ \deployTo -> do
-        deploy $ config deployTo
-        isSymbolicLink (unCurrentPath $ getCurrentPath deployTo) `shouldReturn` True
+      withDeployPath $ \deployPath -> do
+        deploy $ config deployPath
+        isSymbolicLink (unCurrentPath $ getCurrentPath deployPath) `shouldReturn` True
 
-withDeployTo :: (DeployTo -> IO a) -> IO a
-withDeployTo f = withSystemTempDirectory "hapistrano" (f . DeployTo)
+withDeployPath :: (DeployPath -> IO a) -> IO a
+withDeployPath f = withSystemTempDirectory "hapistrano" (f . DeployPath)
 
-config :: DeployTo -> Config
-config deployTo =
+config :: DeployPath -> Config
+config deployPath =
   Config
-    { configDeployTo = deployTo
+    { configDeployPath = deployPath
     , configRepoUrl = repoUrl
     , configKeepReleases = def
     }

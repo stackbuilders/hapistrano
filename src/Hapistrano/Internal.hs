@@ -17,6 +17,6 @@ deploy Config{..} = shakeArgs shakeOptions $ action $ do
   linkCurrent releasePath currentPath
   removePreviousReleases releasesPath configKeepReleases
   where
-    currentPath = getCurrentPath configDeployTo
-    releasesPath = getReleasesPath configDeployTo
-    repoPath = getRepoPath configDeployTo
+    currentPath = getCurrentPath configDeployPath
+    releasesPath = getReleasesPath configDeployPath
+    repoPath = getRepoPath configDeployPath
