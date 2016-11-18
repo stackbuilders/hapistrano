@@ -13,3 +13,6 @@ getReleasesPath deployPath = makeAbsolute (deployPath </> "releases")
 
 getRepoPath :: FilePath -> IO FilePath
 getRepoPath deployPath = makeAbsolute (deployPath </> "repo")
+
+getSharedPath :: FilePath -> IO FilePath
+getSharedPath deployPath = makeAbsolute (deployPath </> "shared")

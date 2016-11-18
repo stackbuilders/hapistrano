@@ -34,6 +34,12 @@ spec =
         releasePath <- deploy config
         doesDirectoryExist releasePath `shouldReturn` True
 
+    it "symlinks the shared files" $
+      withConfig $ \config@Config{..} -> do
+        releasePath <- deploy config
+        let sharedFile = releasePath </> "build.sh"
+        isSymbolicLink sharedFile `shouldReturn` True
+
     it "cleanup the old releases" $
       withConfig $ \config@Config{..} -> do
         replicateM_ 2 $ deploy config { configKeepReleases = KeepReleases 1 }

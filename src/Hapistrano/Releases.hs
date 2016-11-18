@@ -24,8 +24,10 @@ createRelease repoPath releasePath Branch{..} =
 
 buildRelease :: FilePath -> FilePath -> Action ()
 buildRelease releasePath scriptPath = do
-  need [releasePath </> scriptPath]
-  cmd [Cwd releasePath] "source"
+  need [scriptTotalPath]
+  cmd [Cwd releasePath] "/usr/bin/env bash" scriptTotalPath
+  where
+    scriptTotalPath = releasePath </> scriptPath
 
 removePreviousReleases :: FilePath -> KeepReleases -> Action ()
 removePreviousReleases releasesPath keepReleases =
