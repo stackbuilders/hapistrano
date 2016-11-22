@@ -32,16 +32,31 @@ extra-source-files:  changes.md README.md
 
 library
   hs-source-dirs:      src
-  exposed-modules:     System.Hapistrano
-  other-modules:       System.Hapistrano.Types
+  exposed-modules:     Hapistrano
+                     , System.Hapistrano
+                     , Hapistrano.Deploy
+                     , Hapistrano.Types
+  other-modules:       Hapistrano.Current
+                     , Hapistrano.Lock
+                     , Hapistrano.Paths
+                     , Hapistrano.Releases
+                     , Hapistrano.Repo
+                     , Hapistrano.Shared
+                     , System.Hapistrano.Types
   build-depends:       base >= 4.5 && < 4.10
-                     , either >= 4.0 && < 4.6
-                     , mtl >= 2.0 && < 3.0
+                     , aeson
+                     , data-default
+                     , directory
+                     , either
                      , filepath
+                     , mtl
                      , process
-                     , time-locale-compat
+                     , shake
+                     , text
                      , time
+                     , time-locale-compat
                      , transformers
+                     , url
   ghc-options:         -Wall
   default-language:    Haskell2010
 
@@ -50,24 +65,67 @@ executable hap
   main-is:             Main.hs
   build-depends:       base
                      , hapistrano
-                     , base-compat >= 0.6 && < 1.0
+                     , base-compat
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
+
+executable new-hap
+  hs-source-dirs:      app
+  main-is:             Hap/Main.hs
+  build-depends:       base
+                     , aeson
+                     , bytestring
+                     , hapistrano
+                     , optparse-applicative
+  ghc-options:         -Wall -threaded
+  default-language:    Haskell2010
+  other-modules:       Hap.Options
+                     , Hap.Actions
+                     , Hap.Shared.Utils
+
+executable hap-shim
+  hs-source-dirs:      app
+  main-is:             Hap/Shim/Main.hs
+  build-depends:       base
+                     , hapistrano
+                     , optparse-applicative
+  ghc-options:         -Wall -threaded
+  default-language:    Haskell2010
+  other-modules:       Hap.Shim.Options
+                     , Hap.Shim.Actions
+                     , Hap.Shared.Utils
+
 
 test-suite hapistrano-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      spec
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
-  build-depends:       base >= 4.5 && < 4.10
+  build-depends:       base
                      , hapistrano
-                     , either >= 4.0 && < 4.6
-                     , hspec > 2.0 && < 2.5
-                     , mtl >= 2.0 && < 3.0
-                     , temporary
                      , directory
+                     , either
                      , filepath
+                     , hspec
+                     , mtl
                      , process
+                     , temporary
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+test-suite tests
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  other-modules:       HapistranoSpec
+  build-depends:       base
+                     , data-default
+                     , directory
+                     , hapistrano
+                     , hspec
+                     , shake
+                     , temporary
+                     , url
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

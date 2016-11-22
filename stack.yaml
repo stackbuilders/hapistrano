@@ -1,1 +1,4 @@
-resolver: lts-3.5
+resolver: lts-6.25
+
+extra-deps:
+  - directory-1.2.7.0
