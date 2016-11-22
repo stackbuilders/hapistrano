@@ -14,7 +14,7 @@ hapCLI (Deploy configFile) = readConfigAndDeploy configFile
 argumentsParser :: ParserInfo HapOptions
 argumentsParser = info (helper <*> hapOptions)
                     (fullDesc
-                    <> header "Hap options"
+                    <> header "Hapistrano is a deployment library for Haskell applications"
                     <> progDesc "CLI utility to deploy projects in a similar way to Capistrano"
                     <> footer "Run 'new-hap -h' for available commands"
                     )

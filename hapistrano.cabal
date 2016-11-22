@@ -70,7 +70,7 @@ executable hap
   default-language:    Haskell2010
 
 executable new-hap
-  hs-source-dirs:      app/
+  hs-source-dirs:      app
   main-is:             Hap/Main.hs
   build-depends:       base
                      , aeson
@@ -81,6 +81,20 @@ executable new-hap
   default-language:    Haskell2010
   other-modules:       Hap.Options
                      , Hap.Actions
+                     , Hap.Shared.Utils
+
+executable hap-shim
+  hs-source-dirs:      app
+  main-is:             Hap/Shim/Main.hs
+  build-depends:       base
+                     , hapistrano
+                     , optparse-applicative
+  ghc-options:         -Wall -threaded
+  default-language:    Haskell2010
+  other-modules:       Hap.Shim.Options
+                     , Hap.Shim.Actions
+                     , Hap.Shared.Utils
+
 
 test-suite hapistrano-test
   type:                exitcode-stdio-1.0
