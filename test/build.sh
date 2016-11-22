@@ -1,1 +1,1 @@
-stack build
+stack build $ARGS
