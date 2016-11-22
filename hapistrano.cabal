@@ -34,14 +34,14 @@ library
   hs-source-dirs:      src
   exposed-modules:     Hapistrano
                      , System.Hapistrano
-  other-modules:       Hapistrano.Current
                      , Hapistrano.Deploy
+                     , Hapistrano.Types
+  other-modules:       Hapistrano.Current
                      , Hapistrano.Lock
                      , Hapistrano.Paths
                      , Hapistrano.Releases
                      , Hapistrano.Repo
                      , Hapistrano.Shared
-                     , Hapistrano.Types
                      , System.Hapistrano.Types
   build-depends:       base >= 4.5 && < 4.10
                      , aeson
@@ -68,6 +68,19 @@ executable hap
                      , base-compat
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
+
+executable new-hap
+  hs-source-dirs:      app/
+  main-is:             Hap/Main.hs
+  build-depends:       base
+                     , aeson
+                     , bytestring
+                     , hapistrano
+                     , optparse-applicative
+  ghc-options:         -Wall -threaded
+  default-language:    Haskell2010
+  other-modules:       Hap.Options
+                     , Hap.Actions
 
 test-suite hapistrano-test
   type:                exitcode-stdio-1.0
