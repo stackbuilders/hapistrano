@@ -48,9 +48,13 @@ library
 executable hap
   hs-source-dirs:      app
   main-is:             Main.hs
+  other-modules:       Options
+                      , Command
+                      , Flag
   build-depends:       base
                      , hapistrano
                      , base-compat >= 0.6 && < 1.0
+                     , optparse-applicative >= 0.11 && < 0.14
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
