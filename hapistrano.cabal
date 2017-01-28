@@ -33,7 +33,11 @@ extra-source-files:  changes.md README.md
 library
   hs-source-dirs:      src
   exposed-modules:     System.Hapistrano
-  other-modules:       System.Hapistrano.Types
+                     , System.Hapistrano.PushRelease
+                     , System.Hapistrano.Helpers
+  other-modules:     System.Hapistrano.Types
+                     
+                    
   build-depends:       base >= 4.5 && < 4.10
                      , either >= 4.0 && < 4.6
                      , mtl >= 2.0 && < 3.0
@@ -42,6 +46,8 @@ library
                      , time-locale-compat
                      , time
                      , transformers
+                     , shake
+                     , text
   ghc-options:         -Wall
   default-language:    Haskell2010
 
