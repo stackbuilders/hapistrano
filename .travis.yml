@@ -1,39 +1,44 @@
-# This file is based on a generated file.
-# See https://github.com/hvr/multi-ghc-travis.
-
 language: c
 
 sudo: false
 
-# GHC depends on GMP. You can add other dependencies here as well.
-addons:
-  apt:
-    packages:
-    - libgmp-dev
-
-cache:
-  directories:
-    - $HOME/.stack
-
 matrix:
   include:
-  - env: ARGS="--resolver lts-2"
-    compiler: ": # lts-2 gch-7.8.4"
-  - env: ARGS="--resolver lts-3"
-    compiler: ": # lts-3 gch-7.10.2"
-  - env: ARGS="--resolver lts"
-    compiler: ": # lts"
+    - env: CABALVER=1.24 GHCVER=7.6.3
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.6.3], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=7.8.4
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=7.10.3
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3],sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.0.2
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
+    - env: CABALVER=head GHCVER=head
+      addons: {apt: {packages: [cabal-install-head,ghc-head],  sources: [hvr-ghc]}}
+
+  allow_failures:
+    - env: CABALVER=head GHCVER=head
 
 before_install:
-# Using compiler above sets CC to an invalid value, so unset it
-- unset CC
+  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 
-# Download and unpack the stack executable
-- mkdir -p ~/.local/bin
-- export PATH=$HOME/.local/bin:$PATH
-- curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+install:
+ - cabal --version
+ - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+ - travis_retry cabal update
+ - cabal install --only-dependencies --enable-tests
 
-# This line does all of the work: installs GHC if necessary, build the library,
-# executables, and test suites, and runs the test suites. --no-terminal works
-# around some quirks in Travis's terminal implementation.
-script: stack $ARGS --no-terminal --install-ghc test --haddock --no-haddock-deps
+script:
+ - case "$GHCVER" in
+     "7.6.3") cabal configure --enable-tests -v2 -f dev ;;
+     *)       cabal configure --enable-tests --enable-coverage -v2 -f dev ;;
+   esac
+ - cabal build
+ - case "$GHCVER" in
+     "7.6.3") true ;;
+     *)       cabal test --show-details=always ;;
+   esac
+ - cabal sdist
+ - cabal haddock | grep "100%" | wc -l | grep "2"
+
+notifications:
+  email: false

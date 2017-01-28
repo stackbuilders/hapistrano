@@ -12,9 +12,10 @@ module Options (
   )
   where
 
-import Command as Command
-import Flag as Flag
+import Command
+import Flag
 
+import Data.Monoid ((<>))
 import Options.Applicative
 
 -- | Flags and commands
@@ -24,8 +25,8 @@ opts
   <|> fmap Command commands
 
 data Option
-  = Command (Command.Command)
-  | Flag (Flag.Flag)
+  = Command Command.Command
+  | Flag Flag.Flag
   deriving Show
 
 hapistranoDesc :: InfoMod a
@@ -34,4 +35,3 @@ hapistranoDesc =
     <> header "Hapistrano - A deployment library for Haskell applications"
     <> progDesc "Deploy tool for Haskell applications"
     <> footer "Run 'hap -h' for available commands"
-
