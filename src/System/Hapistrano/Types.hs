@@ -30,6 +30,9 @@ data Config =
          , restartCommand :: Maybe String
            -- ^ Optional command to restart the server after a successful deploy
 
+         , port :: Maybe Integer
+           -- ^ Optional port to deploy to a different ssh port
+
          } deriving (Show)
 
 data ReleaseFormat = Short

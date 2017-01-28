@@ -91,7 +91,7 @@ setupDirs :: Hapistrano ()
 setupDirs = do
   conf <- ask
 
-  mapM_ (runCommand (host conf))
+  mapM_ (runCommand (host conf) (port conf))
     ["mkdir -p " ++ releasesPath conf, "mkdir -p " ++ cacheRepoPath conf]
 
 directoryExists :: Maybe String -> FilePath -> IO Bool
@@ -108,12 +108,15 @@ directoryExists hst path = do
 
 -- | Runs the given command either locally or on the local machine.
 runCommand :: Maybe String -- ^ The host on which to run the command
+           -> Maybe Integer -- ^ The port on which to run the command
            -> String -- ^ The command to run, either on the local or remote host
            -> Hapistrano String
 
-runCommand Nothing command = execShellCommand command
-runCommand (Just server) command =
+runCommand Nothing _ command = execShellCommand command
+runCommand (Just server) Nothing command =
   execCommand $ unwords ["ssh", server, command]
+runCommand (Just server) (Just port') command =
+  execCommand $ unwords ["ssh", server, "-p", show port', command]
 
 execShellCommand :: String -> Hapistrano String
 execShellCommand command = do
@@ -166,7 +169,7 @@ currentTimestamp format = do
 readCurrentLink :: Hapistrano FilePath -- ^ The target of the symlink in the Hapistrano monad
 readCurrentLink = do
   conf <- ask
-  runCommand (host conf) $ "readlink " ++ currentPath (deployPath conf)
+  runCommand (host conf) (port conf) $ "readlink " ++ currentPath (deployPath conf)
 
 -- ^ Trims any newlines from the given String
 trim :: String -- ^ String to have trailing newlines stripped
@@ -208,7 +211,7 @@ cloneToRelease = do
   conf <- ask
   rls  <- liftIO $ currentTimestamp (releaseFormat conf)
 
-  void $ runCommand (host conf) $ "git clone " ++ cacheRepoPath conf ++
+  void $ runCommand (host conf) (port conf) $ "git clone " ++ cacheRepoPath conf ++
     " " ++ joinPath [ releasesPath conf, rls ]
 
   return rls
@@ -234,7 +237,7 @@ pathToRelease = last . splitPath
 releases :: Hapistrano [Release] -- ^ A list of all found Releases on the target host
 releases = do
   conf <- ask
-  res  <- runCommand (host conf) $ "find " ++ releasesPath conf ++
+  res  <- runCommand (host conf) (port conf) $ "find " ++ releasesPath conf ++
           " -type d -maxdepth 1"
 
   right $
@@ -276,7 +279,7 @@ cleanReleases = do
       return []
 
     else do
-      _ <- runCommand (host conf) $ "rm -rf -- " ++ unwords deletable
+      _ <- runCommand (host conf) (port conf) $ "rm -rf -- " ++ unwords deletable
       return deletable
 
 -- | Returns a Bool indicating if the given String is in the proper release
@@ -295,7 +298,7 @@ createCacheRepo :: Hapistrano String -- ^ Output of the git command used to crea
 createCacheRepo = do
   conf <- ask
 
-  runCommand (host conf) $ "git clone --bare " ++ repository conf ++ " " ++
+  runCommand (host conf) (port conf) $ "git clone --bare " ++ repository conf ++ " " ++
     cacheRepoPath conf
 
 -- | Returns the full path of the symlink pointing to the current
@@ -312,13 +315,13 @@ removeCurrentSymlink :: Hapistrano ()
 removeCurrentSymlink = do
   conf <- ask
 
-  void $ runCommand (host conf) $ "rm -rf " ++ currentSymlinkPath conf
+  void $ runCommand (host conf) (port conf) $ "rm -rf " ++ currentSymlinkPath conf
 
 -- | Determines whether the target host OS is Linux
 targetIsLinux :: Hapistrano Bool
 targetIsLinux = do
   conf <- ask
-  res <- runCommand (host conf) "uname"
+  res <- runCommand (host conf) (port conf) "uname"
 
   right $ "Linux" `isInfixOf` res
 
@@ -329,7 +332,7 @@ restartServerCommand = do
 
   case restartCommand conf of
     Nothing -> return "No command given for restart action."
-    Just cmd -> runCommand (host conf) cmd
+    Just cmd -> runCommand (host conf) (port conf) cmd
 
 cleanBuildScript :: [String] -> [String]
 cleanBuildScript allScriptLines = filter (not . isCommentOrEmpty) allScriptLines
@@ -378,9 +381,9 @@ symlinkCurrent rel = do
   let tmpLnCmd =
         lnCommand (releasePath conf rel) (currentTempSymlinkPath conf)
 
-  _ <- runCommand (host conf) tmpLnCmd
+  _ <- runCommand (host conf) (port conf) tmpLnCmd
 
-  runCommand (host conf) $ unwords [ mvCommand isLnx
+  runCommand (host conf) (port conf) $ unwords [ mvCommand isLnx
                                    , currentTempSymlinkPath conf
                                    , currentSymlinkPath conf ]
 
@@ -390,7 +393,7 @@ updateCacheRepo :: Hapistrano ()
 updateCacheRepo = do
   conf <- ask
 
-  void $ runCommand (host conf) $ intercalate " && "
+  void $ runCommand (host conf) (port conf) $ intercalate " && "
     [ "cd " ++ cacheRepoPath conf
     , "git fetch origin +refs/heads/*:refs/heads/*" ]
 
@@ -402,7 +405,7 @@ setReleaseRevision rel = do
 
   liftIO $ putStrLn "Setting revision in release path."
 
-  void $ runCommand (host conf) $ intercalate " && "
+  void $ runCommand (host conf) (port conf) $ intercalate " && "
     [ "cd " ++ releasePath conf rel
     , "git fetch --all"
     , "git reset --hard " ++ revision conf
@@ -421,7 +424,7 @@ buildRelease :: Release  -- ^ The Release to build
 buildRelease rel commands = do
   conf <- ask
   let cdCmd = "cd " ++ releasePath conf rel
-  void $ runCommand (host conf) $ intercalate " && " $ cdCmd : commands
+  void $ runCommand (host conf) (port conf) $ intercalate " && " $ cdCmd : commands
 
 
 -- | A safe version of the `maximum` function in Data.List.
