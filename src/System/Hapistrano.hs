@@ -8,6 +8,7 @@ module System.Hapistrano
 
        , activateRelease
        , currentPath
+       , cleanBuildScript
        , defaultSuccessHandler
        , defaultErrorHandler
        , directoryExists
@@ -36,8 +37,8 @@ import Control.Monad.Trans.Either ( left
                                   , right
                                   , eitherT )
 
-import Data.Char (isNumber)
-import Data.List (intercalate, sortBy, isInfixOf)
+import Data.Char (isNumber, isSpace)
+import Data.List (intercalate, sortBy, isInfixOf, dropWhileEnd)
 import Data.Time (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Data.Time.Locale.Compat (defaultTimeLocale)
@@ -170,7 +171,7 @@ readCurrentLink = do
 -- ^ Trims any newlines from the given String
 trim :: String -- ^ String to have trailing newlines stripped
      -> String -- ^ String with trailing newlines removed
-trim = reverse . dropWhile (== '\n') . reverse
+trim = dropWhileEnd isSpace . dropWhile isSpace
 
 -- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
 ensureRepositoryPushed :: Hapistrano String
@@ -330,6 +331,13 @@ restartServerCommand = do
     Nothing -> return "No command given for restart action."
     Just cmd -> runCommand (host conf) cmd
 
+cleanBuildScript :: [String] -> [String]
+cleanBuildScript allScriptLines = filter (not . isCommentOrEmpty) allScriptLines
+  where
+    isCommentOrEmpty line = isEmpty line || isComment line
+    isComment line = (head $ trim line) == '#'
+    isEmpty line = (trim line) == ""
+
 -- | Runs a build script if one is provided.
 runBuild :: Release -> Hapistrano Release
 runBuild rel = do
@@ -341,7 +349,7 @@ runBuild rel = do
 
     Just scr -> do
       fl <- liftIO $ readFile scr
-      buildRelease rel $ lines fl
+      buildRelease rel $ cleanBuildScript $ lines fl
 
   right rel
 
