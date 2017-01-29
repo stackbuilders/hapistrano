@@ -1,7 +1,16 @@
+-- |
+-- Module      :  System.Hapistrano
+-- Copyright   :  © 2017 Stack Builders
+-- License     :  MIT
+--
+-- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- A module for creating reliable deploy processes for Haskell applications.
+
 {-# LANGUAGE OverloadedStrings #-}
 
--- | A module for easily creating reliable deploy processes for Haskell
--- applications.
 module System.Hapistrano
        ( Config(..)
        , ReleaseFormat(..)
@@ -25,7 +34,6 @@ module System.Hapistrano
 
 import Control.Monad.Reader (ReaderT(..), ask)
 
-
 import System.Hapistrano.Types
   (Config(..), FailureResult, Hapistrano, Release, ReleaseFormat(..))
 
@@ -39,10 +47,8 @@ import Control.Monad.Trans.Either ( left
 
 import Data.Char (isNumber, isSpace)
 import Data.List (intercalate, sortBy, isInfixOf, dropWhileEnd)
-import Data.Time (getCurrentTime)
-import Data.Time.Format (formatTime)
-import Data.Time.Locale.Compat (defaultTimeLocale)
-import System.FilePath.Posix (joinPath, splitPath)
+import Data.Time
+import System.FilePath (joinPath, splitPath)
 import System.IO (hPutStrLn, stderr)
 import System.Process (readProcessWithExitCode)
 
@@ -83,7 +89,6 @@ defaultSuccessHandler :: a -> ReaderT Config IO ()
 defaultSuccessHandler _ =
   liftIO $ putStrLn "Deploy completed successfully."
 
-
 -- | Creates necessary directories for the hapistrano project. Should
 -- only need to run the first time the project is deployed on a given
 -- system.
@@ -93,6 +98,8 @@ setupDirs = do
 
   mapM_ (runCommand (host conf) (port conf))
     ["mkdir -p " ++ releasesPath conf, "mkdir -p " ++ cacheRepoPath conf]
+
+-- | TODO
 
 directoryExists :: Maybe String -> FilePath -> IO Bool
 directoryExists hst path = do
@@ -216,7 +223,6 @@ cloneToRelease = do
 
   return rls
 
-
 -- | Returns the full path to the git repo used for cache purposes on the
 -- target host filesystem.
 cacheRepoPath :: Config -- ^ The Hapistrano configuration
@@ -334,6 +340,8 @@ restartServerCommand = do
     Nothing -> return "No command given for restart action."
     Just cmd -> runCommand (host conf) (port conf) cmd
 
+-- | TODO
+
 cleanBuildScript :: [String] -> [String]
 cleanBuildScript allScriptLines = filter (not . isCommentOrEmpty) allScriptLines
   where
@@ -387,7 +395,6 @@ symlinkCurrent rel = do
                                    , currentTempSymlinkPath conf
                                    , currentSymlinkPath conf ]
 
-
 -- | Updates the git repo used as a cache in the target host filesystem.
 updateCacheRepo :: Hapistrano ()
 updateCacheRepo = do
@@ -425,7 +432,6 @@ buildRelease rel commands = do
   conf <- ask
   let cdCmd = "cd " ++ releasePath conf rel
   void $ runCommand (host conf) (port conf) $ intercalate " && " $ cdCmd : commands
-
 
 -- | A safe version of the `maximum` function in Data.List.
 biggest :: Ord a => [a] -> Maybe a

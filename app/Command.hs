@@ -1,5 +1,6 @@
 module Command where
 
+import Data.Monoid ((<>))
 import Options.Applicative
 
 data Command
@@ -18,4 +19,3 @@ commands
     addCommand Deploy "deploy" "Deploys the current release with the configure options"
     <> addCommand Rollback "rollback" "Rolls back to the previous release"
     )
-

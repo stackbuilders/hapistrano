@@ -1,5 +1,6 @@
 module Flag where
 
+import Data.Monoid ((<>))
 import Options.Applicative
 
 data Flag

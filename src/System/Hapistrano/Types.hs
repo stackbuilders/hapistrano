@@ -1,3 +1,14 @@
+-- |
+-- Module      :  System.Hapistrano.Types
+-- Copyright   :  © 2017 Stack Builders
+-- License     :  MIT
+--
+-- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- TODO
+
 module System.Hapistrano.Types
        ( Config(..)
        , FailureResult
@@ -35,6 +46,8 @@ data Config =
 
          } deriving (Show)
 
+-- | TODO
+
 data ReleaseFormat = Short
                      -- ^ Standard release path following Capistrano's format
 
@@ -44,9 +57,14 @@ data ReleaseFormat = Short
 
                    deriving (Show)
 
+-- | TODO
 
 type Release = String
 
+-- | TODO
+
 type FailureResult = (Int, String)
+
+-- | TODO
 
 type Hapistrano a = EitherT FailureResult (ReaderT Config IO) a
