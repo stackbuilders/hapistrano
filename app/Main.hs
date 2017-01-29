@@ -1,96 +1,122 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP             #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main (main) where
 
-import qualified System.Hapistrano as Hap
-import Control.Monad (void)
-import System.Environment.Compat (lookupEnv)
-
-import System.Hapistrano (ReleaseFormat(..))
-
-import System.Exit
-
-import Options
-
-import Paths_hapistrano (version)
+import Control.Monad
+import Data.Maybe (fromMaybe)
 import Data.Version (showVersion)
-
-import qualified Text.Read as Read
+import Numeric.Natural
+import Options.Applicative
+import Path
+import Path.IO
+import Paths_hapistrano (version)
+import System.Environment.Compat (lookupEnv, getEnv)
+import System.Exit
+import System.Hapistrano.Types
+import Text.Read (readMaybe)
+import qualified System.Hapistrano as Hap
+import qualified System.Hapistrano.Commands as Hap
+import qualified System.Hapistrano.Core as Hap
 
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
-import System.IO
-
-die :: String -> IO a
-die err = hPutStrLn stderr err >> exitFailure
 #endif
 
--- | Rolls back to previous release.
-rollback :: Hap.Config -> IO ()
-rollback cfg =
-  Hap.runRC errorHandler successHandler cfg $ do
+----------------------------------------------------------------------------
+-- Command line options
 
-    _ <- Hap.rollback
-    void Hap.restartServerCommand
+-- | Command line options.
 
-  where
-    errorHandler   = Hap.defaultErrorHandler
-    successHandler = Hap.defaultSuccessHandler
+data Opts = Opts
+  { optsCommand :: Command
+  , optsVersion :: Bool
+  }
 
--- | Deploys the current release with Config options.
-deploy :: Hap.Config -> IO ()
-deploy cfg =
-  Hap.runRC errorHandler successHandler cfg $ do
-    _ <- Hap.pushRelease >>= Hap.runBuild >>= Hap.activateRelease
+-- | Command to execute and command-specific options.
 
-    void Hap.restartServerCommand
+data Command
+  = Deploy ReleaseFormat Natural -- ^ Deploy a new release (with timestamp
+    -- format and how many releases to keep)
+  | Rollback Natural -- ^ Rollback to Nth previous release
 
-  where
-    errorHandler   = Hap.defaultErrorHandler
-    successHandler = Hap.defaultSuccessHandler
+parserInfo :: ParserInfo Opts
+parserInfo = info (helper <*> optionParser)
+  ( fullDesc <>
+    progDesc "Deploy tool for Haskell applications" <>
+    header "Hapistrano - A deployment library for Haskell applications" )
 
--- | Retrieves the configuration from environment variables.
-configFromEnv :: IO Hap.Config
-configFromEnv = do
-  maybeDeployPath <- lookupEnv "DEPLOY_PATH"
-  maybeRepository <- lookupEnv "REPOSITORY"
-  maybeRevision <- lookupEnv "REVISION"
+optionParser :: Parser Opts
+optionParser = Opts
+  <$> subparser
+  ( command "deploy"
+    (info deployParser (progDesc "Deploy a new release")) <>
+    command "rollback"
+    (info rollbackParser (progDesc "Roll back to Nth previous release")) )
+  <*> switch
+  ( long "version"
+  <> short 'v'
+  <> help "Show version of the program" )
 
-  deployPath <- maybe (die (noEnv "DEPLOY_PATH")) return maybeDeployPath
-  repository <- maybe (die (noEnv "REPOSITORY")) return maybeRepository
-  revision <- maybe (die (noEnv "REVISION")) return maybeRevision
+deployParser :: Parser Command
+deployParser = Deploy
+  <$> option pReleaseFormat
+  ( long "release-format"
+  <> short 'r'
+  <> value ReleaseShort
+  <> help "Which format release timestamp format to use: ‘long’ or ‘short’, default is ‘short’." )
+  <*> option auto
+  ( long "keep-releases"
+  <> short 'k'
+  <> value 5
+  <> help "How many releases to keep. Default is 5." )
 
-  port           <- lookupEnv "PORT"
-  host           <- lookupEnv "HOST"
-  buildScript    <- lookupEnv "BUILD_SCRIPT"
-  restartCommand <- lookupEnv "RESTART_COMMAND"
+rollbackParser :: Parser Command
+rollbackParser = Rollback
+  <$> option auto
+  ( long "use-nth"
+  <> short 'n'
+  <> value 1
+  <> help "How many deployments back to go? Default is 1." )
 
-  return Hap.Config { Hap.deployPath     = deployPath
-                    , Hap.host           = host
-                    , Hap.releaseFormat  = Short
-                    , Hap.repository     = repository
-                    , Hap.revision       = revision
-                    , Hap.buildScript    = buildScript
-                    , Hap.restartCommand = restartCommand
-                    , Hap.port           = parsePort port
-                    }
-  where
-    noEnv env = env ++ " environment variable does not exist"
-    parsePort maybePort = maybePort >>= Read.readMaybe
+pReleaseFormat :: ReadM ReleaseFormat
+pReleaseFormat = eitherReader $ \s ->
+  case s of
+    "long"  -> Right ReleaseLong
+    "short" -> Right ReleaseShort
+    _       -> Left ("Unknown format: " ++ s ++ ", try ‘long’ or ‘short’.")
+
+----------------------------------------------------------------------------
+-- Main
 
 main :: IO ()
-main = execParser (info (helper <*> opts) hapistranoDesc) >>= runOption
+main = do
+  Opts {..} <- execParser parserInfo
+  when optsVersion $ do
+    putStrLn $ "Hapistrano " ++ showVersion version
+    exitSuccess
 
-runOption :: Option -> IO ()
-runOption (Command command) = runCommand command
-runOption (Flag flag) = runFlag flag
+  deployPath  <- getEnv "DEPLOY_PATH" >>= parseAbsDir
+  repository  <- getEnv "REPOSITORY"
+  revision    <- getEnv "REVISION"
+  port        <- fromMaybe 22 . (>>= readMaybe) <$> lookupEnv "PORT"
+  mhost       <- lookupEnv "HOST"
+  buildScript <- lookupEnv "BUILD_SCRIPT"
+  mrestartCmd <- (>>= Hap.mkGenericCommand) <$> lookupEnv "RESTART_COMMAND"
 
-runCommand :: Command -> IO ()
-runCommand Deploy = configFromEnv >>= deploy
-runCommand Rollback = configFromEnv >>= rollback
-
-runFlag :: Flag -> IO ()
-runFlag Version = printVersion
-
-printVersion :: IO ()
-printVersion = putStrLn $ "Hapistrano " ++ showVersion version
+  Hap.runHapistrano (SshOptions <$> mhost <*> pure port) $ case optsCommand of
+    Deploy releaseFormat n -> do
+      release <- Hap.pushRelease Task
+        { taskDeployPath    = deployPath
+        , taskRepository    = repository
+        , taskRevision      = revision
+        , taskReleaseFormat = releaseFormat }
+      forM_ buildScript $ \spath' -> do
+        spath  <- resolveFile' spath'
+        script <- Hap.readScript spath
+        Hap.playScript script deployPath release
+      Hap.activateRelease deployPath release
+      Hap.dropOldReleases deployPath n
+    Rollback n -> do
+      Hap.rollback deployPath n
+      forM_ mrestartCmd Hap.exec
