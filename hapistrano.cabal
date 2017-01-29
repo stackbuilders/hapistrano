@@ -28,7 +28,8 @@ homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
 cabal-version:       >=1.10
-extra-source-files:  changes.md README.md
+extra-source-files:  CHANGELOG.md
+                   , README.md
 
 flag dev
   description:        Turn on development settings.
