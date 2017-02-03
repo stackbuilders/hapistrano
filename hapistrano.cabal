@@ -30,6 +30,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  CHANGELOG.md
                    , README.md
+data-files:          script/clean-build.sh
 
 flag dev
   description:        Turn on development settings.
@@ -61,16 +62,16 @@ executable hap
   build-depends:       base               >= 4.6 && < 5.0
                      , base-compat        >= 0.6 && < 1.0
                      , hapistrano
+                     , optparse-applicative >= 0.11 && < 0.14
                      , path               >= 0.5 && < 6.0
                      , path-io            >= 1.2 && < 1.3
-                     , optparse-applicative >= 0.11 && < 0.14
   if flag(dev)
     ghc-options:       -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   else
     ghc-options:       -threaded -rtsopts -with-rtsopts=-N -O2 -Wall
   default-language:    Haskell2010
 
-test-suite hapistrano-test
+test-suite test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      spec
   main-is:             Spec.hs
@@ -81,6 +82,8 @@ test-suite hapistrano-test
                      , hapistrano
                      , hspec              >= 2.0 && < 3.0
                      , mtl                >= 2.0 && < 3.0
+                     , path               >= 0.5 && < 6.0
+                     , path-io            >= 1.2 && < 1.3
                      , process            >= 1.4 && < 1.5
                      , temporary          >= 1.1 && < 1.3
   if flag(dev)
@@ -91,4 +94,4 @@ test-suite hapistrano-test
 
 source-repository head
   type:     git
-  location: https://github.com/stackbuilders/hapistrano
+  location: https://github.com/stackbuilders/hapistrano.git

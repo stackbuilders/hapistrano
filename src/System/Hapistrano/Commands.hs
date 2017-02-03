@@ -24,19 +24,21 @@ module System.Hapistrano.Commands
   , Mv (..)
   , Ln (..)
   , Ls (..)
+  , Readlink (..)
   , FindDir (..)
   , GitClone (..)
   , GitFetch (..)
   , GitReset (..)
   , GenericCommand
   , mkGenericCommand
+  , unGenericCommand
   , readScript )
 where
 
 import Control.Monad.IO.Class
 import Data.Char (isSpace)
 import Data.List (dropWhileEnd)
-import Data.Maybe (catMaybes, mapMaybe)
+import Data.Maybe (catMaybes, mapMaybe, fromJust)
 import Data.Proxy
 import Numeric.Natural
 import Path
@@ -137,6 +139,24 @@ instance Command Ln where
     , Just (fromAbsFile linkName) ]
   parseResult Proxy _ = ()
 
+-- | Read link.
+
+data Readlink t = Readlink (Path Abs File)
+
+instance Command (Readlink File) where
+  type Result (Readlink File) = Path Abs File
+  renderCommand (Readlink path) = formatCmd "readlink"
+    [ Just "-f"
+    , Just (toFilePath path) ]
+  parseResult Proxy = fromJust . parseAbsFile . trim
+
+instance Command (Readlink Dir) where
+  type Result (Readlink Dir) = Path Abs Dir
+  renderCommand (Readlink path) = formatCmd "readlink"
+    [ Just "-f"
+    , Just (toFilePath path) ]
+  parseResult Proxy = fromJust . parseAbsDir . trim
+
 -- | @ls@, so far used only to check existence of directories, so it's not
 -- very functional right now.
 
@@ -218,7 +238,12 @@ mkGenericCommand str =
     then Nothing
     else Just (GenericCommand str')
   where
-    str' = takeWhile (/= '#') (trim str)
+    str' = trim (takeWhile (/= '#') str)
+
+-- | Get the raw command back from 'GenericCommand'.
+
+unGenericCommand :: GenericCommand -> String
+unGenericCommand (GenericCommand x) = x
 
 -- | Read commands from a file.
 

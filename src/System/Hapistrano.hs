@@ -19,7 +19,11 @@ module System.Hapistrano
   , activateRelease
   , rollback
   , dropOldReleases
-  , playScript )
+  , playScript
+    -- * Path helpers
+  , releasePath
+  , currentSymlinkPath
+  , tempSymlinkPath )
 where
 
 import Control.Monad
