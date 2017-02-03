@@ -109,6 +109,9 @@ withSandbox action = withSystemTempDir "hap-test" $ \dir -> do
 populateTestRepo :: Path Abs Dir -> IO ()
 populateTestRepo path = runHap $ do
   justExec path "git init"
+  justExec path "git config --local --replace-all push.default simple"
+  justExec path "git config --local --replace-all user.email   hap@hap"
+  justExec path "git config --local --replace-all user.name    Hap"
   justExec path "echo 'Foo!' > foo.txt"
   justExec path "git add -A"
   justExec path "git commit -m 'Initial commit'"

@@ -5,6 +5,7 @@ module Main (main) where
 
 import Control.Monad
 import Data.Maybe (fromMaybe)
+import Data.Monoid ((<>))
 import Data.Version (showVersion)
 import Numeric.Natural
 import Options.Applicative
