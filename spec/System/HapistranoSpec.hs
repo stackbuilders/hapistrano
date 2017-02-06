@@ -1,219 +1,139 @@
-module System.HapistranoSpec (spec) where
+{-# LANGUAGE TemplateHaskell #-}
 
-import Test.Hspec (it, describe, shouldBe, Spec)
+module System.HapistranoSpec
+  ( spec )
+where
 
-import System.IO.Temp (withSystemTempDirectory)
-
-import System.Directory (getDirectoryContents)
-import Control.Monad (void, replicateM_)
-import Control.Monad.Trans.Either (runEitherT)
-
-import Control.Monad.Reader (ReaderT(..))
-
-import System.FilePath.Posix (joinPath)
-
+import Control.Monad
+import Control.Monad.Reader
+import Path
+import Path.IO
+import System.Hapistrano.Types
+import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified System.Hapistrano as Hap
-import Data.List (intercalate, sort)
-
-import qualified System.IO as IO
-import qualified System.Process as Process
-
-runCommand :: String -> IO ()
-runCommand command = do
-  putStrLn ("GIT running: " ++ command)
-  let process = Process.shell command
-  (_, Just outHandle, Just errHandle, processHandle) <-
-    Process.createProcess process { Process.std_err = Process.CreatePipe
-                                  , Process.std_in = Process.CreatePipe
-                                  , Process.std_out = Process.CreatePipe
-                                  }
-  exitCode <- fmap show (Process.waitForProcess processHandle)
-  out <- IO.hGetContents outHandle
-  err <- IO.hGetContents errHandle
-  putStrLn ("GIT res: " ++ show (exitCode, out, err))
-
--- | Generate a source git repo as test fixture. Push an initial commit
--- to the bare repo by making a clone and committing a trivial change and
--- pushing to the bare repo.
-genSourceRepo :: FilePath -> IO FilePath
-genSourceRepo path = do
-  let fullRepoPath = joinPath [path, "testRepo"]
-      clonePath    = joinPath [path, "testRepoClone"]
-
-      gitConfigReplace =
-        intercalate
-          " && "
-          [ "git config --local --replace-all push.default simple"
-          , "git config --local --replace-all user.email hap@hap"
-          , "git config --local --replace-all user.name Hap"
-          ]
-
-      gitConfigUnset =
-        intercalate
-          " && "
-          [ "git config --local --unset push.default"
-          , "git config --local --unset user.email"
-          , "git config --local --unset user.name"
-          ]
-
-      commands =
-        [ "mkdir -p " ++ fullRepoPath
-        , "git init --bare " ++ fullRepoPath
-        , "git clone " ++ fullRepoPath ++ " " ++ clonePath
-        , "echo testing > " ++ joinPath [clonePath, "README"]
-        , "cd " ++ clonePath ++ " && " ++ gitConfigReplace
-        , "cd " ++ clonePath ++ " && git add -A"
-        , "cd " ++ clonePath ++ " && git commit -m\"First commit\""
-        , "cd " ++ clonePath ++ " && git push"
-        , "cd " ++ clonePath ++ " && " ++ gitConfigUnset
-        ]
-
-  mapM_ runCommand commands
-
-  return fullRepoPath
-
-rollback :: Hap.Config -> IO ()
-rollback cfg =
-  Hap.runRC errorHandler successHandler cfg $ do
-
-    _ <- Hap.rollback
-    void Hap.restartServerCommand
-
-  where
-    errorHandler   = Hap.defaultErrorHandler
-    successHandler = Hap.defaultSuccessHandler
-
-
--- | Deploys the current release with Config options.
-deployOnly :: Hap.Config -> IO ()
-deployOnly cfg =
-  Hap.runRC errorHandler successHandler cfg $ void Hap.pushRelease
-
-  where
-    errorHandler   = Hap.defaultErrorHandler
-    successHandler = Hap.defaultSuccessHandler
-
--- | Deploys the current release with Config options.
-deployAndActivate :: Hap.Config -> IO ()
-deployAndActivate cfg =
-  Hap.runRC errorHandler successHandler cfg $ do
-    rel <- Hap.pushRelease
-    _ <- Hap.runBuild rel
-
-    void $ Hap.activateRelease rel
-
-  where
-    errorHandler   = Hap.defaultErrorHandler
-    successHandler = Hap.defaultSuccessHandler
-
-defaultState :: FilePath -> FilePath -> Hap.Config
-defaultState tmpDir testRepo =
-  Hap.Config { Hap.deployPath     = tmpDir
-             , Hap.host           = Nothing
-             , Hap.repository     = testRepo
-             , Hap.releaseFormat  = Hap.Long
-             , Hap.revision       = "master"
-             , Hap.buildScript    = Nothing
-             , Hap.restartCommand = Nothing
-             , Hap.port           = Nothing
-             }
-
--- | The 'fromRight' function extracts the element out of a 'Right' and
--- throws an error if its argument take the form  @Left _@.
-fromRight           :: Either a b -> b
-fromRight (Left _)  = error "fromRight: Argument takes form 'Left _'" -- yuck
-fromRight (Right x) = x
+import qualified System.Hapistrano.Commands as Hap
+import qualified System.Hapistrano.Core as Hap
+import qualified Test.Hspec as Hspec
 
 spec :: Spec
-spec = describe "hapistrano" $ do
-  describe "readCurrentLink" $
-    it "trims trailing whitespace" $
-      withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
+spec = do
+  describe "readScript" $
+    it "preforms all the necessary normalizations correctly" $ do
+      spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
+      (fmap Hap.unGenericCommand <$> Hap.readScript spath)
+        `Hspec.shouldReturn`
+        [ "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
+        , "cabal sandbox delete"
+        , "cabal sandbox init"
+        , "cabal clean"
+        , "cabal update"
+        , "cabal install --only-dependencies -j"
+        , "cabal build -j" ]
 
-        testRepoPath <- genSourceRepo tmpDir
+  around withSandbox $ do
+    describe "pushRelease" $
+      it "sets up repo all right" $ \(deployPath, repoPath) -> runHap $ do
+        let task = mkTask deployPath repoPath
+        release <- Hap.pushRelease task
+        rpath   <- Hap.releasePath deployPath release
+        -- let's check that the dir exists and contains the right files
+        (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt"))
+          `shouldReturn` "Foo!\n"
 
-        deployAndActivate $ defaultState tmpDir testRepoPath
+    describe "activateRelease" $
+      it "creates the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
+        let task = mkTask deployPath repoPath
+        release <- Hap.pushRelease task
+        Hap.activateRelease deployPath release
+        rpath <- Hap.releasePath deployPath release
+        let rc :: Hap.Readlink Dir
+            rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+        Hap.exec rc `shouldReturn` rpath
+        doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
 
-        ltarget <-
-          runReaderT (runEitherT Hap.readCurrentLink) $
-          defaultState tmpDir testRepoPath
+    describe "rollback" $
+      it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
+        let task = mkTask deployPath repoPath
+        rs <- replicateM 5 (Hap.pushRelease task)
+        Hap.rollback deployPath 2
+        rpath <- Hap.releasePath deployPath (rs !! 2)
+        let rc :: Hap.Readlink Dir
+            rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+        Hap.exec rc `shouldReturn` rpath
+        doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
 
-        last (fromRight ltarget) /= '\n' `shouldBe` True
+    describe "dropOldReleases" $
+      it "works" $ \(deployPath, repoPath) -> runHap $ do
+        let task  = mkTask deployPath repoPath
+        rs <- replicateM 7 (Hap.pushRelease task)
+        Hap.dropOldReleases deployPath 5
+        -- two oldest releases should not survive:
+        forM_ (take 2 rs) $ \r ->
+          (Hap.releasePath deployPath r >>= doesDirExist)
+            `shouldReturn` False
+        -- 5 most recent releases should stay alive:
+        forM_ (drop 2 rs) $ \r ->
+          (Hap.releasePath deployPath r >>= doesDirExist)
+            `shouldReturn` True
 
-  describe "deploying" $ do
-    it "reads a common build script with comments and new lines" $ do
-      scriptLines <- lines `fmap` IO.readFile "./script/clean-build.sh"
-      let validBBuildScriptLines = Hap.cleanBuildScript scriptLines
-      length validBBuildScriptLines `shouldBe` 7
+----------------------------------------------------------------------------
+-- Helpers
 
-    it "a simple deploy" $
-      withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
+infix 1 `shouldBe`, `shouldReturn`
 
-        testRepoPath <- genSourceRepo tmpDir
+-- | Lifted 'Hspec.shouldBe'.
 
-        deployOnly $ defaultState tmpDir testRepoPath
+shouldBe :: (MonadIO m, Show a, Eq a) => a -> a -> m ()
+shouldBe x y = liftIO (x `Hspec.shouldBe` y)
 
-        contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-        length (filter (Hap.isReleaseString Hap.Long) contents) `shouldBe` 1
+-- | Lifted 'Hspec.shouldReturn'.
 
-    it "activates the release" $
-      withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
+shouldReturn :: (MonadIO m, Show a, Eq a) => m a -> a -> m ()
+shouldReturn m y = m >>= (`shouldBe` y)
 
-        testRepoPath <- genSourceRepo tmpDir
+-- | The sandbox prepares the environment for an independent round of
+-- testing. It provides two paths: deploy path and path where git repo is
+-- located.
 
-        deployAndActivate $ defaultState tmpDir testRepoPath
+withSandbox :: ActionWith (Path Abs Dir, Path Abs Dir) -> IO ()
+withSandbox action = withSystemTempDir "hap-test" $ \dir -> do
+  let dpath = dir </> $(mkRelDir "deploy")
+      rpath = dir </> $(mkRelDir "repo")
+  ensureDir dpath
+  ensureDir rpath
+  populateTestRepo rpath
+  action (dpath, rpath)
 
-        contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-        length (filter (Hap.isReleaseString Hap.Long) contents) `shouldBe` 1
+-- | Given path where to put the repo, generate it for testing.
 
-    it "cleans up old releases" $
-      withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
-        testRepoPath <- genSourceRepo tmpDir
+populateTestRepo :: Path Abs Dir -> IO ()
+populateTestRepo path = runHap $ do
+  justExec path "git init"
+  justExec path "git config --local --replace-all push.default simple"
+  justExec path "git config --local --replace-all user.email   hap@hap"
+  justExec path "git config --local --replace-all user.name    Hap"
+  justExec path "echo 'Foo!' > foo.txt"
+  justExec path "git add -A"
+  justExec path "git commit -m 'Initial commit'"
 
-        replicateM_ 7 $ deployAndActivate $ defaultState tmpDir testRepoPath
+-- | Execute arbitrary commands in the specified directory.
 
-        contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-        length (filter (Hap.isReleaseString Hap.Long) contents) `shouldBe` 5
+justExec :: Path Abs Dir -> String -> Hapistrano ()
+justExec path cmd' =
+  case Hap.mkGenericCommand cmd' of
+    Nothing -> Hap.failWith 1 (Just $ "Failed to parse the command: " ++ cmd')
+    Just cmd -> Hap.exec (Hap.Cd path cmd)
 
-  describe "rollback" $
-    it "rolls back to the previous release" $
-      withSystemTempDirectory "hapistranoDeployTest" $ \tmpDir -> do
+-- | Run 'Hapistrano' monad locally.
 
-        testRepoPath <- genSourceRepo tmpDir
-        let deployState = defaultState tmpDir testRepoPath
+runHap :: Hapistrano a -> IO a
+runHap = Hap.runHapistrano Nothing
 
-        deployAndActivate deployState
+-- | Make a 'Task' given deploy path and path to the repo.
 
-        -- current symlink should point to the last release directory
-        contents <- getDirectoryContents (joinPath [tmpDir, "releases"])
-
-        let firstRelease = head $ filter (Hap.isReleaseString Hap.Long) contents
-
-        firstReleaseLinkTarget <-
-          runReaderT (runEitherT Hap.readCurrentLink) deployState
-
-        firstRelease `shouldBe` Hap.pathToRelease (fromRight firstReleaseLinkTarget)
-
-        -- deploy a second version
-        deployAndActivate deployState
-
-        -- current symlink should point to second release
-
-        conts <- getDirectoryContents (joinPath [tmpDir, "releases"])
-
-        let secondRelease =
-              sort (filter (Hap.isReleaseString Hap.Long) conts) !! 1
-
-        secondReleaseLinkTarget <-
-          runReaderT (runEitherT Hap.readCurrentLink) deployState
-
-        secondRelease `shouldBe` Hap.pathToRelease (fromRight secondReleaseLinkTarget)
-
-        -- roll back, and current symlink should point to first release again
-
-        rollback deployState
-
-        afterRollbackLinkTarget <-
-          runReaderT (runEitherT Hap.readCurrentLink) deployState
-
-        Hap.pathToRelease (fromRight afterRollbackLinkTarget) `shouldBe` firstRelease
+mkTask :: Path Abs Dir -> Path Abs Dir -> Task
+mkTask deployPath repoPath = Task
+  { taskDeployPath    = deployPath
+  , taskRepository    = fromAbsDir repoPath
+  , taskRevision      = "master"
+  , taskReleaseFormat = ReleaseLong }

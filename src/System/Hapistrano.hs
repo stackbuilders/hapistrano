@@ -1,6 +1,6 @@
 -- |
 -- Module      :  System.Hapistrano
--- Copyright   :  © 2017 Stack Builders
+-- Copyright   :  © 2015-2017 Stack Builders
 -- License     :  MIT
 --
 -- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
@@ -9,433 +9,210 @@
 --
 -- A module for creating reliable deploy processes for Haskell applications.
 
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module System.Hapistrano
-       ( Config(..)
-       , ReleaseFormat(..)
+  ( pushRelease
+  , activateRelease
+  , rollback
+  , dropOldReleases
+  , playScript
+    -- * Path helpers
+  , releasePath
+  , currentSymlinkPath
+  , tempSymlinkPath )
+where
 
-       , activateRelease
-       , currentPath
-       , cleanBuildScript
-       , defaultSuccessHandler
-       , defaultErrorHandler
-       , directoryExists
-       , isReleaseString
-       , pathToRelease
-       , pushRelease
-       , readCurrentLink
-       , restartServerCommand
-       , rollback
-       , runRC
-       , runBuild
-
-       ) where
-
-import Control.Monad.Reader (ReaderT(..), ask)
-
-import System.Hapistrano.Types
-  (Config(..), FailureResult, Hapistrano, Release, ReleaseFormat(..))
-
-import Control.Monad (unless, void)
-import System.Exit (ExitCode(..), exitWith)
-
-import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.Trans.Either ( left
-                                  , right
-                                  , eitherT )
-
-import Data.Char (isNumber, isSpace)
-import Data.List (intercalate, sortBy, isInfixOf, dropWhileEnd)
+import Control.Monad
+import Control.Monad.Except
+import Data.List (genericDrop, dropWhileEnd, sortBy)
+import Data.Maybe (mapMaybe)
+import Data.Ord (comparing, Down (..))
 import Data.Time
-import System.FilePath (joinPath, splitPath)
-import System.IO (hPutStrLn, stderr)
-import System.Process (readProcessWithExitCode)
+import Numeric.Natural
+import Path
+import System.Hapistrano.Commands
+import System.Hapistrano.Core
+import System.Hapistrano.Types
 
-import qualified System.IO as IO
-import qualified System.Process as Process
+----------------------------------------------------------------------------
+-- High-level functionality
 
--- | Does basic project setup for a project, including making sure
--- some directories exist, and pushing a new release directory with the
--- SHA1 or branch specified in the configuration.
-pushRelease :: Hapistrano Release
-pushRelease = setupDirs >> ensureRepositoryPushed >> updateCacheRepo >>
-              cleanReleases >> cloneToRelease >>= setReleaseRevision
+-- | Perform basic setup for a project, making sure necessary directories
+-- exist and pushing a new release directory with the SHA1 or branch
+-- specified in the configuration. Return identifier of the pushed release.
 
--- | Switches the current symlink to point to the release specified in
--- the configuration. Maybe used in either deploy or rollback cases.
-activateRelease :: Release -> Hapistrano String
-activateRelease rel = removeCurrentSymlink >> symlinkCurrent rel
+pushRelease :: Task -> Hapistrano Release
+pushRelease Task {..} = do
+  setupDirs taskDeployPath
+  ensureCacheInPlace taskRepository taskDeployPath
+  release <- newRelease taskReleaseFormat
+  cloneToRelease taskDeployPath release
+  setReleaseRevision taskDeployPath release taskRevision
+  return release
 
--- | Runs the deploy, along with an optional success or failure function.
-runRC :: ((Int, String) -> ReaderT Config IO a) -- ^ Error handler
-      -> (a -> ReaderT Config IO a)             -- ^ Success handler
-      -> Config                  -- ^ Hapistrano deployment configuration
-      -> Hapistrano a            -- ^ The remote command to run
-      -> IO a
-runRC errorHandler successHandler config command =
-    runReaderT (eitherT errorHandler successHandler command) config
+-- | Switch the current symlink to point to the specified release. May be
+-- used in deploy or rollback cases.
 
--- | Default method to run on deploy failure. Emits a failure message
--- and exits with a status code of 1.
-defaultErrorHandler :: FailureResult -> ReaderT Config IO ()
-defaultErrorHandler res =
-  liftIO $ hPutStrLn stderr
-  ("Deploy failed with (status, message): " ++ show res)
-  >> exitWith (ExitFailure 1)
+activateRelease
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ Release identifier to activate
+  -> Hapistrano ()
+activateRelease deployPath release = do
+  rpath <- releasePath deployPath release
+  let tpath = tempSymlinkPath deployPath
+      cpath = currentSymlinkPath deployPath
+  exec (Ln rpath tpath) -- create a symlink for the new candidate
+  exec (Mv tpath cpath) -- atomically replace the symlink
 
--- | Default method to run on deploy success.
-defaultSuccessHandler :: a -> ReaderT Config IO ()
-defaultSuccessHandler _ =
-  liftIO $ putStrLn "Deploy completed successfully."
+-- | Activates one of already deployed releases.
 
--- | Creates necessary directories for the hapistrano project. Should
--- only need to run the first time the project is deployed on a given
--- system.
-setupDirs :: Hapistrano ()
-setupDirs = do
-  conf <- ask
+rollback
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Natural           -- ^ How many releases back to go, 0 re-activates current
+  -> Hapistrano ()
+rollback deployPath n = do
+  xs <- genericDrop n <$> deployedReleases deployPath
+  case xs of
+    [] -> failWith 1 (Just "Could not find the requested release to rollback to.")
+    (x:_) -> activateRelease deployPath x
 
-  mapM_ (runCommand (host conf) (port conf))
-    ["mkdir -p " ++ releasesPath conf, "mkdir -p " ++ cacheRepoPath conf]
+-- | Remove older releases to avoid filling up the target host filesystem.
 
--- | TODO
+dropOldReleases
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Natural           -- ^ How many releases to keep
+  -> Hapistrano ()     -- ^ Deleted Releases
+dropOldReleases deployPath n = do
+  releases <- deployedReleases deployPath
+  forM_ (genericDrop n releases) $ \release -> do
+    rpath <- releasePath deployPath release
+    exec (Rm rpath)
 
-directoryExists :: Maybe String -> FilePath -> IO Bool
-directoryExists hst path = do
-  let (command, args) = case hst of
-        Just h  -> ("ssh", [h, "ls", path])
-        Nothing -> ("ls", [path])
+-- | Play the given script switching to diroctory of given release.
 
-  (code, _, _) <- readProcessWithExitCode command args ""
+playScript
+  :: [GenericCommand] -- ^ Commands to execute
+  -> Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ Release identifier
+  -> Hapistrano ()
+playScript cmds deployDir release = do
+  rpath <- releasePath deployDir release
+  forM_ cmds (exec . Cd rpath)
 
-  return $ case code of
-    ExitSuccess   -> True
-    ExitFailure _ -> False
+----------------------------------------------------------------------------
+-- Helpers
 
--- | Runs the given command either locally or on the local machine.
-runCommand :: Maybe String -- ^ The host on which to run the command
-           -> Maybe Integer -- ^ The port on which to run the command
-           -> String -- ^ The command to run, either on the local or remote host
-           -> Hapistrano String
+-- | Ensure that necessary directories exist. Idempotent.
 
-runCommand Nothing _ command = execShellCommand command
-runCommand (Just server) Nothing command =
-  execCommand $ unwords ["ssh", server, command]
-runCommand (Just server) (Just port') command =
-  execCommand $ unwords ["ssh", server, "-p", show port', command]
+setupDirs
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Hapistrano ()
+setupDirs deployPath = do
+  (exec . MkDir . releasesPath)  deployPath
+  (exec . MkDir . cacheRepoPath) deployPath
 
-execShellCommand :: String -> Hapistrano String
-execShellCommand command = do
-  liftIO $ putStrLn ("Executing: " ++ command)
-  let process = Process.shell command
-  (_, Just outHandle, Just errHandle, processHandle) <-
-    liftIO $
-      Process.createProcess process { Process.std_err = Process.CreatePipe
-                                    , Process.std_in = Process.CreatePipe
-                                    , Process.std_out = Process.CreatePipe
-                                    }
-  exitCode <- liftIO $ Process.waitForProcess processHandle
-  case exitCode of
-    ExitFailure code -> do
-      err <- liftIO $ IO.hGetContents errHandle
-      left (code, trim err)
-    ExitSuccess -> do
-      out <- liftIO $ IO.hGetContents outHandle
-      unless (null out) (liftIO $ putStrLn ("Output: " ++ out))
-      right (trim out)
+-- | Ensure that the specified repo is cloned and checked out on the given
+-- revision. Idempotent.
 
-execCommand :: String -> Hapistrano String
-execCommand cmd = do
-  let wds         = words cmd
-      (cmd', args) = (head wds, tail wds)
+ensureCacheInPlace
+  :: String            -- ^ Repo URL
+  -> Path Abs Dir      -- ^ Deploy path
+  -> Hapistrano ()
+ensureCacheInPlace repo deployPath = do
+  let cpath = cacheRepoPath deployPath
+      refs  = cpath </> $(mkRelDir "refs")
+  exists <- (exec (Ls refs) >> return True)
+    `catchError` const (return False)
+  unless exists $
+    exec (GitClone True (Left repo) cpath)
+  exec (Cd cpath (GitFetch "origin")) -- TODO store this in task description?
 
-  liftIO $ putStrLn $ "Executing: " ++ cmd
+-- | Create a new realese identifier based on current timestamp.
 
-  (code, stdout, err) <- liftIO $ readProcessWithExitCode cmd' args ""
+newRelease :: ReleaseFormat -> Hapistrano Release
+newRelease releaseFormat =
+  mkRelease releaseFormat <$> liftIO getCurrentTime
 
-  case code of
-    ExitSuccess -> do
-      unless (null stdout) (liftIO $ putStrLn $ "Output: " ++ stdout)
+-- | Clone the repository to create the specified 'Release'.
 
-      right $ trim stdout
+cloneToRelease
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ 'Release' to create
+  -> Hapistrano ()
+cloneToRelease deployPath release = do
+  rpath <- releasePath deployPath release
+  let cpath = cacheRepoPath deployPath
+  exec (GitClone False (Right cpath) rpath)
 
-    ExitFailure int -> left (int, trim err)
+-- | Set the release to the correct revision by resetting the head of the
+-- git repo.
 
--- | Returns a timestamp in the default format for build directories.
-currentTimestamp :: ReleaseFormat -> IO String
-currentTimestamp format = do
-  curTime <- getCurrentTime
-  return $ formatTime defaultTimeLocale fstring curTime
+setReleaseRevision
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ 'Release' to reset
+  -> String            -- ^ Revision to reset to
+  -> Hapistrano ()
+setReleaseRevision deployPath release revision = do
+  rpath <- releasePath deployPath release
+  exec (Cd rpath (GitReset revision))
 
-  where fstring = case format of
-          Short -> "%Y%m%d%H%M%S"
-          Long  -> "%Y%m%d%H%M%S%q"
+-- | Return a list of all currently deployed releases sorted newest first.
 
--- | Returns the FilePath pointed to by the current symlink.
-readCurrentLink :: Hapistrano FilePath -- ^ The target of the symlink in the Hapistrano monad
-readCurrentLink = do
-  conf <- ask
-  runCommand (host conf) (port conf) $ "readlink " ++ currentPath (deployPath conf)
+deployedReleases
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Hapistrano [Release]
+deployedReleases deployPath = do
+  let rpath = releasesPath deployPath
+  xs <- exec (FindDir 1 rpath)
+  ps <- mapM (stripDir rpath) (filter (/= rpath) xs)
+  (return . sortBy (comparing Down) . mapMaybe parseRelease)
+    (dropWhileEnd (== '/') . fromRelDir <$> ps)
 
--- ^ Trims any newlines from the given String
-trim :: String -- ^ String to have trailing newlines stripped
-     -> String -- ^ String with trailing newlines removed
-trim = dropWhileEnd isSpace . dropWhile isSpace
+----------------------------------------------------------------------------
+-- Path helpers
 
--- | Ensure that the initial bare repo exists in the repo directory. Idempotent.
-ensureRepositoryPushed :: Hapistrano String
-ensureRepositoryPushed = do
-  conf <- ask
-  res  <-
-    liftIO $ directoryExists (host conf) $ joinPath [cacheRepoPath conf, "refs"]
+-- | Return the full path to the directory containing all of the release
+-- builds.
 
-  if res
-    then right "Repo already existed"
-    else createCacheRepo
+releasesPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Path Abs Dir
+releasesPath deployPath = deployPath </> $(mkRelDir "releases")
 
--- | Returns the full path of the folder containing all of the release builds.
-releasesPath :: Config -> FilePath
-releasesPath conf = joinPath [deployPath conf, "releases"]
+-- | Construct path to a particular 'Release'.
 
--- | Figures out the most recent release if possible.
-detectPrevious :: [String] -- ^ The releases in `releases` path
-               -> Hapistrano String -- ^ The previous release in the Hapistrano monad
-detectPrevious rs =
-  case biggest rs of
-    Nothing -> left (1, "No previous releases detected!")
-    Just rls -> right rls
+releasePath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ 'Release' identifier
+  -> Hapistrano (Path Abs Dir)
+releasePath deployPath release = do
+  let rendered = renderRelease release
+  case parseRelDir rendered of
+    Nothing -> failWith 1 (Just $ "Could not append path: " ++ rendered)
+    Just rpath -> return (releasesPath deployPath </> rpath)
 
--- | Activates the previous detected release.
-rollback :: Hapistrano String -- ^ The current Release in the Hapistrano monad
-rollback = previousReleases >>= detectPrevious >>= activateRelease
-
--- | Clones the repository to the next releasePath timestamp. Makes a new
--- timestamp if one doesn't yet exist in the HapistranoState. Returns the
--- timestamp of the release that we cloned to.
-cloneToRelease :: Hapistrano Release -- ^ The newly-cloned Release, in the Hapistrano monad
-cloneToRelease = do
-  conf <- ask
-  rls  <- liftIO $ currentTimestamp (releaseFormat conf)
-
-  void $ runCommand (host conf) (port conf) $ "git clone " ++ cacheRepoPath conf ++
-    " " ++ joinPath [ releasesPath conf, rls ]
-
-  return rls
-
--- | Returns the full path to the git repo used for cache purposes on the
+-- | Return the full path to the git repo used for cache purposes on the
 -- target host filesystem.
-cacheRepoPath :: Config -- ^ The Hapistrano configuration
-              -> FilePath -- ^ The full path to the git cache repo used for speeding up deploys
-cacheRepoPath conf = joinPath [deployPath conf, "repo"]
 
--- | Returns the full path to the current symlink.
-currentPath :: FilePath -- ^ The full path of the deploy folder root
-            -> FilePath -- ^ The full path to the `current` symlink
-currentPath depPath = joinPath [depPath, "current"]
+cacheRepoPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Path Abs Dir
+cacheRepoPath deployPath = deployPath </> $(mkRelDir "repo")
 
--- | Take the release timestamp from the end of a filepath.
-pathToRelease :: FilePath -- ^ The entire FilePath to a Release directory
-              -> Release -- ^ The Release number.
-pathToRelease = last . splitPath
+-- | Get full path to current symlink.
 
--- | Returns a list of Strings representing the currently deployed releases.
-releases :: Hapistrano [Release] -- ^ A list of all found Releases on the target host
-releases = do
-  conf <- ask
-  res  <- runCommand (host conf) (port conf) $ "find " ++ releasesPath conf ++
-          " -type d -maxdepth 1"
+currentSymlinkPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Path Abs File
+currentSymlinkPath deployPath = deployPath </> $(mkRelFile "current")
 
-  right $
-    filter (isReleaseString (releaseFormat conf)) . map pathToRelease $
-    lines res
+-- | Get full path to temp symlink.
 
-previousReleases :: Hapistrano [Release] -- ^ All non-current releases on the target host
-previousReleases = do
-  rls            <- releases
-  currentRelease <- readCurrentLink
-
-  let currentRel = (head . lines . pathToRelease) currentRelease
-  return $ filter (< currentRel) rls
-
-releasePath :: Config -> Release -> FilePath
-releasePath conf rls = joinPath [releasesPath conf, rls]
-
--- | Given a list of release strings, takes the last four in the sequence.
--- Assumes a list of folders that has been determined to be a proper release
--- path.
-oldReleases :: Config -> [Release] -> [FilePath]
-oldReleases conf rs = map mergePath toDelete
-  where sorted             = sortBy (flip compare) rs
-        toDelete           = drop 4 sorted
-        mergePath = releasePath conf
-
--- | Removes releases older than the last five to avoid filling up the target
--- host filesystem.
-cleanReleases :: Hapistrano [String] -- ^ Deleted Release directories
-cleanReleases = do
-  conf        <- ask
-  allReleases <- releases
-
-  let deletable = oldReleases conf allReleases
-
-  if null deletable
-    then do
-      liftIO $ putStrLn "There are no old releases to prune."
-      return []
-
-    else do
-      _ <- runCommand (host conf) (port conf) $ "rm -rf -- " ++ unwords deletable
-      return deletable
-
--- | Returns a Bool indicating if the given String is in the proper release
--- format.
-isReleaseString :: ReleaseFormat -- ^ Format of Release directories
-                -> String -- ^ String to check against Release format
-                -> Bool -- ^ Whether the given String adheres to the specified Release format
-isReleaseString format s = all isNumber s && length s == releaseLength
-  where releaseLength = case format of
-          Short -> 14
-          Long  -> 26
-
--- | Creates the git repository that is used on the target host for
--- cache purposes.
-createCacheRepo :: Hapistrano String -- ^ Output of the git command used to create the bare cache repo
-createCacheRepo = do
-  conf <- ask
-
-  runCommand (host conf) (port conf) $ "git clone --bare " ++ repository conf ++ " " ++
-    cacheRepoPath conf
-
--- | Returns the full path of the symlink pointing to the current
--- release.
-currentSymlinkPath :: Config -> FilePath
-currentSymlinkPath conf = joinPath [deployPath conf, "current"]
-
-currentTempSymlinkPath :: Config -> FilePath
-currentTempSymlinkPath conf = joinPath [deployPath conf, "current_tmp"]
-
--- | Removes the current symlink in preparation for a new release being
--- activated.
-removeCurrentSymlink :: Hapistrano ()
-removeCurrentSymlink = do
-  conf <- ask
-
-  void $ runCommand (host conf) (port conf) $ "rm -rf " ++ currentSymlinkPath conf
-
--- | Determines whether the target host OS is Linux
-targetIsLinux :: Hapistrano Bool
-targetIsLinux = do
-  conf <- ask
-  res <- runCommand (host conf) (port conf) "uname"
-
-  right $ "Linux" `isInfixOf` res
-
--- | Runs a command to restart a server if a command is provided.
-restartServerCommand :: Hapistrano String
-restartServerCommand = do
-  conf <- ask
-
-  case restartCommand conf of
-    Nothing -> return "No command given for restart action."
-    Just cmd -> runCommand (host conf) (port conf) cmd
-
--- | TODO
-
-cleanBuildScript :: [String] -> [String]
-cleanBuildScript allScriptLines = filter (not . isCommentOrEmpty) allScriptLines
-  where
-    isCommentOrEmpty line = isEmpty line || isComment line
-    isComment line = (head $ trim line) == '#'
-    isEmpty line = (trim line) == ""
-
--- | Runs a build script if one is provided.
-runBuild :: Release -> Hapistrano Release
-runBuild rel = do
-  conf <- ask
-
-  case buildScript conf of
-    Nothing ->
-      liftIO $ putStrLn "No build script specified, skipping build step."
-
-    Just scr -> do
-      fl <- liftIO $ readFile scr
-      buildRelease rel $ cleanBuildScript $ lines fl
-
-  right rel
-
--- | Returns the best 'mv' command for a symlink given the target platform.
-mvCommand :: Bool   -- ^ Whether the target host is Linux
-          -> String -- ^ The best mv command for a symlink on the platform
-mvCommand True  = "mv -Tf"
-mvCommand False = "mv -f"
-
--- | Creates a symlink to the current release.
-lnCommand ::
-  String    -- ^ The path of the new release
-  -> String -- ^ The temporary symlink target for the release
-  -> String -- ^ A command to create the temporary symlink
-lnCommand rlsPath symlinkPath = unwords ["ln -s", rlsPath, symlinkPath]
-
--- | Creates a symlink to the directory indicated by the release timestamp.
--- hapistrano does this by creating a temporary symlink and doing an atomic
--- mv (1) operation to activate the new release.
-symlinkCurrent :: Release -> Hapistrano String
-symlinkCurrent rel = do
-  conf <- ask
-
-  isLnx <- targetIsLinux
-
-  let tmpLnCmd =
-        lnCommand (releasePath conf rel) (currentTempSymlinkPath conf)
-
-  _ <- runCommand (host conf) (port conf) tmpLnCmd
-
-  runCommand (host conf) (port conf) $ unwords [ mvCommand isLnx
-                                   , currentTempSymlinkPath conf
-                                   , currentSymlinkPath conf ]
-
--- | Updates the git repo used as a cache in the target host filesystem.
-updateCacheRepo :: Hapistrano ()
-updateCacheRepo = do
-  conf <- ask
-
-  void $ runCommand (host conf) (port conf) $ intercalate " && "
-    [ "cd " ++ cacheRepoPath conf
-    , "git fetch origin +refs/heads/*:refs/heads/*" ]
-
--- | Sets the release to the correct revision by resetting the
--- head of the git repo.
-setReleaseRevision :: Release -> Hapistrano Release
-setReleaseRevision rel = do
-  conf <- ask
-
-  liftIO $ putStrLn "Setting revision in release path."
-
-  void $ runCommand (host conf) (port conf) $ intercalate " && "
-    [ "cd " ++ releasePath conf rel
-    , "git fetch --all"
-    , "git reset --hard " ++ revision conf
-    ]
-
-  return rel
-
--- | Returns a command that builds this application. Sets the context
--- of the build by switching to the release directory before running
--- the script.
-buildRelease :: Release  -- ^ The Release to build
-             -> [String] -- ^ Commands to be run. List intercalated
-                         -- with "&&" so that failure aborts the
-                         -- sequence.
-             -> Hapistrano ()
-buildRelease rel commands = do
-  conf <- ask
-  let cdCmd = "cd " ++ releasePath conf rel
-  void $ runCommand (host conf) (port conf) $ intercalate " && " $ cdCmd : commands
-
--- | A safe version of the `maximum` function in Data.List.
-biggest :: Ord a => [a] -> Maybe a
-biggest rls =
-  case sortBy (flip compare) rls of
-    []  -> Nothing
-    r:_ -> Just r
+tempSymlinkPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Path Abs File
+tempSymlinkPath deployPath = deployPath </> $(mkRelFile "current_tmp")

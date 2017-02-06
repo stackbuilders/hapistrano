@@ -1,70 +1,108 @@
 -- |
 -- Module      :  System.Hapistrano.Types
--- Copyright   :  © 2017 Stack Builders
+-- Copyright   :  © 2015-2017 Stack Builders
 -- License     :  MIT
 --
 -- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- TODO
+-- Type definitions for the Hapistrano tool.
 
 module System.Hapistrano.Types
-       ( Config(..)
-       , FailureResult
-       , Hapistrano
-       , Release
-       , ReleaseFormat(..)
-       ) where
+  ( Hapistrano
+  , Failure (..)
+  , Config (..)
+  , Task (..)
+  , ReleaseFormat(..)
+  , SshOptions (..)
+  , Release
+  , mkRelease
+  , releaseTime
+  , renderRelease
+  , parseRelease )
+where
 
-import Control.Monad.Reader (ReaderT(..))
-import Control.Monad.Trans.Either (EitherT(..))
+import Control.Applicative
+import Control.Monad.Except
+import Control.Monad.Reader
+import Data.Time
+import Path
 
--- | Config stuff that will be replaced by config file reading
-data Config =
-  Config { deployPath     :: String
-           -- ^ The root of the deploy target on the remote host
+-- | Hapistrano monad.
 
-         , repository     :: String -- ^ The remote git repo
-         , revision       :: String -- ^ A SHA1 or branch to release
+type Hapistrano a = ExceptT Failure (ReaderT Config IO) a
 
-         , releaseFormat  :: ReleaseFormat
-         , host           :: Maybe String
-           -- ^ The target host for the deploy, or Nothing to indicate that
-           -- operations should be done directly in the local deployPath without
-           -- going over SSH
+-- | Failure with status code and a message.
 
-         , buildScript    :: Maybe FilePath
-           -- ^ The local path to a file that should be executed on the remote
-           -- server to build the application.
+data Failure = Failure Int (Maybe String)
 
-         , restartCommand :: Maybe String
-           -- ^ Optional command to restart the server after a successful deploy
+-- | Hapistrano configuration options.
 
-         , port :: Maybe Integer
-           -- ^ Optional port to deploy to a different ssh port
+data Config = Config
+  { configSshOptions :: Maybe SshOptions
+    -- ^ 'Nothing' if we are running locally, or SSH options to use.
+  }
 
-         } deriving (Show)
+-- | The records describes deployment task.
 
--- | TODO
+data Task = Task
+  { taskDeployPath :: Path Abs Dir
+    -- ^ The root of the deploy target on the remote host
+  , taskRepository :: String
+    -- ^ The URL of remote Git repo to deploy
+  , taskRevision :: String
+    -- ^ A SHA1 or branch to release
+  , taskReleaseFormat :: ReleaseFormat
+    -- ^ The 'ReleaseFormat' to use
+  } deriving (Show, Eq)
 
-data ReleaseFormat = Short
-                     -- ^ Standard release path following Capistrano's format
+-- | Release format mode.
 
-                   | Long
-                     -- ^ Long release path including picoseconds for testing
-                     -- or people seriously into continuous deployment
+data ReleaseFormat
+  = ReleaseShort -- ^ Standard release path following Capistrano's format
+  | ReleaseLong  -- ^ Long release path including picoseconds
+  deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
-                   deriving (Show)
+-- | SSH options.
 
--- | TODO
+data SshOptions = SshOptions
+  { sshHost :: String  -- ^ Host to use
+  , sshPort :: Word    -- ^ Port to use
+  } deriving (Show, Eq, Ord)
 
-type Release = String
+-- | Release indentifier.
 
--- | TODO
+data Release = Release ReleaseFormat UTCTime
+  deriving (Eq, Show, Ord)
 
-type FailureResult = (Int, String)
+-- | Create a 'Release' indentifier.
 
--- | TODO
+mkRelease :: ReleaseFormat -> UTCTime -> Release
+mkRelease = Release
 
-type Hapistrano a = EitherT FailureResult (ReaderT Config IO) a
+-- | Extract deployment time from 'Release'.
+
+releaseTime :: Release -> UTCTime
+releaseTime (Release _ time) = time
+
+-- | Render 'Release' indentifier as a 'String'.
+
+renderRelease :: Release -> String
+renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
+  where
+    fmt = case rfmt of
+      ReleaseShort -> releaseFormatShort
+      ReleaseLong  -> releaseFormatLong
+
+-- | Parse 'Release' identifier from a 'String'.
+
+parseRelease :: String -> Maybe Release
+parseRelease s = (Release ReleaseLong <$> p releaseFormatLong s)
+  <|> (Release ReleaseShort <$> p releaseFormatShort s)
+  where
+    p = parseTimeM False defaultTimeLocale
+
+releaseFormatShort, releaseFormatLong :: String
+releaseFormatShort = "%Y%m%d%H%M%S"
+releaseFormatLong  = "%Y%m%d%H%M%S%q"
