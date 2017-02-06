@@ -79,8 +79,8 @@ data Cd cmd = Cd (Path Abs Dir) cmd
 
 instance Command cmd => Command (Cd cmd) where
   type Result (Cd cmd) = Result cmd
-  renderCommand (Cd path cmd) = "cd " ++ quote (fromAbsDir path) ++
-    " && " ++ renderCommand cmd
+  renderCommand (Cd path cmd) = "(cd " ++ quote (fromAbsDir path) ++
+    " && " ++ renderCommand cmd ++ ")"
   parseResult Proxy = parseResult (Proxy :: Proxy cmd)
 
 -- | Create a directory. Does not fail if the directory already exists.
