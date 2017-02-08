@@ -116,6 +116,7 @@ main = do
         spath  <- resolveFile' spath'
         script <- Hap.readScript spath
         Hap.playScript script deployPath release
+      Hap.registerReleaseAsComplete deployPath release
       Hap.activateRelease deployPath release
       Hap.dropOldReleases deployPath n
     Rollback n -> do

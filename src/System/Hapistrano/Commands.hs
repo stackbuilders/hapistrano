@@ -25,7 +25,8 @@ module System.Hapistrano.Commands
   , Ln (..)
   , Ls (..)
   , Readlink (..)
-  , FindDir (..)
+  , Find (..)
+  , Touch (..)
   , GitClone (..)
   , GitFetch (..)
   , GitReset (..)
@@ -168,19 +169,39 @@ instance Command Ls where
     [ Just (fromAbsDir path) ]
   parseResult Proxy _ = ()
 
--- | Find (a very limited version, only finds directories).
+-- | Find (a very limited version).
 
-data FindDir = FindDir Natural (Path Abs Dir)
+data Find t = Find Natural (Path Abs Dir)
 
-instance Command FindDir where
-  type Result FindDir = [Path Abs Dir]
-  renderCommand (FindDir maxDepth dir) = formatCmd "find"
+instance Command (Find Dir) where
+  type Result (Find Dir) = [Path Abs Dir]
+  renderCommand (Find maxDepth dir) = formatCmd "find"
     [ Just (fromAbsDir dir)
     , Just "-maxdepth"
     , Just (show maxDepth)
     , Just "-type"
     , Just "d" ]
   parseResult Proxy = mapMaybe parseAbsDir . fmap trim . lines
+
+instance Command (Find File) where
+  type Result (Find File) = [Path Abs File]
+  renderCommand (Find maxDepth dir) = formatCmd "find"
+    [ Just (fromAbsDir dir)
+    , Just "-maxdepth"
+    , Just (show maxDepth)
+    , Just "-type"
+    , Just "f" ]
+  parseResult Proxy = mapMaybe parseAbsFile . fmap trim . lines
+
+-- | @touch@.
+
+data Touch = Touch (Path Abs File)
+
+instance Command Touch where
+  type Result Touch = ()
+  renderCommand (Touch path) = formatCmd "touch"
+    [ Just (fromAbsFile path) ]
+  parseResult Proxy _ = ()
 
 -- | Git clone.
 

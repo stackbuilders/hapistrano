@@ -40,6 +40,13 @@ spec = do
         (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt"))
           `shouldReturn` "Foo!\n"
 
+    describe "registerReleaseAsComplete" $
+      it "creates the token all right" $ \(deployPath, repoPath) -> runHap $ do
+        let task = mkTask deployPath repoPath
+        release <- Hap.pushRelease task
+        Hap.registerReleaseAsComplete deployPath release
+        (Hap.ctokenPath deployPath release >>= doesFileExist) `shouldReturn` True
+
     describe "activateRelease" $
       it "creates the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
         let task = mkTask deployPath repoPath
@@ -51,16 +58,28 @@ spec = do
         Hap.exec rc `shouldReturn` rpath
         doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
 
-    describe "rollback" $
-      it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
-        let task = mkTask deployPath repoPath
-        rs <- replicateM 5 (Hap.pushRelease task)
-        Hap.rollback deployPath 2
-        rpath <- Hap.releasePath deployPath (rs !! 2)
-        let rc :: Hap.Readlink Dir
-            rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
-        Hap.exec rc `shouldReturn` rpath
-        doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+    describe "rollback" $ do
+      context "without completion tokens" $
+        it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
+          let task = mkTask deployPath repoPath
+          rs <- replicateM 5 (Hap.pushRelease task)
+          Hap.rollback deployPath 2
+          rpath <- Hap.releasePath deployPath (rs !! 2)
+          let rc :: Hap.Readlink Dir
+              rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+          Hap.exec rc `shouldReturn` rpath
+          doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+      context "with completion tokens" $
+        it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
+          let task = mkTask deployPath repoPath
+          rs <- replicateM 5 (Hap.pushRelease task)
+          forM_ (take 3 rs) (Hap.registerReleaseAsComplete deployPath)
+          Hap.rollback deployPath 2
+          rpath <- Hap.releasePath deployPath (rs !! 0)
+          let rc :: Hap.Readlink Dir
+              rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+          Hap.exec rc `shouldReturn` rpath
+          doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
 
     describe "dropOldReleases" $
       it "works" $ \(deployPath, repoPath) -> runHap $ do
