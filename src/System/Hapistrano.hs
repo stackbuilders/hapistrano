@@ -16,6 +16,7 @@
 
 module System.Hapistrano
   ( pushRelease
+  , registerReleaseAsComplete
   , activateRelease
   , rollback
   , dropOldReleases
@@ -23,7 +24,8 @@ module System.Hapistrano
     -- * Path helpers
   , releasePath
   , currentSymlinkPath
-  , tempSymlinkPath )
+  , tempSymlinkPath
+  , ctokenPath )
 where
 
 import Control.Monad
@@ -54,6 +56,17 @@ pushRelease Task {..} = do
   setReleaseRevision taskDeployPath release taskRevision
   return release
 
+-- | Create a file-token that will tell rollback function that this release
+-- should be considered successfully compiled\/completed.
+
+registerReleaseAsComplete
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ Release identifier to activate
+  -> Hapistrano ()
+registerReleaseAsComplete deployPath release = do
+  cpath <- ctokenPath deployPath release
+  exec (Touch cpath)
+
 -- | Switch the current symlink to point to the specified release. May be
 -- used in deploy or rollback cases.
 
@@ -75,8 +88,13 @@ rollback
   -> Natural           -- ^ How many releases back to go, 0 re-activates current
   -> Hapistrano ()
 rollback deployPath n = do
-  xs <- genericDrop n <$> deployedReleases deployPath
-  case xs of
+  crs <- completedReleases deployPath
+  drs <- deployedReleases  deployPath
+  -- NOTE If we don't have any completed releases, then perhaps the
+  -- application was used with older versions of Hapistrano that did not
+  -- have this functionality. We then fall back and use collection of “just”
+  -- deployed releases.
+  case genericDrop n (if null crs then drs else crs) of
     [] -> failWith 1 (Just "Could not find the requested release to rollback to.")
     (x:_) -> activateRelease deployPath x
 
@@ -114,6 +132,7 @@ setupDirs
 setupDirs deployPath = do
   (exec . MkDir . releasesPath)  deployPath
   (exec . MkDir . cacheRepoPath) deployPath
+  (exec . MkDir . ctokensPath)   deployPath
 
 -- | Ensure that the specified repo is cloned and checked out on the given
 -- revision. Idempotent.
@@ -167,10 +186,22 @@ deployedReleases
   -> Hapistrano [Release]
 deployedReleases deployPath = do
   let rpath = releasesPath deployPath
-  xs <- exec (FindDir 1 rpath)
+  xs <- exec (Find 1 rpath :: Find Dir)
   ps <- mapM (stripDir rpath) (filter (/= rpath) xs)
   (return . sortBy (comparing Down) . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelDir <$> ps)
+
+-- | Return a list of successfully completed releases sorted newest first.
+
+completedReleases
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Hapistrano [Release]
+completedReleases deployPath = do
+  let cpath = ctokensPath deployPath
+  xs <- exec (Find 1 cpath :: Find File)
+  ps <- mapM (stripDir cpath) xs
+  (return . sortBy (comparing Down) . mapMaybe parseRelease)
+    (dropWhileEnd (== '/') . fromRelFile <$> ps)
 
 ----------------------------------------------------------------------------
 -- Path helpers
@@ -216,3 +247,22 @@ tempSymlinkPath
   :: Path Abs Dir      -- ^ Deploy path
   -> Path Abs File
 tempSymlinkPath deployPath = deployPath </> $(mkRelFile "current_tmp")
+
+-- | Get path to the directory that contains tokens of build completion.
+
+ctokensPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Path Abs Dir
+ctokensPath deployPath = deployPath </> $(mkRelDir "ctokens")
+
+-- | Get path to completion token file for particular release.
+
+ctokenPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Release           -- ^ 'Release' identifier
+  -> Hapistrano (Path Abs File)
+ctokenPath deployPath release = do
+  let rendered = renderRelease release
+  case parseRelFile rendered of
+    Nothing -> failWith 1 (Just $ "Could not append path: " ++ rendered)
+    Just rpath -> return (ctokensPath deployPath </> rpath)
