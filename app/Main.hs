@@ -4,20 +4,16 @@
 module Main (main) where
 
 import Control.Monad
-import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Data.Version (showVersion)
 import Numeric.Natural
 import Options.Applicative
-import Path
-import Path.IO
 import Paths_hapistrano (version)
-import System.Environment.Compat (lookupEnv, getEnv)
 import System.Exit
 import System.Hapistrano.Types
-import Text.Read (readMaybe)
+import qualified Config as C
+import qualified Data.Yaml as Yaml
 import qualified System.Hapistrano as Hap
-import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core as Hap
 
 #if !MIN_VERSION_base(4,8,0)
@@ -32,6 +28,7 @@ import Control.Applicative
 data Opts = Opts
   { optsCommand :: Command
   , optsVersion :: Bool
+  , optsConfigFile :: FilePath
   }
 
 -- | Command to execute and command-specific options.
@@ -58,6 +55,13 @@ optionParser = Opts
   ( long "version"
   <> short 'v'
   <> help "Show version of the program" )
+  <*> strOption
+  ( long "config"
+  <> short 'c'
+  <> value "hap.yaml"
+  <> metavar "PATH"
+  <> showDefault
+  <> help "Configuration file to use" )
 
 deployParser :: Parser Command
 deployParser = Deploy
@@ -70,7 +74,8 @@ deployParser = Deploy
   ( long "keep-releases"
   <> short 'k'
   <> value 5
-  <> help "How many releases to keep. Default is 5." )
+  <> showDefault
+  <> help "How many releases to keep" )
 
 rollbackParser :: Parser Command
 rollbackParser = Rollback
@@ -78,7 +83,8 @@ rollbackParser = Rollback
   ( long "use-nth"
   <> short 'n'
   <> value 1
-  <> help "How many deployments back to go? Default is 1." )
+  <> showDefault
+  <> help "How many deployments back to go?" )
 
 pReleaseFormat :: ReadM ReleaseFormat
 pReleaseFormat = eitherReader $ \s ->
@@ -97,28 +103,24 @@ main = do
     putStrLn $ "Hapistrano " ++ showVersion version
     exitSuccess
 
-  deployPath  <- getEnv "DEPLOY_PATH" >>= parseAbsDir
-  repository  <- getEnv "REPOSITORY"
-  revision    <- getEnv "REVISION"
-  port        <- fromMaybe 22 . (>>= readMaybe) <$> lookupEnv "PORT"
-  mhost       <- lookupEnv "HOST"
-  buildScript <- lookupEnv "BUILD_SCRIPT"
-  mrestartCmd <- (>>= Hap.mkGenericCommand) <$> lookupEnv "RESTART_COMMAND"
-
-  Hap.runHapistrano (SshOptions <$> mhost <*> pure port) $ case optsCommand of
-    Deploy releaseFormat n -> do
-      release <- Hap.pushRelease Task
-        { taskDeployPath    = deployPath
-        , taskRepository    = repository
-        , taskRevision      = revision
-        , taskReleaseFormat = releaseFormat }
-      forM_ buildScript $ \spath' -> do
-        spath  <- resolveFile' spath'
-        script <- Hap.readScript spath
-        Hap.playScript script deployPath release
-      Hap.registerReleaseAsComplete deployPath release
-      Hap.activateRelease deployPath release
-      Hap.dropOldReleases deployPath n
-    Rollback n -> do
-      Hap.rollback deployPath n
-      forM_ mrestartCmd Hap.exec
+  econfig <- Yaml.decodeFileEither optsConfigFile
+  case econfig of
+    Left err -> do
+      putStrLn (Yaml.prettyPrintParseException err)
+      exitFailure
+    Right C.Config {..} ->
+      Hap.runHapistrano (SshOptions <$> configHost <*> pure configPort) $ case optsCommand of
+        Deploy releaseFormat n -> do
+          release <- Hap.pushRelease Task
+            { taskDeployPath    = configDeployPath
+            , taskRepository    = configRepo
+            , taskRevision      = configRevision
+            , taskReleaseFormat = releaseFormat }
+          forM_ configBuildScript (Hap.playScript configDeployPath release)
+          forM_ configRestartCommand Hap.exec
+          Hap.registerReleaseAsComplete configDeployPath release
+          Hap.activateRelease configDeployPath release
+          Hap.dropOldReleases configDeployPath n
+        Rollback n -> do
+          Hap.rollback configDeployPath n
+          forM_ configRestartCommand Hap.exec
