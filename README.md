@@ -77,11 +77,33 @@ $ hap rollback # to rollback to previous successful deploy
 $ hap rollback -n 2 # go two deploys back in time, etc.
 ```
 
-# License
+## What to do when compiling on server is not viable
+
+Sometimes the target machine (server) is not capable of compiling your
+application because e.g. it has not enough memory and GHC exhausts it all.
+You can copy pre-compiled files from local machine or CI server using
+`copy_files` and `copy_dirs` parameters:
+
+```haskell
+copy_files:
+  - src: '/home/stackbuilders/my-file.txt'
+    dest: 'my-file.txt'
+copy_dirs:
+  - src: .stack-work
+    dest: .stack-work
+```
+
+`src` maybe absolute or relative, it's path to file or directory on local
+machine, `dest` may only be relative (it's expanded relatively to cloned
+repo) and specifies where to put the files/directories on target machine.
+Directories and files with clashing names will be overwritten. Directories
+are copied recursively.
+
+## License
 
 MIT, see [the LICENSE file](LICENSE).
 
-# Contributing
+## Contributing
 
 Pull requests for modifications to this program are welcome. Fork and
 open a PR. Feel free to [email me](mailto:justin@stackbuilders.com) if

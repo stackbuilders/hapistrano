@@ -80,7 +80,7 @@ data Cd cmd = Cd (Path Abs Dir) cmd
 
 instance Command cmd => Command (Cd cmd) where
   type Result (Cd cmd) = Result cmd
-  renderCommand (Cd path cmd) = "(cd " ++ quote (fromAbsDir path) ++
+  renderCommand (Cd path cmd) = "(cd " ++ quoteCmd (fromAbsDir path) ++
     " && " ++ renderCommand cmd ++ ")"
   parseResult Proxy = parseResult (Proxy :: Proxy cmd)
 
@@ -278,12 +278,12 @@ readScript path = liftIO $ catMaybes . fmap mkGenericCommand . lines
 -- | Format a command.
 
 formatCmd :: String -> [Maybe String] -> String
-formatCmd cmd args = unwords (quote <$> (cmd : catMaybes args))
+formatCmd cmd args = unwords (quoteCmd <$> (cmd : catMaybes args))
 
 -- | Simple-minded quoter.
 
-quote :: String -> String
-quote str =
+quoteCmd :: String -> String
+quoteCmd str =
   if any isSpace str
     then "\"" ++ str ++ "\""
     else str
