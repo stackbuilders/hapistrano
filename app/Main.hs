@@ -8,6 +8,8 @@ import Data.Monoid ((<>))
 import Data.Version (showVersion)
 import Numeric.Natural
 import Options.Applicative
+import Path
+import Path.IO
 import Paths_hapistrano (version)
 import System.Exit
 import System.Hapistrano.Types
@@ -116,6 +118,15 @@ main = do
             , taskRepository    = configRepo
             , taskRevision      = configRevision
             , taskReleaseFormat = releaseFormat }
+          rpath <- Hap.releasePath configDeployPath release
+          forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
+            srcPath  <- resolveFile' src
+            destPath <- parseRelFile dest
+            Hap.scpFile srcPath (rpath </> destPath)
+          forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
+            srcPath  <- resolveDir' src
+            destPath <- parseRelDir dest
+            Hap.scpDir srcPath (rpath </> destPath)
           forM_ configBuildScript (Hap.playScript configDeployPath release)
           forM_ configRestartCommand Hap.exec
           Hap.registerReleaseAsComplete configDeployPath release

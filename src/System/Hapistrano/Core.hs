@@ -17,13 +17,16 @@
 module System.Hapistrano.Core
   ( runHapistrano
   , failWith
-  , exec )
+  , exec
+  , scpFile
+  , scpDir )
 where
 
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Proxy
+import Path
 import System.Exit
 import System.Hapistrano.Commands
 import System.Hapistrano.Types
@@ -68,7 +71,58 @@ exec typedCmd = do
           Just SshOptions {..} ->
             ("ssh", [sshHost, "-p", show sshPort, cmd])
       cmd = renderCommand typedCmd
-      hostLabel =
+  parseResult (Proxy :: Proxy a) <$> exec' prog args cmd
+
+-- | Copy a file from local path to target server.
+
+scpFile
+  :: Path Abs File     -- ^ Location of the file to copy
+  -> Path Abs File     -- ^ Where to put the file on target machine
+  -> Hapistrano ()
+scpFile src dest =
+  scp' (fromAbsFile src) (fromAbsFile dest) ["-qv"]
+
+-- | Copy a local directory recursively to target server.
+
+scpDir
+  :: Path Abs Dir      -- ^ Location of the directory to copy
+  -> Path Abs Dir      -- ^ Where to put the dir on target machine
+  -> Hapistrano ()
+scpDir src dest =
+  scp' (fromAbsDir src) (fromAbsDir dest) ["-qvr"]
+
+scp'
+  :: FilePath
+  -> FilePath
+  -> [String]
+  -> Hapistrano ()
+scp' src dest extraArgs = do
+  Config {..} <- ask
+  let prog = "scp"
+      portArg =
+        case sshPort <$> configSshOptions of
+          Nothing -> []
+          Just x  -> ["-p", show x]
+      hostPrefix =
+        case sshHost <$> configSshOptions of
+          Nothing -> ""
+          Just x -> x ++ ":"
+      args = extraArgs ++ portArg ++ [src, hostPrefix ++ dest]
+  void (exec' prog args (prog ++ " " ++ unwords args))
+
+----------------------------------------------------------------------------
+-- Helpers
+
+-- | A helper for 'exec' and similar functions.
+
+exec'
+  :: String            -- ^ Name of program to run
+  -> [String]          -- ^ Arguments to that program
+  -> String            -- ^ How to show the command in print-outs
+  -> Hapistrano String -- ^ Raw stdout output of that program
+exec' prog args cmd = do
+  Config {..} <- ask
+  let hostLabel =
         case configSshOptions of
           Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
@@ -83,12 +137,9 @@ exec typedCmd = do
     hPutStrLn stderr stderr'
   case exitCode of
     ExitSuccess ->
-      return (parseResult (Proxy :: Proxy a) stdout')
+      return stdout'
     ExitFailure n ->
       failWith n Nothing
-
-----------------------------------------------------------------------------
--- Helpers
 
 -- | Print something “inside” a line, sort-of beautifully.
 

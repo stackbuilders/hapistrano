@@ -2,7 +2,8 @@
 {-# LANGUAGE RecordWildCards   #-}
 
 module Config
-  ( Config (..) )
+  ( Config (..)
+  , CopyThing (..) )
 where
 
 import Data.Aeson
@@ -28,7 +29,17 @@ data Config = Config
     -- (usually after a deploy or rollback).
   , configBuildScript :: !(Maybe [GenericCommand])
     -- ^ Build script to execute to build the project
+  , configCopyFiles :: ![CopyThing]
+    -- ^ Collection of files to copy over to target machine before building
+  , configCopyDirs :: ![CopyThing]
+    -- ^ Collection of directories to copy over to target machine before building
   } deriving (Eq, Ord, Show)
+
+-- | Information about source and destination locations of a file\/directory
+-- to copy.
+
+data CopyThing = CopyThing FilePath FilePath
+  deriving (Eq, Ord, Show)
 
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
@@ -41,7 +52,13 @@ instance FromJSON Config where
       maybe (return Nothing) (fmap Just . mkCmd)
     configBuildScript <- o .:? "build_script" >>=
       maybe (return Nothing) (fmap Just . mapM mkCmd)
+    configCopyFiles  <- o .:? "copy_files" .!= []
+    configCopyDirs   <- o .:? "copy_dirs"  .!= []
     return Config {..}
+
+instance FromJSON CopyThing where
+  parseJSON = withObject "src and dest of a thing to copy" $ \o ->
+    CopyThing <$> (o .: "src") <*> (o .: "dest")
 
 mkCmd :: String -> Parser GenericCommand
 mkCmd raw =
