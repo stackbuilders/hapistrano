@@ -6,6 +6,7 @@
 * Parse ssh port from `PORT` environment variable.
 * Drop support for GHCs older than 7.10 (because Chris Done's `path` does
   not compile with them, see: https://github.com/chrisdone/path/issues/46).
+* Now Hapistrano uses `hap.yaml` file for all its configuration.
 
 ## 0.2.1.2
 
