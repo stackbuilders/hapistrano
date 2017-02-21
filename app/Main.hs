@@ -128,10 +128,10 @@ main = do
             destPath <- parseRelDir dest
             Hap.scpDir srcPath (rpath </> destPath)
           forM_ configBuildScript (Hap.playScript configDeployPath release)
-          forM_ configRestartCommand Hap.exec
           Hap.registerReleaseAsComplete configDeployPath release
           Hap.activateRelease configDeployPath release
           Hap.dropOldReleases configDeployPath n
+          forM_ configRestartCommand Hap.exec
         Rollback n -> do
           Hap.rollback configDeployPath n
           forM_ configRestartCommand Hap.exec
