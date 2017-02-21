@@ -103,7 +103,7 @@ data Rm where
 instance Command Rm where
   type Result Rm = ()
   renderCommand (Rm path) = formatCmd "rm"
-    [ Just "-rfv"
+    [ Just "-rf"
     , Just (toFilePath path) ]
   parseResult Proxy _ = ()
 
