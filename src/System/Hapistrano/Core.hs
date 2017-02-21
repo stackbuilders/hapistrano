@@ -102,7 +102,7 @@ scp' src dest extraArgs = do
       portArg =
         case sshPort <$> configSshOptions of
           Nothing -> []
-          Just x  -> ["-p", show x]
+          Just x  -> ["-P", show x]
       hostPrefix =
         case sshHost <$> configSshOptions of
           Nothing -> ""
