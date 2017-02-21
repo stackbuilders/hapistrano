@@ -80,7 +80,7 @@ scpFile
   -> Path Abs File     -- ^ Where to put the file on target machine
   -> Hapistrano ()
 scpFile src dest =
-  scp' (fromAbsFile src) (fromAbsFile dest) ["-qv"]
+  scp' (fromAbsFile src) (fromAbsFile dest) ["-q"]
 
 -- | Copy a local directory recursively to target server.
 
@@ -89,7 +89,7 @@ scpDir
   -> Path Abs Dir      -- ^ Where to put the dir on target machine
   -> Hapistrano ()
 scpDir src dest =
-  scp' (fromAbsDir src) (fromAbsDir dest) ["-qvr"]
+  scp' (fromAbsDir src) (fromAbsDir dest) ["-qr"]
 
 scp'
   :: FilePath
@@ -102,7 +102,7 @@ scp' src dest extraArgs = do
       portArg =
         case sshPort <$> configSshOptions of
           Nothing -> []
-          Just x  -> ["-p", show x]
+          Just x  -> ["-P", show x]
       hostPrefix =
         case sshHost <$> configSshOptions of
           Nothing -> ""
