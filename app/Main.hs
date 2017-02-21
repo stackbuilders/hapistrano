@@ -13,10 +13,11 @@ import Path.IO
 import Paths_hapistrano (version)
 import System.Exit
 import System.Hapistrano.Types
-import qualified Config as C
-import qualified Data.Yaml as Yaml
-import qualified System.Hapistrano as Hap
-import qualified System.Hapistrano.Core as Hap
+import qualified Config                     as C
+import qualified Data.Yaml                  as Yaml
+import qualified System.Hapistrano          as Hap
+import qualified System.Hapistrano.Commands as Hap
+import qualified System.Hapistrano.Core     as Hap
 
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
@@ -122,11 +123,15 @@ main = do
           forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
             srcPath  <- resolveFile' src
             destPath <- parseRelFile dest
-            Hap.scpFile srcPath (rpath </> destPath)
+            let dpath = rpath </> destPath
+            (Hap.exec . Hap.MkDir . parent) dpath
+            Hap.scpFile srcPath dpath
           forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
             srcPath  <- resolveDir' src
             destPath <- parseRelDir dest
-            Hap.scpDir srcPath (rpath </> destPath)
+            let dpath = rpath </> destPath
+            (Hap.exec . Hap.MkDir . parent) dpath
+            Hap.scpDir srcPath dpath
           forM_ configBuildScript (Hap.playScript configDeployPath release)
           Hap.registerReleaseAsComplete configDeployPath release
           Hap.activateRelease configDeployPath release
