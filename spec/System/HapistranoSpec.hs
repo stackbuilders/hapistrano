@@ -9,6 +9,7 @@ import Control.Monad.Reader
 import Path
 import Path.IO
 import System.Hapistrano.Types
+import System.IO
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
@@ -146,7 +147,18 @@ justExec path cmd' =
 -- | Run 'Hapistrano' monad locally.
 
 runHap :: Hapistrano a -> IO a
-runHap = Hap.runHapistrano Nothing
+runHap m = do
+  let printFnc dest str =
+        case dest of
+          StdoutDest -> putStr str
+          StderrDest -> hPutStr stderr str
+  r <- Hap.runHapistrano Nothing printFnc m
+  case r of
+    Left n -> do
+      expectationFailure ("Failed with status code: " ++ show n)
+      return undefined
+      -- ↑ because expectationFailure from Hspec has wrong type :-(
+    Right x -> return x
 
 -- | Make a 'Task' given deploy path and path to the repo.
 

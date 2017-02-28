@@ -2,6 +2,8 @@
 
 * Fixed a bug with repos not being fetched properly.
 
+* Implemented concurrent deployment to multiple hosts.
+
 ## 0.3.0.1
 
 * Reduced verbosity of some commands to make reading logs easier.

@@ -7,6 +7,7 @@ module Config
 where
 
 import Data.Aeson
+import Data.Maybe (maybeToList)
 import Data.Yaml
 import Path
 import System.Hapistrano.Commands
@@ -16,10 +17,8 @@ import System.Hapistrano.Commands
 data Config = Config
   { configDeployPath :: !(Path Abs Dir)
     -- ^ Top-level deploy directory on target machine
-  , configHost :: !(Maybe String)
-    -- ^ Host to deploy to. If missing, localhost will be assumed.
-  , configPort :: !Word
-    -- ^ SSH port number to use, may be omitted
+  , configHosts :: ![(String, Word)]
+    -- ^ Hosts\/ports to deploy to. If empty, localhost will be assumed.
   , configRepo :: !String
     -- ^ Location of repository that contains the source code to deploy
   , configRevision :: !String
@@ -44,8 +43,13 @@ data CopyThing = CopyThing FilePath FilePath
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"
-    configHost       <- o .:? "host"
-    configPort       <- o .:? "port" .!= 22
+    host             <- o .:? "host"
+    port             <- o .:? "port" .!= 22
+    hs               <- (o .:? "targets" .!= []) >>= mapM (\m -> do
+      host' <- m .: "host"
+      port' <- m .:? "port" .!= 22
+      return (host', port'))
+    let configHosts = maybeToList ((,) <$> host <*> pure port) ++ hs
     configRepo       <- o .: "repo"
     configRevision   <- o .: "revision"
     configRestartCommand <- (o .:? "restart_command") >>=

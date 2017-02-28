@@ -16,6 +16,7 @@ module System.Hapistrano.Types
   , Task (..)
   , ReleaseFormat(..)
   , SshOptions (..)
+  , OutputDest (..)
   , Release
   , mkRelease
   , releaseTime
@@ -40,8 +41,10 @@ data Failure = Failure Int (Maybe String)
 -- | Hapistrano configuration options.
 
 data Config = Config
-  { configSshOptions :: Maybe SshOptions
+  { configSshOptions :: !(Maybe SshOptions)
     -- ^ 'Nothing' if we are running locally, or SSH options to use.
+  , configPrint :: !(OutputDest -> String -> IO ())
+    -- ^ How to print messages
   }
 
 -- | The records describes deployment task.
@@ -55,7 +58,7 @@ data Task = Task
     -- ^ A SHA1 or branch to release
   , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 -- | Release format mode.
 
@@ -69,7 +72,14 @@ data ReleaseFormat
 data SshOptions = SshOptions
   { sshHost :: String  -- ^ Host to use
   , sshPort :: Word    -- ^ Port to use
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
+
+-- | Output destination.
+
+data OutputDest
+  = StdoutDest
+  | StderrDest
+  deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
 -- | Release indentifier.
 
