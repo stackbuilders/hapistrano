@@ -7,7 +7,7 @@
 ## 0.3.0.1
 
 * Reduced verbosity of some commands to make reading logs easier.
-* Restart command is now invoked after activation of new release (is it
+* Restart command is now invoked after activation of new release (as it
   should).
 * Fix a typo in flag that specifies SSH port for `scp`.
 * Ensure that containing directories for files and directories to copy
@@ -17,8 +17,7 @@
 
 * Add proper set of dependency version constraints.
 * Use `optparse-applicative` to parse arguments.
-* Add support for comments and empty lines to scripts.
-* Parse ssh port from `PORT` environment variable.
+* Allow to specify non-standard SSH port.
 * Drop support for GHCs older than 7.10 (because Chris Done's `path` does
   not compile with them, see: https://github.com/chrisdone/path/issues/46).
 * Now Hapistrano uses `hap.yaml` file for all its configuration.

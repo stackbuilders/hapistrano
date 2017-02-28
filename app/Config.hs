@@ -7,6 +7,8 @@ module Config
 where
 
 import Data.Aeson
+import Data.Function (on)
+import Data.List (nubBy)
 import Data.Maybe (maybeToList)
 import Data.Yaml
 import Path
@@ -43,13 +45,15 @@ data CopyThing = CopyThing FilePath FilePath
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"
+    let grabPort m = m .:? "port" .!= 22
     host             <- o .:? "host"
-    port             <- o .:? "port" .!= 22
+    port             <- grabPort o
     hs               <- (o .:? "targets" .!= []) >>= mapM (\m -> do
       host' <- m .: "host"
-      port' <- m .:? "port" .!= 22
+      port' <- grabPort m
       return (host', port'))
-    let configHosts = maybeToList ((,) <$> host <*> pure port) ++ hs
+    let configHosts = nubBy ((==) `on` fst)
+          (maybeToList ((,) <$> host <*> pure port) ++ hs)
     configRepo       <- o .: "repo"
     configRevision   <- o .: "revision"
     configRestartCommand <- (o .:? "restart_command") >>=
