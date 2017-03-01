@@ -99,6 +99,39 @@ repo) and specifies where to put the files/directories on target machine.
 Directories and files with clashing names will be overwritten. Directories
 are copied recursively.
 
+## Deploying to multiple machines concurrently
+
+Beginning with Hapistrano 0.3.1.0 it's possible to deploy to several
+machines concurrently. The only things you need to do is to adjust your
+configuration file and use `targets` parameter instead of `host` and `port`,
+like this:
+
+```haskell
+targets:
+  - host: myserver-a.com
+    port: 2222
+  - host: myserver-b.cmo
+# the rest is the same…
+```
+
+A few things to note here:
+
+* `host` item is required for every target, but `port` may be omitted and
+  then it defaults to `22`.
+
+* The deployment will run concurrently and finish when interactions with all
+  targets have finished either successfully or not. If at least one
+  interaction was unsuccessful, the `hap` tool will exit with non-zero exit
+  code.
+
+* The log is printed is such a way that messages from several machines get
+  intermixed, but it's guaranteed that they won't overlap (printing itself
+  is sequential) and the headers will tell you exactly which machine was
+  executing which command.
+
+If you don't specify `host` and `targets`, `hap` will assume `localhost` as
+usually, which is mainly useful for testing.
+
 ## License
 
 MIT, see [the LICENSE file](LICENSE).

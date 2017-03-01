@@ -30,28 +30,28 @@ import Path
 import System.Exit
 import System.Hapistrano.Commands
 import System.Hapistrano.Types
-import System.IO
 import System.Process
 
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 
 runHapistrano :: MonadIO m
   => Maybe SshOptions  -- ^ SSH options to use or 'Nothing' if we run locally
+  -> (OutputDest -> String -> IO ()) -- ^ How to print messages
   -> Hapistrano a      -- ^ The computation to run
-  -> m a               -- ^ IO-enabled monad that hosts the computation
-runHapistrano sshOptions m = liftIO $ do
+  -> m (Either Int a)  -- ^ Status code in 'Left' on failure, result in
+              -- 'Right' on success
+runHapistrano sshOptions printFnc m = liftIO $ do
   let config = Config
-        { configSshOptions = sshOptions }
+        { configSshOptions = sshOptions
+        , configPrint      = printFnc }
   r <- runReaderT (runExceptT m) config
   case r of
     Left (Failure n msg) -> do
-      forM_ msg (hPutStrLn stderr)
-      exitWith (ExitFailure n)
-    Right x ->
-      x <$ putStrLn "Success."
+      forM_ msg (printFnc StderrDest)
+      return (Left n)
+    Right x -> return (Right x)
 
--- | Fail returning the following status code and printing given message to
--- 'stderr'.
+-- | Fail returning the following status code and message.
 
 failWith :: Int -> Maybe String -> Hapistrano a
 failWith n msg = throwError (Failure n msg)
@@ -126,24 +126,22 @@ exec' prog args cmd = do
         case configSshOptions of
           Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
-  liftIO $ do
-    printLine hostLabel
-    putStrLn ("$ " ++ cmd)
+  liftIO $ configPrint StdoutDest (putLine hostLabel ++ "$ " ++ cmd ++ "\n")
   (exitCode, stdout', stderr') <- liftIO
     (readProcessWithExitCode prog args "")
   unless (null stdout') . liftIO $
-    putStrLn stdout'
+    configPrint StdoutDest stdout'
   unless (null stderr') . liftIO $
-    hPutStrLn stderr stderr'
+    configPrint StderrDest stderr'
   case exitCode of
     ExitSuccess ->
       return stdout'
     ExitFailure n ->
       failWith n Nothing
 
--- | Print something “inside” a line, sort-of beautifully.
+-- | Put something “inside” a line, sort-of beautifully.
 
-printLine :: String -> IO ()
-printLine str = putStrLn ("*** " ++ str ++ padding)
+putLine :: String -> String
+putLine str = "*** " ++ str ++ padding ++ "\n"
   where
     padding = ' ' : replicate (75 - length str) '*'
