@@ -84,8 +84,10 @@ spec = do
 
     describe "dropOldReleases" $
       it "works" $ \(deployPath, repoPath) -> runHap $ do
-        let task  = mkTask deployPath repoPath
-        rs <- replicateM 7 (Hap.pushRelease task)
+        rs <- replicateM 7 $ do
+          r <- Hap.pushRelease (mkTask deployPath repoPath)
+          Hap.registerReleaseAsComplete deployPath r
+          return r
         Hap.dropOldReleases deployPath 5
         -- two oldest releases should not survive:
         forM_ (take 2 rs) $ \r ->
@@ -94,6 +96,14 @@ spec = do
         -- 5 most recent releases should stay alive:
         forM_ (drop 2 rs) $ \r ->
           (Hap.releasePath deployPath r >>= doesDirExist)
+            `shouldReturn` True
+        -- two oldest completion tokens should not survive:
+        forM_ (take 2 rs) $ \r ->
+          (Hap.ctokenPath deployPath r >>= doesFileExist)
+            `shouldReturn` False
+        -- 5 most recent completion tokens should stay alive:
+        forM_ (drop 2 rs) $ \r ->
+          (Hap.ctokenPath deployPath r >>= doesFileExist)
             `shouldReturn` True
 
 ----------------------------------------------------------------------------

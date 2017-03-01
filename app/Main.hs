@@ -178,4 +178,4 @@ main = do
         ((Right () <$ printer (length haps)) : haps)
       case sequence_ results of
         Left n -> exitWith (ExitFailure n)
-        Right () -> putStr "Success."
+        Right () -> putStrLn "Success."
