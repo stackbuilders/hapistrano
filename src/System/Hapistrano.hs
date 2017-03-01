@@ -105,10 +105,14 @@ dropOldReleases
   -> Natural           -- ^ How many releases to keep
   -> Hapistrano ()     -- ^ Deleted Releases
 dropOldReleases deployPath n = do
-  releases <- deployedReleases deployPath
-  forM_ (genericDrop n releases) $ \release -> do
+  dreleases <- deployedReleases deployPath
+  forM_ (genericDrop n dreleases) $ \release -> do
     rpath <- releasePath deployPath release
     exec (Rm rpath)
+  creleases <- completedReleases deployPath
+  forM_ (genericDrop n creleases) $ \release -> do
+    cpath <- ctokenPath  deployPath release
+    exec (Rm cpath)
 
 -- | Play the given script switching to diroctory of given release.
 

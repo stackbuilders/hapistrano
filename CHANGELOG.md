@@ -1,8 +1,8 @@
 ## 0.3.1.0
 
 * Fixed a bug with repos not being fetched properly.
-
 * Implemented concurrent deployment to multiple hosts.
+* Now completion tokens are dropped automatically like old releases.
 
 ## 0.3.0.1
 
