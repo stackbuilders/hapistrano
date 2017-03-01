@@ -1,3 +1,7 @@
+## 0.3.1.0
+
+* Fixed a bug with repos not being fetched properly.
+
 ## 0.3.0.1
 
 * Reduced verbosity of some commands to make reading logs easier.
