@@ -2,6 +2,11 @@ language: c
 
 sudo: false
 
+cache:
+  directories:
+    - ~/.ghc
+    - ~/.cabal
+
 matrix:
   include:
     - env: CABALVER=1.24 GHCVER=7.10.3
@@ -19,7 +24,7 @@ install:
  - cabal install --only-dependencies --enable-tests
 
 script:
- - cabal configure --enable-tests --enable-coverage -v2 -f dev
+ - cabal configure --enable-tests -v2 -f dev
  - cabal build
  - cabal test --show-details=always
  - cabal sdist
