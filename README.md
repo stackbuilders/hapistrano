@@ -110,7 +110,7 @@ like this:
 targets:
   - host: myserver-a.com
     port: 2222
-  - host: myserver-b.cmo
+  - host: myserver-b.com
 # the rest is the same…
 ```
 
