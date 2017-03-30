@@ -33,7 +33,6 @@ import Control.Applicative
 
 data Opts = Opts
   { optsCommand :: Command
-  , optsVersion :: Bool
   , optsConfigFile :: FilePath
   }
 
@@ -45,10 +44,17 @@ data Command
   | Rollback Natural -- ^ Rollback to Nth previous release
 
 parserInfo :: ParserInfo Opts
-parserInfo = info (helper <*> optionParser)
-  ( fullDesc <>
-    progDesc "Deploy tool for Haskell applications" <>
-    header "Hapistrano - A deployment library for Haskell applications" )
+parserInfo =
+  info
+    (helper <*> versionOption <*> optionParser)
+    (fullDesc <> progDesc "Deploy tool for Haskell applications" <>
+     header "Hapistrano - A deployment library for Haskell applications")
+  where
+    versionOption :: Parser (a -> a)
+    versionOption =
+      infoOption
+        (showVersion version)
+        (long "version" <> short 'v' <> help "Show version of the program")
 
 optionParser :: Parser Opts
 optionParser = Opts
@@ -57,10 +63,6 @@ optionParser = Opts
     (info deployParser (progDesc "Deploy a new release")) <>
     command "rollback"
     (info rollbackParser (progDesc "Roll back to Nth previous release")) )
-  <*> switch
-  ( long "version"
-  <> short 'v'
-  <> help "Show version of the program" )
   <*> strOption
   ( long "config"
   <> short 'c'
@@ -113,9 +115,6 @@ data Message
 main :: IO ()
 main = do
   Opts {..} <- execParser parserInfo
-  when optsVersion $ do
-    putStrLn $ "Hapistrano " ++ showVersion version
-    exitSuccess
   econfig <- Yaml.decodeFileEither optsConfigFile
   case econfig of
     Left err -> do
