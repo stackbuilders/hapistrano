@@ -34,6 +34,8 @@ data Config = Config
     -- ^ Collection of files to copy over to target machine before building
   , configCopyDirs :: ![CopyThing]
     -- ^ Collection of directories to copy over to target machine before building
+  , configVcAction :: !Bool
+  -- ^ Perform version control related actions. By default, it's assumed to be True.
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -62,6 +64,7 @@ instance FromJSON Config where
       maybe (return Nothing) (fmap Just . mapM mkCmd)
     configCopyFiles  <- o .:? "copy_files" .!= []
     configCopyDirs   <- o .:? "copy_dirs"  .!= []
+    configVcAction    <- o .:? "vc_action" .!= True
     return Config {..}
 
 instance FromJSON CopyThing where
