@@ -124,7 +124,7 @@ A few things to note here:
   interaction was unsuccessful, the `hap` tool will exit with non-zero exit
   code.
 
-* The log is printed is such a way that messages from several machines get
+* The log is printed in such a way that messages from several machines get
   intermixed, but it's guaranteed that they won't overlap (printing itself
   is sequential) and the headers will tell you exactly which machine was
   executing which command.
