@@ -63,6 +63,9 @@ The following parameters are *optional*:
 * `restart_command` — if you need to restart a remote web server after a
   successful rollback, specify the command that you use in this variable. It
   will be run after both deploy and rollback.
+* `vc_action` - Controls if version control related activity should
+  take place. It defaults to true. When you don't want activity like
+  cloning, fetching etc. to take place, set this to `false`.
 
 After creating a configuration file as above, deploying is as simple as:
 
