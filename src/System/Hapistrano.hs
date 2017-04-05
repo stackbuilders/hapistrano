@@ -16,6 +16,7 @@
 
 module System.Hapistrano
   ( pushRelease
+  , pushReleaseWithoutVc
   , registerReleaseAsComplete
   , activateRelease
   , rollback
@@ -54,6 +55,15 @@ pushRelease Task {..} = do
   release <- newRelease taskReleaseFormat
   cloneToRelease taskDeployPath release
   setReleaseRevision taskDeployPath release taskRevision
+  return release
+
+-- | Same as 'pushRelease' but doesn't perform any version control
+-- related operations.
+
+pushReleaseWithoutVc :: Task -> Hapistrano Release
+pushReleaseWithoutVc Task {..} = do
+  setupDirs taskDeployPath
+  release <- newRelease taskReleaseFormat
   return release
 
 -- | Create a file-token that will tell rollback function that this release

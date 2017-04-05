@@ -122,17 +122,19 @@ main = do
       exitFailure
     Right C.Config {..} -> do
       chan <- newTChanIO
+      let task rf = Task { taskDeployPath    = configDeployPath
+                         , taskRepository    = configRepo
+                         , taskRevision      = configRevision
+                         , taskReleaseFormat = rf }
       let printFnc dest str = atomically $
             writeTChan chan (PrintMsg dest str)
           hap sshOpts =  do
             r <- Hap.runHapistrano sshOpts printFnc $
               case optsCommand of
                 Deploy releaseFormat n -> do
-                  release <- Hap.pushRelease Task
-                    { taskDeployPath    = configDeployPath
-                    , taskRepository    = configRepo
-                    , taskRevision      = configRevision
-                    , taskReleaseFormat = releaseFormat }
+                  release <- case configVcAction of
+                               True -> Hap.pushRelease (task releaseFormat)
+                               False -> Hap.pushReleaseWithoutVc (task releaseFormat)
                   rpath <- Hap.releasePath configDeployPath release
                   forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
                     srcPath  <- resolveFile' src

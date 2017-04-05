@@ -1,3 +1,8 @@
+## 0.3.2.0
+
+* Fix `-v` switch for hap.
+* Add `vc_action` to control version control related tasks.
+
 ## 0.3.1.0
 
 * Fixed a bug with repos not being fetched properly.
