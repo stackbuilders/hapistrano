@@ -238,6 +238,7 @@ instance Command GitReset where
   type Result GitReset = ()
   renderCommand (GitReset revision) = formatCmd "git"
     [ Just "reset"
+    , Just "--hard"
     , Just revision ]
   parseResult Proxy _ = ()
 
