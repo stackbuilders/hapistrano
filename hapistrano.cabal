@@ -60,7 +60,7 @@ executable hap
   hs-source-dirs:      app
   main-is:             Main.hs
   other-modules:       Config
-  build-depends:       aeson              >= 0.11 && < 1.2
+  build-depends:       aeson              >= 0.11 && < 1.3
                      , async              >= 2.0.1.6 && < 2.2
                      , base               >= 4.6 && < 5.0
                      , hapistrano
