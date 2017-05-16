@@ -58,7 +58,7 @@ parserInfo =
 
 optionParser :: Parser Opts
 optionParser = Opts
-  <$> subparser
+  <$> hsubparser
   ( command "deploy"
     (info deployParser (progDesc "Deploy a new release")) <>
     command "rollback"
