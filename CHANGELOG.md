@@ -1,3 +1,7 @@
+## 0.3.2.2
+
+* Allow optparse-applicative 0.14
+
 ## 0.3.2.1
 
 * Add support for help in subcommands. Thanks to Vanessa McHale (GitHub: vmchale) for this contribution
