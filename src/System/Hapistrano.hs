@@ -8,7 +8,7 @@
 -- Portability :  portable
 --
 -- A module for creating reliable deploy processes for Haskell applications.
-
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -63,8 +63,7 @@ pushRelease Task {..} = do
 pushReleaseWithoutVc :: Task -> Hapistrano Release
 pushReleaseWithoutVc Task {..} = do
   setupDirs taskDeployPath
-  release <- newRelease taskReleaseFormat
-  return release
+  newRelease taskReleaseFormat
 
 -- | Create a file-token that will tell rollback function that this release
 -- should be considered successfully compiled\/completed.
@@ -201,7 +200,7 @@ deployedReleases
 deployedReleases deployPath = do
   let rpath = releasesPath deployPath
   xs <- exec (Find 1 rpath :: Find Dir)
-  ps <- mapM (stripDir rpath) (filter (/= rpath) xs)
+  ps <- stripDirs rpath (filter (/= rpath) xs)
   (return . sortBy (comparing Down) . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelDir <$> ps)
 
@@ -213,7 +212,7 @@ completedReleases
 completedReleases deployPath = do
   let cpath = ctokensPath deployPath
   xs <- exec (Find 1 cpath :: Find File)
-  ps <- mapM (stripDir cpath) xs
+  ps <- stripDirs cpath xs
   (return . sortBy (comparing Down) . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelFile <$> ps)
 
@@ -280,3 +279,11 @@ ctokenPath deployPath release = do
   case parseRelFile rendered of
     Nothing -> failWith 1 (Just $ "Could not append path: " ++ rendered)
     Just rpath -> return (ctokensPath deployPath </> rpath)
+
+stripDirs :: Path Abs Dir -> [Path Abs t] -> Hapistrano [Path Rel t]
+stripDirs path =
+#if MIN_VERSION_path(0,6,0)
+  mapM (stripProperPrefix path)
+#else
+  mapM (stripDir path)
+#endif

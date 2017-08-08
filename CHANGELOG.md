@@ -1,3 +1,7 @@
+## 0.3.2.3
+
+* Allow path-io 1.3
+
 ## 0.3.2.2
 
 * Allow optparse-applicative 0.14
