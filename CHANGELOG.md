@@ -1,3 +1,8 @@
+## 0.3.2.4
+
+* Allow time 1.8
+* Allow process 1.6
+
 ## 0.3.2.3
 
 * Allow path-io 1.3
