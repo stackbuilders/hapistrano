@@ -1,3 +1,8 @@
+## 0.3.3.0
+
+* Correct bounds for base. GHC support for versions older than 7.10 was dropped on 0.3.0.0
+* Add `run_locally` to run user defined commands locally before deployment. Thanks to Sibi (GitHub: psibi) for this contribution
+
 ## 0.3.2.4
 
 * Allow time 1.8
