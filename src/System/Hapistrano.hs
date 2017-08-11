@@ -193,17 +193,17 @@ cloneToRelease deployPath release = do
   let cpath = cacheRepoPath deployPath
   exec (GitClone False (Right cpath) rpath)
 
--- | Set the release to the correct revision by resetting the head of the
--- git repo.
+-- | Set the release to the correct revision by checking out a branch or
+-- a commit.
 
 setReleaseRevision
   :: Path Abs Dir      -- ^ Deploy path
-  -> Release           -- ^ 'Release' to reset
-  -> String            -- ^ Revision to reset to
+  -> Release           -- ^ 'Release' to checkout
+  -> String            -- ^ Revision to checkout
   -> Hapistrano ()
 setReleaseRevision deployPath release revision = do
   rpath <- releasePath deployPath release
-  exec (Cd rpath (GitReset revision))
+  exec (Cd rpath (GitCheckout revision))
 
 -- | Return a list of all currently deployed releases sorted newest first.
 

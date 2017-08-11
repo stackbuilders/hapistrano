@@ -27,6 +27,7 @@ module System.Hapistrano.Commands
   , Readlink (..)
   , Find (..)
   , Touch (..)
+  , GitCheckout (..)
   , GitClone (..)
   , GitFetch (..)
   , GitReset (..)
@@ -202,6 +203,17 @@ instance Command Touch where
   renderCommand (Touch path) = formatCmd "touch"
     [ Just (fromAbsFile path) ]
   parseResult Proxy _ = ()
+
+-- | Git checkout.
+
+data GitCheckout = GitCheckout String
+
+instance Command GitCheckout where
+  type Result GitCheckout = ()
+  renderCommand (GitCheckout revision) = formatCmd "git"
+    [ Just "checkout"
+    , Just revision ]
+  parseResult Proxy  _ = ()
 
 -- | Git clone.
 
