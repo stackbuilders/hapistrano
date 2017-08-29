@@ -75,6 +75,13 @@ run_locally:
   - bash deploy.sh
 ```
 
+Note how we are even able to execute a bash script named `deploy.sh`
+above. Be sure to use `set -e` in your bash script to avoid
+headaches. Hapistrano will stop the execution on non zero exit
+codes. Without the usage of `set -e`, there is a possiblity that your
+bash script may return a zero exit code even if your intermediate
+command resulted in an error.
+
 After creating a configuration file as above, deploying is as simple as:
 
 ```bash
