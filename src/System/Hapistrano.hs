@@ -125,7 +125,7 @@ dropOldReleases deployPath n = do
     cpath <- ctokenPath  deployPath release
     exec (Rm cpath)
 
--- | Play the given script switching to diroctory of given release.
+-- | Play the given script switching to directory of given release.
 
 playScript
   :: Path Abs Dir      -- ^ Deploy path
