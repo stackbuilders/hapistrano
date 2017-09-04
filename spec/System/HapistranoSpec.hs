@@ -20,7 +20,7 @@ import qualified Test.Hspec as Hspec
 spec :: Spec
 spec = do
   describe "readScript" $
-    it "preforms all the necessary normalizations correctly" $ do
+    it "performs all the necessary normalizations correctly" $ do
       spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
       (fmap Hap.unGenericCommand <$> Hap.readScript spath)
         `Hspec.shouldReturn`
