@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.2.4
+version:             0.3.3.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -43,7 +43,7 @@ library
                      , System.Hapistrano.Commands
                      , System.Hapistrano.Core
                      , System.Hapistrano.Types
-  build-depends:       base               >= 4.6 && < 5.0
+  build-depends:       base               >= 4.8 && < 5.0
                      , filepath           >= 1.2 && < 1.5
                      , mtl                >= 2.0 && < 3.0
                      , path               >= 0.5 && < 0.7
@@ -63,7 +63,7 @@ executable hap
                      , Paths_hapistrano
   build-depends:       aeson              >= 0.11 && < 1.3
                      , async              >= 2.0.1.6 && < 2.2
-                     , base               >= 4.6 && < 5.0
+                     , base               >= 4.8 && < 5.0
                      , hapistrano
                      , optparse-applicative >= 0.11 && < 0.15
                      , path               >= 0.5 && < 0.7
@@ -81,7 +81,7 @@ test-suite test
   hs-source-dirs:      spec
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
-  build-depends:       base               >= 4.5 && < 5.0
+  build-depends:       base               >= 4.8 && < 5.0
                      , directory          >= 1.2.2 && < 1.4
                      , filepath           >= 1.2 && < 1.5
                      , hapistrano
