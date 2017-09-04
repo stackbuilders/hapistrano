@@ -66,6 +66,21 @@ The following parameters are *optional*:
 * `vc_action` - Controls if version control related activity should
   take place. It defaults to true. When you don't want activity like
   cloning, fetching etc. to take place, set this to `false`.
+* `run_locally:`- Instructions to run locally on your machine in the
+  form of shell commands. Example:
+
+```
+run_locally:
+  - pwd
+  - bash deploy.sh
+```
+
+Note how we are even able to execute a bash script named `deploy.sh`
+above. Be sure to use `set -e` in your bash script to avoid
+headaches. Hapistrano will stop the execution on non zero exit
+codes. Without the usage of `set -e`, there is a possiblity that your
+bash script may return a zero exit code even if your intermediate
+command resulted in an error.
 
 After creating a configuration file as above, deploying is as simple as:
 

@@ -22,6 +22,7 @@ module System.Hapistrano
   , rollback
   , dropOldReleases
   , playScript
+  , playScriptLocally
     -- * Path helpers
   , releasePath
   , currentSymlinkPath
@@ -40,6 +41,7 @@ import Path
 import System.Hapistrano.Commands
 import System.Hapistrano.Core
 import System.Hapistrano.Types
+import Control.Monad.Reader (local)
 
 ----------------------------------------------------------------------------
 -- High-level functionality
@@ -123,7 +125,7 @@ dropOldReleases deployPath n = do
     cpath <- ctokenPath  deployPath release
     exec (Rm cpath)
 
--- | Play the given script switching to diroctory of given release.
+-- | Play the given script switching to directory of given release.
 
 playScript
   :: Path Abs Dir      -- ^ Deploy path
@@ -133,6 +135,17 @@ playScript
 playScript deployDir release cmds = do
   rpath <- releasePath deployDir release
   forM_ cmds (exec . Cd rpath)
+
+-- | Plays the given script on your machine locally.
+
+playScriptLocally :: [GenericCommand] -> Hapistrano ()
+playScriptLocally cmds =
+  local
+    (\c ->
+        c
+        { configSshOptions = Nothing
+        }) $
+  forM_ cmds exec
 
 ----------------------------------------------------------------------------
 -- Helpers

@@ -8,6 +8,7 @@ import Control.Monad
 import Control.Monad.Reader
 import Path
 import Path.IO
+import Data.Maybe (catMaybes)
 import System.Hapistrano.Types
 import System.IO
 import Test.Hspec hiding (shouldBe, shouldReturn)
@@ -19,7 +20,7 @@ import qualified Test.Hspec as Hspec
 spec :: Spec
 spec = do
   describe "readScript" $
-    it "preforms all the necessary normalizations correctly" $ do
+    it "performs all the necessary normalizations correctly" $ do
       spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
       (fmap Hap.unGenericCommand <$> Hap.readScript spath)
         `Hspec.shouldReturn`
@@ -58,6 +59,23 @@ spec = do
             rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
         Hap.exec rc `shouldReturn` rpath
         doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+        
+    describe "playScriptLocally (successful run)" $
+       it "check that local scripts are run and deployment is successful" $ \(deployPath, repoPath) -> runHap $ do
+        let localCommands = catMaybes $ map Hap.mkGenericCommand ["pwd", "ls"]
+            task = mkTask deployPath repoPath
+        Hap.playScriptLocally localCommands
+        release <- Hap.pushRelease task
+        Hap.registerReleaseAsComplete deployPath release
+        (Hap.ctokenPath deployPath release >>= doesFileExist) `shouldReturn` True
+
+    describe "playScriptLocally (error exit)" $
+       it "check that deployment isn't done" $ \(deployPath, repoPath) -> (runHap $ do
+        let localCommands = catMaybes $ map Hap.mkGenericCommand ["pwd", "ls", "false"]
+            task = mkTask deployPath repoPath
+        Hap.playScriptLocally localCommands
+        release <- Hap.pushRelease task
+        Hap.registerReleaseAsComplete deployPath release) `shouldThrow` anyException
 
     describe "rollback" $ do
       context "without completion tokens" $

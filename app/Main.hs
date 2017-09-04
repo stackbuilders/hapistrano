@@ -132,6 +132,7 @@ main = do
             r <- Hap.runHapistrano sshOpts printFnc $
               case optsCommand of
                 Deploy releaseFormat n -> do
+                  forM_ configRunLocally Hap.playScriptLocally
                   release <- case configVcAction of
                                True -> Hap.pushRelease (task releaseFormat)
                                False -> Hap.pushReleaseWithoutVc (task releaseFormat)
