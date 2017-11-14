@@ -11,8 +11,6 @@ import Path.IO
 import Data.Maybe (catMaybes)
 import System.Hapistrano.Types
 import System.IO
-import System.Process (readProcessWithExitCode)
-import GHC.IO.Exception (ExitCode(ExitSuccess))
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
