@@ -17,6 +17,9 @@ import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core as Hap
 import qualified Test.Hspec as Hspec
 
+testBranchName :: String
+testBranchName = "another_branch"
+
 spec :: Spec
 spec = do
   describe "readScript" $
@@ -33,7 +36,7 @@ spec = do
         , "cabal build -j" ]
 
   around withSandbox $ do
-    describe "pushRelease" $
+    describe "pushRelease" $ do
       it "sets up repo all right" $ \(deployPath, repoPath) -> runHap $ do
         let task = mkTask deployPath repoPath
         release <- Hap.pushRelease task
@@ -41,6 +44,18 @@ spec = do
         -- let's check that the dir exists and contains the right files
         (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt"))
           `shouldReturn` "Foo!\n"
+
+      it "deploys properly a branch other than master" $ \(deployPath, repoPath) -> runHap $ do
+        let task = mkTaskWithCustomRevision deployPath repoPath testBranchName
+        release <- Hap.pushRelease task
+        rpath   <- Hap.releasePath deployPath release
+        -- let's check that the dir exists and contains the right files
+        (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "bar.txt"))
+            `shouldReturn` "Bar!\n"
+        -- This fails if the opened branch is not testBranchName
+        justExec rpath ("test `git rev-parse --abbrev-ref HEAD` = " ++ testBranchName)
+        -- This fails if there are unstaged changes
+        justExec rpath "git diff --exit-code"
 
     describe "registerReleaseAsComplete" $
       it "creates the token all right" $ \(deployPath, repoPath) -> runHap $ do
@@ -163,6 +178,13 @@ populateTestRepo path = runHap $ do
   justExec path "echo 'Foo!' > foo.txt"
   justExec path "git add -A"
   justExec path "git commit -m 'Initial commit'"
+  -- Add dummy content to a branch that is not master
+  justExec path ("git checkout -b " ++ testBranchName)
+  justExec path "echo 'Bar!' > bar.txt"
+  justExec path "git add bar.txt"
+  justExec path "git commit -m 'Added more bars to another branch'"
+  justExec path "git checkout master"
+
 
 -- | Execute arbitrary commands in the specified directory.
 
@@ -191,8 +213,11 @@ runHap m = do
 -- | Make a 'Task' given deploy path and path to the repo.
 
 mkTask :: Path Abs Dir -> Path Abs Dir -> Task
-mkTask deployPath repoPath = Task
+mkTask deployPath repoPath = mkTaskWithCustomRevision deployPath repoPath "master"
+
+mkTaskWithCustomRevision :: Path Abs Dir -> Path Abs Dir -> String -> Task
+mkTaskWithCustomRevision deployPath repoPath revision = Task
   { taskDeployPath    = deployPath
   , taskRepository    = fromAbsDir repoPath
-  , taskRevision      = "master"
+  , taskRevision      = revision
   , taskReleaseFormat = ReleaseLong }
