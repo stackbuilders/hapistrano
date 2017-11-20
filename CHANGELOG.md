@@ -1,3 +1,6 @@
+## 0.3.4.0
+* Use `git checkout` instead of `git reset` to set the release revision
+
 ## 0.3.3.0
 
 * Correct bounds for base. GHC support for versions older than 7.10 was dropped on 0.3.0.0
