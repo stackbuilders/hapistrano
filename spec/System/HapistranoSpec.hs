@@ -10,6 +10,7 @@ import Path
 import Path.IO
 import Data.Maybe (catMaybes)
 import System.Hapistrano.Types
+import System.Info (os)
 import System.IO
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified System.Hapistrano as Hap
@@ -68,13 +69,13 @@ spec = do
       it "creates the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
         let task = mkTask deployPath repoPath
         release <- Hap.pushRelease task
-        Hap.activateRelease deployPath release
+        Hap.activateRelease currentSystem deployPath release
         rpath <- Hap.releasePath deployPath release
         let rc :: Hap.Readlink Dir
-            rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+            rc = Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
         Hap.exec rc `shouldReturn` rpath
         doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
-        
+
     describe "playScriptLocally (successful run)" $
        it "check that local scripts are run and deployment is successful" $ \(deployPath, repoPath) -> runHap $ do
         let localCommands = catMaybes $ map Hap.mkGenericCommand ["pwd", "ls"]
@@ -97,10 +98,10 @@ spec = do
         it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) -> runHap $ do
           let task = mkTask deployPath repoPath
           rs <- replicateM 5 (Hap.pushRelease task)
-          Hap.rollback deployPath 2
+          Hap.rollback currentSystem deployPath 2
           rpath <- Hap.releasePath deployPath (rs !! 2)
           let rc :: Hap.Readlink Dir
-              rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+              rc = Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
           Hap.exec rc `shouldReturn` rpath
           doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
       context "with completion tokens" $
@@ -108,10 +109,10 @@ spec = do
           let task = mkTask deployPath repoPath
           rs <- replicateM 5 (Hap.pushRelease task)
           forM_ (take 3 rs) (Hap.registerReleaseAsComplete deployPath)
-          Hap.rollback deployPath 2
+          Hap.rollback currentSystem deployPath 2
           rpath <- Hap.releasePath deployPath (rs !! 0)
           let rc :: Hap.Readlink Dir
-              rc = Hap.Readlink (Hap.currentSymlinkPath deployPath)
+              rc = Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
           Hap.exec rc `shouldReturn` rpath
           doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
 
@@ -221,3 +222,8 @@ mkTaskWithCustomRevision deployPath repoPath revision = Task
   , taskRepository    = fromAbsDir repoPath
   , taskRevision      = revision
   , taskReleaseFormat = ReleaseLong }
+
+currentSystem :: TargetSystem
+currentSystem = if os == "linux"
+                then GNULinux
+                else BSD

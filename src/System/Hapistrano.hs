@@ -82,23 +82,25 @@ registerReleaseAsComplete deployPath release = do
 -- used in deploy or rollback cases.
 
 activateRelease
-  :: Path Abs Dir      -- ^ Deploy path
+  :: TargetSystem
+  -> Path Abs Dir      -- ^ Deploy path
   -> Release           -- ^ Release identifier to activate
   -> Hapistrano ()
-activateRelease deployPath release = do
+activateRelease ts deployPath release = do
   rpath <- releasePath deployPath release
   let tpath = tempSymlinkPath deployPath
       cpath = currentSymlinkPath deployPath
-  exec (Ln rpath tpath) -- create a symlink for the new candidate
-  exec (Mv tpath cpath) -- atomically replace the symlink
+  exec (Ln ts rpath tpath) -- create a symlink for the new candidate
+  exec (Mv ts tpath cpath) -- atomically replace the symlink
 
 -- | Activates one of already deployed releases.
 
 rollback
-  :: Path Abs Dir      -- ^ Deploy path
+  :: TargetSystem
+  -> Path Abs Dir      -- ^ Deploy path
   -> Natural           -- ^ How many releases back to go, 0 re-activates current
   -> Hapistrano ()
-rollback deployPath n = do
+rollback ts deployPath n = do
   crs <- completedReleases deployPath
   drs <- deployedReleases  deployPath
   -- NOTE If we don't have any completed releases, then perhaps the
@@ -107,7 +109,7 @@ rollback deployPath n = do
   -- deployed releases.
   case genericDrop n (if null crs then drs else crs) of
     [] -> failWith 1 (Just "Could not find the requested release to rollback to.")
-    (x:_) -> activateRelease deployPath x
+    (x:_) -> activateRelease ts deployPath x
 
 -- | Remove older releases to avoid filling up the target host filesystem.
 

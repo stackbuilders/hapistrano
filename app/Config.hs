@@ -1,5 +1,8 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Config
   ( Config (..)
@@ -13,6 +16,7 @@ import Data.Maybe (maybeToList)
 import Data.Yaml
 import Path
 import System.Hapistrano.Commands
+import System.Hapistrano.Types (TargetSystem(..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
 
@@ -37,6 +41,11 @@ data Config = Config
   , configVcAction :: !Bool
   -- ^ Perform version control related actions. By default, it's assumed to be True.
   , configRunLocally :: !(Maybe [GenericCommand])
+  -- ^ Perform a series of commands on the local machine before communication
+  -- with target server starts
+  , configTargetSystem :: !TargetSystem
+  -- ^ Optional parameter to specify the target system. It's GNU/Linux by
+  -- default
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -66,13 +75,20 @@ instance FromJSON Config where
     configCopyFiles  <- o .:? "copy_files" .!= []
     configCopyDirs   <- o .:? "copy_dirs"  .!= []
     configVcAction    <- o .:? "vc_action" .!= True
-    configRunLocally  <- o .:? "run_locally" >>= 
+    configRunLocally  <- o .:? "run_locally" >>=
       maybe (return Nothing) (fmap Just . mapM mkCmd)
+    configTargetSystem <- o .:? "linux" .!= GNULinux
     return Config {..}
 
 instance FromJSON CopyThing where
   parseJSON = withObject "src and dest of a thing to copy" $ \o ->
     CopyThing <$> (o .: "src") <*> (o .: "dest")
+
+instance FromJSON TargetSystem where
+  parseJSON = withBool "linux" $
+    pure . \case
+      True  -> GNULinux
+      False -> BSD
 
 mkCmd :: String -> Parser GenericCommand
 mkCmd raw =

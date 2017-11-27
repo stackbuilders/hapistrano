@@ -1,3 +1,7 @@
+## 0.3.5.0
+* Add support for deploying to other Unix systems, besides GNU/Linux which
+  didn't supported all the flags that Hapistrano was using. See issue #63
+
 ## 0.3.4.0
 * Use `git checkout` instead of `git reset` to set the release revision
 

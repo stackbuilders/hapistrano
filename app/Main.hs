@@ -151,11 +151,11 @@ main = do
                     Hap.scpDir srcPath dpath
                   forM_ configBuildScript (Hap.playScript configDeployPath release)
                   Hap.registerReleaseAsComplete configDeployPath release
-                  Hap.activateRelease configDeployPath release
+                  Hap.activateRelease configTargetSystem configDeployPath release
                   Hap.dropOldReleases configDeployPath n
                   forM_ configRestartCommand Hap.exec
                 Rollback n -> do
-                  Hap.rollback configDeployPath n
+                  Hap.rollback configTargetSystem configDeployPath n
                   forM_ configRestartCommand Hap.exec
             atomically (writeTChan chan FinishMsg)
             return r

@@ -18,6 +18,7 @@ module System.Hapistrano.Types
   , SshOptions (..)
   , OutputDest (..)
   , Release
+  , TargetSystem(..)
   , mkRelease
   , releaseTime
   , renderRelease
@@ -85,6 +86,13 @@ data OutputDest
 
 data Release = Release ReleaseFormat UTCTime
   deriving (Eq, Show, Ord)
+
+-- | Target's system where application will be deployed
+
+data TargetSystem
+  = GNULinux
+  | BSD
+  deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
 -- | Create a 'Release' indentifier.
 
