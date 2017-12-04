@@ -66,6 +66,12 @@ The following parameters are *optional*:
 * `vc_action` - Controls if version control related activity should
   take place. It defaults to true. When you don't want activity like
   cloning, fetching etc. to take place, set this to `false`.
+* `linux` - Specify, whether or not, the target system where Hapistrano will
+  deploy to is a GNU/Linux or other UNIX (g.e. BSD, Mac). This is set to `true`
+  by default so unless the target system is not GNU/Linux, this should not be
+  necessary. The platform where Hapistrano is running won't affect the
+  available options for commands (g.e. A Mac deploying to a Ubuntu machine,
+  doesn't need this flag)
 * `run_locally:`- Instructions to run locally on your machine in the
   form of shell commands. Example:
 

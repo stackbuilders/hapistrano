@@ -45,6 +45,8 @@ import Data.Proxy
 import Numeric.Natural
 import Path
 
+import System.Hapistrano.Types (TargetSystem(..))
+
 ----------------------------------------------------------------------------
 -- Commands
 
@@ -110,19 +112,20 @@ instance Command Rm where
 
 -- | Move or rename files or directories.
 
-data Mv t = Mv (Path Abs t) (Path Abs t)
+data Mv t = Mv TargetSystem (Path Abs t) (Path Abs t)
 
 instance Command (Mv File) where
   type Result (Mv File) = ()
-  renderCommand (Mv old new) = formatCmd "mv"
-    [ Just "-fvT"
+  renderCommand (Mv ts old new) = formatCmd "mv"
+    [ Just flags
     , Just (fromAbsFile old)
     , Just (fromAbsFile new) ]
+    where flags = if isLinux ts then "-fvT" else "-fv"
   parseResult Proxy _ = ()
 
 instance Command (Mv Dir) where
   type Result (Mv Dir) = ()
-  renderCommand (Mv old new) = formatCmd "mv"
+  renderCommand (Mv _ old new) = formatCmd "mv"
     [ Just "-fv"
     , Just (fromAbsDir old)
     , Just (fromAbsDir new) ]
@@ -131,32 +134,35 @@ instance Command (Mv Dir) where
 -- | Create symlinks.
 
 data Ln where
-  Ln :: Path Abs t -> Path Abs File -> Ln
+  Ln :: TargetSystem -> Path Abs t -> Path Abs File -> Ln
 
 instance Command Ln where
   type Result Ln = ()
-  renderCommand (Ln target linkName) = formatCmd "ln"
-    [ Just "-svT"
+  renderCommand (Ln ts target linkName) = formatCmd "ln"
+    [ Just flags
     , Just (toFilePath target)
     , Just (fromAbsFile linkName) ]
+    where flags = if isLinux ts then "-svT" else "-sv"
   parseResult Proxy _ = ()
 
 -- | Read link.
 
-data Readlink t = Readlink (Path Abs File)
+data Readlink t = Readlink TargetSystem (Path Abs File)
 
 instance Command (Readlink File) where
   type Result (Readlink File) = Path Abs File
-  renderCommand (Readlink path) = formatCmd "readlink"
-    [ Just "-f"
+  renderCommand (Readlink ts path) = formatCmd "readlink"
+    [ flags
     , Just (toFilePath path) ]
+    where flags = if isLinux ts then Just "-f" else Nothing
   parseResult Proxy = fromJust . parseAbsFile . trim
 
 instance Command (Readlink Dir) where
   type Result (Readlink Dir) = Path Abs Dir
-  renderCommand (Readlink path) = formatCmd "readlink"
-    [ Just "-f"
+  renderCommand (Readlink ts path) = formatCmd "readlink"
+    [ flags
     , Just (toFilePath path) ]
+    where flags = if isLinux ts then Just "-f" else Nothing
   parseResult Proxy = fromJust . parseAbsDir . trim
 
 -- | @ls@, so far used only to check existence of directories, so it's not
@@ -305,3 +311,6 @@ quoteCmd str =
 
 trim :: String -> String
 trim = dropWhileEnd isSpace . dropWhile isSpace
+
+isLinux :: TargetSystem -> Bool
+isLinux = (== GNULinux)
