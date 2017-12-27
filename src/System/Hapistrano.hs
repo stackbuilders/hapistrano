@@ -30,18 +30,18 @@ module System.Hapistrano
   , ctokenPath )
 where
 
-import Control.Monad
-import Control.Monad.Except
-import Data.List (genericDrop, dropWhileEnd, sortBy)
-import Data.Maybe (mapMaybe)
-import Data.Ord (comparing, Down (..))
-import Data.Time
-import Numeric.Natural
-import Path
-import System.Hapistrano.Commands
-import System.Hapistrano.Core
-import System.Hapistrano.Types
-import Control.Monad.Reader (local)
+import           Control.Monad
+import           Control.Monad.Except
+import           Control.Monad.Reader       (local)
+import           Data.List                  (dropWhileEnd, genericDrop, sortBy)
+import           Data.Maybe                 (mapMaybe)
+import           Data.Ord                   (Down (..), comparing)
+import           Data.Time
+import           Numeric.Natural
+import           Path
+import           System.Hapistrano.Commands
+import           System.Hapistrano.Core
+import           System.Hapistrano.Types
 
 ----------------------------------------------------------------------------
 -- High-level functionality
@@ -251,7 +251,7 @@ releasePath
 releasePath deployPath release = do
   let rendered = renderRelease release
   case parseRelDir rendered of
-    Nothing -> failWith 1 (Just $ "Could not append path: " ++ rendered)
+    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered)
     Just rpath -> return (releasesPath deployPath </> rpath)
 
 -- | Return the full path to the git repo used for cache purposes on the
@@ -292,7 +292,7 @@ ctokenPath
 ctokenPath deployPath release = do
   let rendered = renderRelease release
   case parseRelFile rendered of
-    Nothing -> failWith 1 (Just $ "Could not append path: " ++ rendered)
+    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered)
     Just rpath -> return (ctokensPath deployPath </> rpath)
 
 stripDirs :: Path Abs Dir -> [Path Abs t] -> Hapistrano [Path Rel t]

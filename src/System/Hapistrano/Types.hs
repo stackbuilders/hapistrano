@@ -25,11 +25,11 @@ module System.Hapistrano.Types
   , parseRelease )
 where
 
-import Control.Applicative
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Time
-import Path
+import           Control.Applicative
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.Time
+import           Path
 
 -- | Hapistrano monad.
 
@@ -44,18 +44,18 @@ data Failure = Failure Int (Maybe String)
 data Config = Config
   { configSshOptions :: !(Maybe SshOptions)
     -- ^ 'Nothing' if we are running locally, or SSH options to use.
-  , configPrint :: !(OutputDest -> String -> IO ())
+  , configPrint      :: !(OutputDest -> String -> IO ())
     -- ^ How to print messages
   }
 
 -- | The records describes deployment task.
 
 data Task = Task
-  { taskDeployPath :: Path Abs Dir
+  { taskDeployPath    :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
-  , taskRepository :: String
+  , taskRepository    :: String
     -- ^ The URL of remote Git repo to deploy
-  , taskRevision :: String
+  , taskRevision      :: String
     -- ^ A SHA1 or branch to release
   , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use

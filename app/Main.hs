@@ -1,30 +1,25 @@
-{-# LANGUAGE CPP             #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Main (main) where
 
-import Control.Concurrent.Async
-import Control.Concurrent.STM
-import Control.Monad
-import Data.Monoid ((<>))
-import Data.Version (showVersion)
-import Numeric.Natural
-import Options.Applicative hiding (str)
-import Path
-import Path.IO
-import Paths_hapistrano (version)
-import System.Exit
-import System.Hapistrano.Types
-import System.IO
 import qualified Config                     as C
+import           Control.Concurrent.Async
+import           Control.Concurrent.STM
+import           Control.Monad
+import           Data.Monoid                ((<>))
+import           Data.Version               (showVersion)
 import qualified Data.Yaml                  as Yaml
+import           Numeric.Natural
+import           Options.Applicative        hiding (str)
+import           Path
+import           Path.IO
+import           Paths_hapistrano           (version)
+import           System.Exit
 import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core     as Hap
-
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
+import           System.Hapistrano.Types
+import           System.IO
 
 ----------------------------------------------------------------------------
 -- Command line options
@@ -32,7 +27,7 @@ import Control.Applicative
 -- | Command line options.
 
 data Opts = Opts
-  { optsCommand :: Command
+  { optsCommand    :: Command
   , optsConfigFile :: FilePath
   }
 
@@ -179,5 +174,5 @@ main = do
       results <- (runConcurrently . sequenceA . fmap Concurrently)
         ((Right () <$ printer (length haps)) : haps)
       case sequence_ results of
-        Left n -> exitWith (ExitFailure n)
+        Left n   -> exitWith (ExitFailure n)
         Right () -> putStrLn "Success."

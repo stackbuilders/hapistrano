@@ -4,19 +4,19 @@ module System.HapistranoSpec
   ( spec )
 where
 
-import Control.Monad
-import Control.Monad.Reader
-import Path
-import Path.IO
-import Data.Maybe (catMaybes)
-import System.Hapistrano.Types
-import System.Info (os)
-import System.IO
-import Test.Hspec hiding (shouldBe, shouldReturn)
-import qualified System.Hapistrano as Hap
+import           Control.Monad
+import           Control.Monad.Reader
+import           Data.Maybe                 (catMaybes)
+import           Path
+import           Path.IO
+import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
-import qualified System.Hapistrano.Core as Hap
-import qualified Test.Hspec as Hspec
+import qualified System.Hapistrano.Core     as Hap
+import           System.Hapistrano.Types
+import           System.Info                (os)
+import           System.IO
+import           Test.Hspec                 hiding (shouldBe, shouldReturn)
+import qualified Test.Hspec                 as Hspec
 
 testBranchName :: String
 testBranchName = "another_branch"
