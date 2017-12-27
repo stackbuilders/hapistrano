@@ -1,4 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Main (main) where
 
@@ -9,6 +11,8 @@ import           Control.Monad
 import           Data.Monoid                ((<>))
 import           Data.Version               (showVersion)
 import qualified Data.Yaml                  as Yaml
+import           Development.GitRev
+import           Formatting
 import           Numeric.Natural
 import           Options.Applicative        hiding (str)
 import           Path
@@ -46,10 +50,15 @@ parserInfo =
      header "Hapistrano - A deployment library for Haskell applications")
   where
     versionOption :: Parser (a -> a)
-    versionOption =
-      infoOption
+    versionOption = infoOption
+      (formatToString
+        ("Hapistrano: "% string
+          % "\nbranch: " % string
+          % "\nrevision: " % string)
         (showVersion version)
-        (long "version" <> short 'v' <> help "Show version of the program")
+        $(gitBranch)
+        $(gitHash))
+      (long "version" <> short 'v' <> help "Show version information")
 
 optionParser :: Parser Opts
 optionParser = Opts
@@ -171,7 +180,7 @@ main = do
               xs ->
                 let f (host, port) = SshOptions host port
                 in hap . Just . f <$> xs
-      results <- (runConcurrently . sequenceA . fmap Concurrently)
+      results <- (runConcurrently . traverse Concurrently)
         ((Right () <$ printer (length haps)) : haps)
       case sequence_ results of
         Left n   -> exitWith (ExitFailure n)
