@@ -1,30 +1,29 @@
-{-# LANGUAGE CPP             #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Main (main) where
 
-import Control.Concurrent.Async
-import Control.Concurrent.STM
-import Control.Monad
-import Data.Monoid ((<>))
-import Data.Version (showVersion)
-import Numeric.Natural
-import Options.Applicative hiding (str)
-import Path
-import Path.IO
-import Paths_hapistrano (version)
-import System.Exit
-import System.Hapistrano.Types
-import System.IO
 import qualified Config                     as C
+import           Control.Concurrent.Async
+import           Control.Concurrent.STM
+import           Control.Monad
+import           Data.Monoid                ((<>))
+import           Data.Version               (showVersion)
 import qualified Data.Yaml                  as Yaml
+import           Development.GitRev
+import           Formatting
+import           Numeric.Natural
+import           Options.Applicative        hiding (str)
+import           Path
+import           Path.IO
+import           Paths_hapistrano           (version)
+import           System.Exit
 import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core     as Hap
-
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
+import           System.Hapistrano.Types
+import           System.IO
 
 ----------------------------------------------------------------------------
 -- Command line options
@@ -32,7 +31,7 @@ import Control.Applicative
 -- | Command line options.
 
 data Opts = Opts
-  { optsCommand :: Command
+  { optsCommand    :: Command
   , optsConfigFile :: FilePath
   }
 
@@ -51,10 +50,15 @@ parserInfo =
      header "Hapistrano - A deployment library for Haskell applications")
   where
     versionOption :: Parser (a -> a)
-    versionOption =
-      infoOption
+    versionOption = infoOption
+      (formatToString
+        ("Hapistrano: "% string
+          % "\nbranch: " % string
+          % "\nrevision: " % string)
         (showVersion version)
-        (long "version" <> short 'v' <> help "Show version of the program")
+        $(gitBranch)
+        $(gitHash))
+      (long "version" <> short 'v' <> help "Show version information")
 
 optionParser :: Parser Opts
 optionParser = Opts
@@ -176,8 +180,8 @@ main = do
               xs ->
                 let f (host, port) = SshOptions host port
                 in hap . Just . f <$> xs
-      results <- (runConcurrently . sequenceA . fmap Concurrently)
+      results <- (runConcurrently . traverse Concurrently)
         ((Right () <$ printer (length haps)) : haps)
       case sequence_ results of
-        Left n -> exitWith (ExitFailure n)
+        Left n   -> exitWith (ExitFailure n)
         Right () -> putStrLn "Success."

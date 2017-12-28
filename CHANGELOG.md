@@ -1,3 +1,7 @@
+## 0.3.5.1
+* Standarize style
+* When showing version information also show git branch and commit
+
 ## 0.3.5.0
 * Add support for deploying to other Unix systems, besides GNU/Linux which
   didn't supported all the flags that Hapistrano was using. See issue #63

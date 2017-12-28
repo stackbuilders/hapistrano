@@ -37,15 +37,15 @@ module System.Hapistrano.Commands
   , readScript )
 where
 
-import Control.Monad.IO.Class
-import Data.Char (isSpace)
-import Data.List (dropWhileEnd)
-import Data.Maybe (catMaybes, mapMaybe, fromJust)
-import Data.Proxy
-import Numeric.Natural
-import Path
+import           Control.Monad.IO.Class
+import           Data.Char               (isSpace)
+import           Data.List               (dropWhileEnd)
+import           Data.Maybe              (catMaybes, fromJust, mapMaybe)
+import           Data.Proxy
+import           Numeric.Natural
+import           Path
 
-import System.Hapistrano.Types (TargetSystem(..))
+import           System.Hapistrano.Types (TargetSystem (..))
 
 ----------------------------------------------------------------------------
 -- Commands
@@ -231,7 +231,7 @@ instance Command GitClone where
     [ Just "clone"
     , if bare then Just "--bare" else Nothing
     , Just (case src of
-       Left repoUrl -> repoUrl
+       Left repoUrl  -> repoUrl
        Right srcPath -> fromAbsDir srcPath)
     , Just (fromAbsDir dest) ]
   parseResult Proxy _ = ()

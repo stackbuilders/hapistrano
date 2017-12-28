@@ -22,15 +22,15 @@ module System.Hapistrano.Core
   , scpDir )
 where
 
-import Control.Monad
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Proxy
-import Path
-import System.Exit
-import System.Hapistrano.Commands
-import System.Hapistrano.Types
-import System.Process
+import           Control.Monad
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.Proxy
+import           Path
+import           System.Exit
+import           System.Hapistrano.Commands
+import           System.Hapistrano.Types
+import           System.Process
 
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 
@@ -106,7 +106,7 @@ scp' src dest extraArgs = do
       hostPrefix =
         case sshHost <$> configSshOptions of
           Nothing -> ""
-          Just x -> x ++ ":"
+          Just x  -> x ++ ":"
       args = extraArgs ++ portArg ++ [src, hostPrefix ++ dest]
   void (exec' prog args (prog ++ " " ++ unwords args))
 
