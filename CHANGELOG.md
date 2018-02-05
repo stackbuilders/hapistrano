@@ -1,3 +1,6 @@
+## 0.3.5.2
+* Loose uppers bounds for async
+
 ## 0.3.5.1
 * Standarize style
 * When showing version information also show git branch and commit
