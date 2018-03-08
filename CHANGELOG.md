@@ -1,3 +1,6 @@
+## 0.3.5.3
+* Support for aeson 1.3
+
 ## 0.3.5.2
 * Loose uppers bounds for async
 
