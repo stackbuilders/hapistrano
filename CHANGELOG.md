@@ -1,3 +1,6 @@
+## 0.3.5.4
+* Support for temporary 1.3
+
 ## 0.3.5.3
 * Support for aeson 1.3
 
