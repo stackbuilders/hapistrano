@@ -33,6 +33,14 @@ script:
  - cabal test --show-details=always
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep "4"
+ - "docker build . -t stackbuilders/hapistrano:$(cat hapistrano.cabal | grep ^version: | awk '{print $2}')"
+
+deploy:
+  provider: script
+  script: deploy.sh
+  on:
+    branch: master
+    condition: $GHCVER == 8.2.2
 
 notifications:
   email: false
