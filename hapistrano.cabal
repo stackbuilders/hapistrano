@@ -37,6 +37,11 @@ flag dev
   manual:             True
   default:            False
 
+flag static
+  description:        Build a static binary.
+  manual:             True
+  default:            False
+
 library
   hs-source-dirs:      src
   exposed-modules:     System.Hapistrano
@@ -77,7 +82,10 @@ executable hap
   if flag(dev)
     ghc-options:       -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   else
-    ghc-options:       -threaded -rtsopts -with-rtsopts=-N -O2 -Wall
+    if flag(static)
+      ghc-options:       -threaded -rtsopts -with-rtsopts=-N -O2 -Wall -static -optl-static
+    else
+      ghc-options:       -threaded -rtsopts -with-rtsopts=-N -O2 -Wall
   default-language:    Haskell2010
 
 test-suite test
