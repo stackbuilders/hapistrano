@@ -36,7 +36,8 @@ script:
  - cabal test --show-details=always
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep "4"
- - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then docker build . -t hapistrano; docker run --rm hapistrano --version; fi
+ # There is a single Docker image, there are no variants for different versions of GHC
+ - if [[ "$GHCVER" == "8.0.2" ]]; then docker build . -t hapistrano; docker run --rm hapistrano --version; fi
 
 notifications:
   email: false
