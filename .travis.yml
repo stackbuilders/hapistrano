@@ -36,14 +36,7 @@ script:
  - cabal test --show-details=always
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep "4"
- - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then docker build .; fi
-
-deploy:
-  provider: script
-  script: deploy.sh
-  on:
-    branch: master
-    condition: $GHCVER == 8.2.2
+ - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then docker build . -t hapistrano; docker run --rm hapistrano --version; fi
 
 notifications:
   email: false
