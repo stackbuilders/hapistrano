@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.5.4
+version:             0.3.5.5
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -27,7 +27,8 @@ category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
-cabal-version:       >=1.10
+cabal-version:       >=1.18
+tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.2
 extra-source-files:  CHANGELOG.md
                    , README.md
 data-files:          script/clean-build.sh
