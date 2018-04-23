@@ -1,3 +1,6 @@
+## 0.3.5.5
+* Adding tested compatibility with GHC 8.4
+
 ## 0.3.5.4
 * Support for temporary 1.3
 
