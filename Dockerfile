@@ -33,20 +33,14 @@ COPY script/ script/
 COPY LICENSE .
 COPY Setup.hs .
 
-RUN cabal build hapistrano
+RUN cabal configure -f static
+RUN cabal build hap
 
-# This forces cabal to link Hapistrano and produce an actual binary
-RUN cabal run -- --version
 # Compress the resulting binary
 RUN upx /hapistrano/dist/build/hap/hap
 
 # Copy Hapistrano to a basic Alpine
 FROM alpine:3.7
-
-RUN apk update \
- && apk add \
-        gmp-dev \
-        libffi-dev
 
 COPY --from=build-env /hapistrano/dist/build/hap/hap /bin/hap
 
