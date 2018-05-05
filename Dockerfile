@@ -32,6 +32,8 @@ COPY app/ app/
 COPY script/ script/
 COPY LICENSE .
 COPY Setup.hs .
+# So Hapistrano is built with version information
+COPY .git/ .git/
 
 RUN cabal configure -f static
 RUN cabal build hap
