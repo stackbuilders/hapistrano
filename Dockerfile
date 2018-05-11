@@ -41,8 +41,12 @@ RUN cabal build hap
 # Compress the resulting binary
 RUN upx /hapistrano/dist/build/hap/hap
 
-# Copy Hapistrano to a basic Alpine
+# Copy Hapistrano to a basic Alpine with SSH
 FROM alpine:3.7
+
+RUN apk update \
+ && apk add \
+        openssh-client
 
 COPY --from=build-env /hapistrano/dist/build/hap/hap /bin/hap
 
