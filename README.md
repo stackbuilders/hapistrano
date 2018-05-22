@@ -156,6 +156,11 @@ A few things to note here:
 If you don't specify `host` and `targets`, `hap` will assume `localhost` as
 usually, which is mainly useful for testing.
 
+## Docker
+
+If you would like to use Docker, there is a lightweight image 
+available on [Docker Hub](https://hub.docker.com/r/stackbuilders/hapistrano/).
+
 ## License
 
 MIT, see [the LICENSE file](LICENSE).

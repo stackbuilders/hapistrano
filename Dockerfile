@@ -48,6 +48,8 @@ RUN apk update \
  && apk add \
         openssh-client
 
+RUN mkdir ~/.ssh
+
 COPY --from=build-env /hapistrano/dist/build/hap/hap /bin/hap
 
 ENTRYPOINT ["/bin/hap"]

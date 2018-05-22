@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.5.5
+version:             0.3.5.6
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -22,7 +22,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
 maintainer:          justin@stackbuilders.com
-copyright:           2015-2017 Stack Builders Inc.
+copyright:           2015-2018 Stack Builders Inc.
 category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
@@ -31,6 +31,7 @@ cabal-version:       >=1.18
 tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.2
 extra-source-files:  CHANGELOG.md
                    , README.md
+                   , Dockerfile
 data-files:          script/clean-build.sh
 
 flag dev
