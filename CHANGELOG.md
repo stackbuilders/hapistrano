@@ -1,3 +1,6 @@
+## 0.3.5.6
+* Add Dockerfile
+
 ## 0.3.5.5
 * Adding tested compatibility with GHC 8.4
 
