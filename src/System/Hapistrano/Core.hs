@@ -70,8 +70,8 @@ exec typedCmd = do
             ("bash", ["-c", cmd])
           Just SshOptions {..} ->
             ("ssh", [sshHost, "-p", show sshPort, cmd])
-      cmd = renderCommand typedCmd
-  parseResult (Proxy :: Proxy a) <$> exec' prog args cmd
+      (md, cmd) = renderCommand typedCmd
+  parseResult (Proxy :: Proxy a) <$> exec' md prog args cmd
 
 -- | Copy a file from local path to target server.
 
@@ -108,7 +108,7 @@ scp' src dest extraArgs = do
           Nothing -> ""
           Just x  -> x ++ ":"
       args = extraArgs ++ portArg ++ [src, hostPrefix ++ dest]
-  void (exec' prog args (prog ++ " " ++ unwords args))
+  void (exec' Nothing prog args (prog ++ " " ++ unwords args))
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -116,11 +116,12 @@ scp' src dest extraArgs = do
 -- | A helper for 'exec' and similar functions.
 
 exec'
-  :: String            -- ^ Name of program to run
+  :: Maybe FilePath
+  -> String            -- ^ Name of program to run
   -> [String]          -- ^ Arguments to that program
   -> String            -- ^ How to show the command in print-outs
   -> Hapistrano String -- ^ Raw stdout output of that program
-exec' prog args cmd = do
+exec' md prog args cmd = do
   Config {..} <- ask
   let hostLabel =
         case configSshOptions of
@@ -128,7 +129,8 @@ exec' prog args cmd = do
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
   liftIO $ configPrint StdoutDest (putLine hostLabel ++ "$ " ++ cmd ++ "\n")
   (exitCode, stdout', stderr') <- liftIO
-    (readProcessWithExitCode prog args "")
+    (readCreateProcessWithExitCode ((proc prog args) { cwd = md }) "")
+    -- (readProcessWithExitCode prog args "")
   unless (null stdout') . liftIO $
     configPrint StdoutDest stdout'
   unless (null stderr') . liftIO $
