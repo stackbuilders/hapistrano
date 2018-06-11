@@ -1,3 +1,6 @@
+## 0.3.5.7
+* Loose upper bound for aeson 1.4
+
 ## 0.3.5.6
 * Add Dockerfile
 
