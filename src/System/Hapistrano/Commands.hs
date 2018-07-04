@@ -83,7 +83,7 @@ data Cd cmd = Cd (Path Abs Dir) cmd
 
 instance Command cmd => Command (Cd cmd) where
   type Result (Cd cmd) = Result cmd
-  renderCommand (Cd path cmd) = "(cd " ++ quoteCmd (fromAbsDir path) ++
+  renderCommand (Cd path cmd) = "(cd " ++ windowsThing (quoteCmd (fromAbsDir path)) ++
     " && " ++ renderCommand cmd ++ ")"
   parseResult Proxy = parseResult (Proxy :: Proxy cmd)
 
@@ -95,7 +95,7 @@ instance Command MkDir where
   type Result MkDir = ()
   renderCommand (MkDir path) = formatCmd "mkdir"
     [ Just "-pv"
-    , Just (fromAbsDir path) ]
+    , Just (windowsThing $ fromAbsDir path) ]
   parseResult Proxy _ = ()
 
 -- | Delete file or directory.
@@ -107,7 +107,7 @@ instance Command Rm where
   type Result Rm = ()
   renderCommand (Rm path) = formatCmd "rm"
     [ Just "-rf"
-    , Just (toFilePath path) ]
+    , Just (windowsThing $ toFilePath path) ]
   parseResult Proxy _ = ()
 
 -- | Move or rename files or directories.
@@ -118,8 +118,8 @@ instance Command (Mv File) where
   type Result (Mv File) = ()
   renderCommand (Mv ts old new) = formatCmd "mv"
     [ Just flags
-    , Just (fromAbsFile old)
-    , Just (fromAbsFile new) ]
+    , Just (windowsThing $ fromAbsFile old)
+    , Just (windowsThing $ fromAbsFile new) ]
     where flags = if isLinux ts then "-fvT" else "-fv"
   parseResult Proxy _ = ()
 
@@ -140,8 +140,8 @@ instance Command Ln where
   type Result Ln = ()
   renderCommand (Ln ts target linkName) = formatCmd "ln"
     [ Just flags
-    , Just (toFilePath target)
-    , Just (fromAbsFile linkName) ]
+    , Just (windowsThing $ toFilePath target)
+    , Just (windowsThing $ fromAbsFile linkName) ]
     where flags = if isLinux ts then "-svT" else "-sv"
   parseResult Proxy _ = ()
 
@@ -153,16 +153,16 @@ instance Command (Readlink File) where
   type Result (Readlink File) = Path Abs File
   renderCommand (Readlink ts path) = formatCmd "readlink"
     [ flags
-    , Just (toFilePath path) ]
-    where flags = if isLinux ts then Just "-f" else Nothing
+    , Just (windowsThing $ toFilePath path) ]
+    where flags = if isLinux ts then Just "-f" else Just "-f" -- Nothing -- FIXME
   parseResult Proxy = fromJust . parseAbsFile . trim
 
 instance Command (Readlink Dir) where
   type Result (Readlink Dir) = Path Abs Dir
   renderCommand (Readlink ts path) = formatCmd "readlink"
     [ flags
-    , Just (toFilePath path) ]
-    where flags = if isLinux ts then Just "-f" else Nothing
+    , Just (windowsThing $ toFilePath path) ]
+    where flags = if isLinux ts then Just "-f" else Just "-f" -- Nothing -- FIXME
   parseResult Proxy = fromJust . parseAbsDir . trim
 
 -- | @ls@, so far used only to check existence of directories, so it's not
@@ -173,7 +173,7 @@ data Ls = Ls (Path Abs Dir)
 instance Command Ls where
   type Result Ls = ()
   renderCommand (Ls path) = formatCmd "ls"
-    [ Just (fromAbsDir path) ]
+    [ Just (windowsThing $ fromAbsDir path) ]
   parseResult Proxy _ = ()
 
 -- | Find (a very limited version).
@@ -183,7 +183,7 @@ data Find t = Find Natural (Path Abs Dir)
 instance Command (Find Dir) where
   type Result (Find Dir) = [Path Abs Dir]
   renderCommand (Find maxDepth dir) = formatCmd "find"
-    [ Just (fromAbsDir dir)
+    [ Just (windowsThing $ fromAbsDir dir)
     , Just "-maxdepth"
     , Just (show maxDepth)
     , Just "-type"
@@ -193,7 +193,7 @@ instance Command (Find Dir) where
 instance Command (Find File) where
   type Result (Find File) = [Path Abs File]
   renderCommand (Find maxDepth dir) = formatCmd "find"
-    [ Just (fromAbsDir dir)
+    [ Just (windowsThing $ fromAbsDir dir)
     , Just "-maxdepth"
     , Just (show maxDepth)
     , Just "-type"
@@ -207,7 +207,7 @@ data Touch = Touch (Path Abs File)
 instance Command Touch where
   type Result Touch = ()
   renderCommand (Touch path) = formatCmd "touch"
-    [ Just (fromAbsFile path) ]
+    [ Just (windowsThing $ fromAbsFile path) ]
   parseResult Proxy _ = ()
 
 -- | Git checkout.
@@ -231,10 +231,16 @@ instance Command GitClone where
     [ Just "clone"
     , if bare then Just "--bare" else Nothing
     , Just (case src of
-       Left repoUrl  -> repoUrl
-       Right srcPath -> fromAbsDir srcPath)
-    , Just (fromAbsDir dest) ]
+       Left repoUrl  -> windowsThing repoUrl
+       Right srcPath -> windowsThing (fromAbsDir srcPath))
+    , Just (windowsThing (fromAbsDir dest)) ]
   parseResult Proxy _ = ()
+
+windowsThing :: String -> String
+windowsThing = concatMap f
+  where
+    f '\\' = ['/']
+    f x = [x]
 
 -- | Git fetch (simplified).
 

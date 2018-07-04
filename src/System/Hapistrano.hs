@@ -217,7 +217,7 @@ deployedReleases deployPath = do
   xs <- exec (Find 1 rpath :: Find Dir)
   ps <- stripDirs rpath (filter (/= rpath) xs)
   (return . sortBy (comparing Down) . mapMaybe parseRelease)
-    (dropWhileEnd (== '/') . fromRelDir <$> ps)
+    (dropWhileEnd (`elem` ("/\\" :: String)) . fromRelDir <$> ps)
 
 -- | Return a list of successfully completed releases sorted newest first.
 
@@ -229,7 +229,7 @@ completedReleases deployPath = do
   xs <- exec (Find 1 cpath :: Find File)
   ps <- stripDirs cpath xs
   (return . sortBy (comparing Down) . mapMaybe parseRelease)
-    (dropWhileEnd (== '/') . fromRelFile <$> ps)
+    (dropWhileEnd (`elem` ("/\\" :: String)) . fromRelFile <$> ps)
 
 ----------------------------------------------------------------------------
 -- Path helpers
