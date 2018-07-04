@@ -45,7 +45,7 @@ spec = do
         -- let's check that the dir exists and contains the right files
         (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt"))
           `shouldReturn` "Foo!\n"
-{-
+
       it "deploys properly a branch other than master" $ \(deployPath, repoPath) -> runHap $ do
         let task = mkTaskWithCustomRevision deployPath repoPath testBranchName
         release <- Hap.pushRelease task
@@ -139,7 +139,7 @@ spec = do
         forM_ (drop 2 rs) $ \r ->
           (Hap.ctokenPath deployPath r >>= doesFileExist)
             `shouldReturn` True
--}
+
 ----------------------------------------------------------------------------
 -- Helpers
 
