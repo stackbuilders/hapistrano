@@ -1,3 +1,9 @@
+init:
+- ps: chcp 65001
+- ps: Set-WinSystemLocale en-US
+- ps: Start-Sleep -s 5
+- ps: Restart-Computer
+
 build: off
 
 cache:
