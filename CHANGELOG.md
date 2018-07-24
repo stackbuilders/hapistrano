@@ -1,3 +1,6 @@
+## 0.3.5.9
+* Loose upper bound for path-io 1.4
+
 ## 0.3.5.8
 * Loose upper bound for yaml 0.9
 
