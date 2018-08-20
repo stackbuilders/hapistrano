@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.5.9
+version:             0.3.5.10
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -80,7 +80,7 @@ executable hap
                      , path               >= 0.5 && < 0.7
                      , path-io            >= 1.2 && < 1.5
                      , stm                >= 2.4 && < 2.5
-                     , yaml               >= 0.8 && < 0.10
+                     , yaml               >= 0.8 && < 0.11
   if flag(dev)
     ghc-options:       -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   else
@@ -102,7 +102,7 @@ test-suite test
                      , hspec              >= 2.0 && < 3.0
                      , mtl                >= 2.0 && < 3.0
                      , path               >= 0.5 && < 0.7
-                     , path-io            >= 1.2 && < 1.4
+                     , path-io            >= 1.2 && < 1.5
                      , process            >= 1.4 && < 1.7
                      , temporary          >= 1.1 && < 1.4
   if flag(dev)
