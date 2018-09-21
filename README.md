@@ -101,6 +101,23 @@ $ hap rollback # to rollback to previous successful deploy
 $ hap rollback -n 2 # go two deploys back in time, etc.
 ```
 
+### Environment Variables
+
+Configuration files are parsed using
+[loadYamlSettings](http://hackage.haskell.org/package/yaml-0.10.2.0/docs/Data-Yaml-Config.html#v:loadYamlSettings),
+therefore, variable substitution is supported. Considering the following configuration file:
+
+```yaml
+revision: "_env:HAPISTRANO_REVISION:origin/master
+...
+```
+
+The `revision` value could be overwritten as follows:
+
+```sh
+HAPISTRANO_REVISION=origin/feature_branch hap deploy
+```
+
 ## What to do when compiling on server is not viable
 
 Sometimes the target machine (server) is not capable of compiling your
