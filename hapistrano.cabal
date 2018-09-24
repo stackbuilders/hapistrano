@@ -21,14 +21,14 @@ description:
 license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
-maintainer:          justin@stackbuilders.com
+maintainer:          jpaucar@stackbuilders.com
 copyright:           2015-2018 Stack Builders Inc.
 category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
 cabal-version:       >=1.18
-tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.3
+tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.3, GHC==8.6.1
 extra-source-files:  CHANGELOG.md
                    , README.md
                    , Dockerfile
@@ -79,7 +79,7 @@ executable hap
                      , optparse-applicative >= 0.11 && < 0.15
                      , path               >= 0.5 && < 0.7
                      , path-io            >= 1.2 && < 1.5
-                     , stm                >= 2.4 && < 2.5
+                     , stm                >= 2.4 && < 2.6
                      , yaml               >= 0.8.16 && < 0.11
   if flag(dev)
     ghc-options:       -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
