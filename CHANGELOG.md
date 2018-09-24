@@ -1,3 +1,6 @@
+## 0.3.6.0
+* Add support to interpolate ENV variables in a configuration file.
+
 ## 0.3.5.10
 * Updated upper bound for yaml 0.10
 

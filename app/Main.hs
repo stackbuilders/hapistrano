@@ -10,7 +10,7 @@ import           Control.Concurrent.STM
 import           Control.Monad
 import           Data.Monoid                ((<>))
 import           Data.Version               (showVersion)
-import qualified Data.Yaml                  as Yaml
+import qualified Data.Yaml.Config           as Yaml
 import           Development.GitRev
 import           Formatting
 import           Numeric.Natural
@@ -119,69 +119,64 @@ data Message
 main :: IO ()
 main = do
   Opts {..} <- execParser parserInfo
-  econfig <- Yaml.decodeFileEither optsConfigFile
-  case econfig of
-    Left err -> do
-      putStrLn (Yaml.prettyPrintParseException err)
-      exitFailure
-    Right C.Config {..} -> do
-      chan <- newTChanIO
-      let task rf = Task { taskDeployPath    = configDeployPath
-                         , taskRepository    = configRepo
-                         , taskRevision      = configRevision
-                         , taskReleaseFormat = rf }
-      let printFnc dest str = atomically $
-            writeTChan chan (PrintMsg dest str)
-          hap sshOpts =  do
-            r <- Hap.runHapistrano sshOpts printFnc $
-              case optsCommand of
-                Deploy releaseFormat n -> do
-                  forM_ configRunLocally Hap.playScriptLocally
-                  release <- case configVcAction of
-                               True -> Hap.pushRelease (task releaseFormat)
-                               False -> Hap.pushReleaseWithoutVc (task releaseFormat)
-                  rpath <- Hap.releasePath configDeployPath release
-                  forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
-                    srcPath  <- resolveFile' src
-                    destPath <- parseRelFile dest
-                    let dpath = rpath </> destPath
-                    (Hap.exec . Hap.MkDir . parent) dpath
-                    Hap.scpFile srcPath dpath
-                  forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
-                    srcPath  <- resolveDir' src
-                    destPath <- parseRelDir dest
-                    let dpath = rpath </> destPath
-                    (Hap.exec . Hap.MkDir . parent) dpath
-                    Hap.scpDir srcPath dpath
-                  forM_ configBuildScript (Hap.playScript configDeployPath release)
-                  Hap.registerReleaseAsComplete configDeployPath release
-                  Hap.activateRelease configTargetSystem configDeployPath release
-                  Hap.dropOldReleases configDeployPath n
-                  forM_ configRestartCommand Hap.exec
-                Rollback n -> do
-                  Hap.rollback configTargetSystem configDeployPath n
-                  forM_ configRestartCommand Hap.exec
-            atomically (writeTChan chan FinishMsg)
-            return r
-          printer :: Int -> IO ()
-          printer n = when (n > 0) $ do
-            msg <- atomically (readTChan chan)
-            case msg of
-              PrintMsg StdoutDest str ->
-                putStr str >> printer n
-              PrintMsg StderrDest str ->
-                hPutStr stderr str >> printer n
-              FinishMsg ->
-                printer (n - 1)
-          haps :: [IO (Either Int ())]
-          haps =
-            case configHosts of
-              [] -> [hap Nothing] -- localhost, no SSH
-              xs ->
-                let f (host, port) = SshOptions host port
-                in hap . Just . f <$> xs
-      results <- (runConcurrently . traverse Concurrently)
-        ((Right () <$ printer (length haps)) : haps)
-      case sequence_ results of
-        Left n   -> exitWith (ExitFailure n)
-        Right () -> putStrLn "Success."
+  C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
+  chan <- newTChanIO
+  let task rf = Task { taskDeployPath    = configDeployPath
+                     , taskRepository    = configRepo
+                     , taskRevision      = configRevision
+                     , taskReleaseFormat = rf }
+  let printFnc dest str = atomically $
+        writeTChan chan (PrintMsg dest str)
+      hap sshOpts =  do
+        r <- Hap.runHapistrano sshOpts printFnc $
+          case optsCommand of
+            Deploy releaseFormat n -> do
+              forM_ configRunLocally Hap.playScriptLocally
+              release <- case configVcAction of
+                           True -> Hap.pushRelease (task releaseFormat)
+                           False -> Hap.pushReleaseWithoutVc (task releaseFormat)
+              rpath <- Hap.releasePath configDeployPath release
+              forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
+                srcPath  <- resolveFile' src
+                destPath <- parseRelFile dest
+                let dpath = rpath </> destPath
+                (Hap.exec . Hap.MkDir . parent) dpath
+                Hap.scpFile srcPath dpath
+              forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
+                srcPath  <- resolveDir' src
+                destPath <- parseRelDir dest
+                let dpath = rpath </> destPath
+                (Hap.exec . Hap.MkDir . parent) dpath
+                Hap.scpDir srcPath dpath
+              forM_ configBuildScript (Hap.playScript configDeployPath release)
+              Hap.registerReleaseAsComplete configDeployPath release
+              Hap.activateRelease configTargetSystem configDeployPath release
+              Hap.dropOldReleases configDeployPath n
+              forM_ configRestartCommand Hap.exec
+            Rollback n -> do
+              Hap.rollback configTargetSystem configDeployPath n
+              forM_ configRestartCommand Hap.exec
+        atomically (writeTChan chan FinishMsg)
+        return r
+      printer :: Int -> IO ()
+      printer n = when (n > 0) $ do
+        msg <- atomically (readTChan chan)
+        case msg of
+          PrintMsg StdoutDest str ->
+            putStr str >> printer n
+          PrintMsg StderrDest str ->
+            hPutStr stderr str >> printer n
+          FinishMsg ->
+            printer (n - 1)
+      haps :: [IO (Either Int ())]
+      haps =
+        case configHosts of
+          [] -> [hap Nothing] -- localhost, no SSH
+          xs ->
+            let f (host, port) = SshOptions host port
+            in hap . Just . f <$> xs
+  results <- (runConcurrently . traverse Concurrently)
+    ((Right () <$ printer (length haps)) : haps)
+  case sequence_ results of
+    Left n   -> exitWith (ExitFailure n)
+    Right () -> putStrLn "Success."
