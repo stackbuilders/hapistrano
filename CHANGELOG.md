@@ -1,3 +1,6 @@
+## 0.3.6.1
+* Loose upper bound for yaml 0.11
+
 ## 0.3.6.0
 * Add support to interpolate ENV variables in a configuration file.
 * Add support for GHC 8.6.1
