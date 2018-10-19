@@ -7,6 +7,7 @@ where
 import           Control.Monad
 import           Control.Monad.Reader
 import           Data.Maybe                 (catMaybes)
+import           Numeric.Natural
 import           Path
 import           Path.IO
 import qualified System.Hapistrano          as Hap
@@ -17,6 +18,8 @@ import           System.Info                (os)
 import           System.IO
 import           Test.Hspec                 hiding (shouldBe, shouldReturn)
 import qualified Test.Hspec                 as Hspec
+import           Test.Hspec.QuickCheck
+import           Test.QuickCheck
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -35,6 +38,48 @@ spec = do
         , "cabal update"
         , "cabal install --only-dependencies -j"
         , "cabal build -j" ]
+
+  describe "fromMaybeReleaseFormat" $ do
+    context "when the first value is present" $ do
+      context "and the second value is present" $
+        prop "returns the first value" $
+          forAll ((,) <$> arbitraryReleaseFormat <*> arbitraryReleaseFormat) $
+            \(rf1, rf2) -> fromMaybeReleaseFormat (Just rf1) (Just rf2) `Hspec.shouldBe` rf1
+
+      context "and the second value is not present" $
+        prop "returns the first value" $ forAll arbitraryReleaseFormat $ \rf ->
+          fromMaybeReleaseFormat (Just rf) Nothing `Hspec.shouldBe` rf
+
+    context "when the first value is not present" $ do
+      context "and the second value is present" $
+        prop "returns the second value" $ forAll arbitraryReleaseFormat $ \rf ->
+          fromMaybeReleaseFormat Nothing (Just rf) `Hspec.shouldBe` rf
+
+      context "and the second value is not present" $
+        it "returns the default value" $
+          fromMaybeReleaseFormat Nothing Nothing `Hspec.shouldBe` ReleaseShort
+
+
+  describe "fromMaybeKeepReleases" $ do
+    context "when the first value is present" $ do
+      context "and the second value is present" $
+        prop "returns the first value" $
+          forAll ((,) <$> arbitraryKeepReleases <*> arbitraryKeepReleases) $
+            \(kr1, kr2) -> fromMaybeKeepReleases (Just kr1) (Just kr2) `Hspec.shouldBe` kr1
+
+      context "and the second value is not present" $
+        prop "returns the first value" $ forAll arbitraryKeepReleases $ \kr ->
+          fromMaybeKeepReleases (Just kr) Nothing `Hspec.shouldBe` kr
+
+    context "when the first value is not present" $ do
+      context "and the second value is present" $
+        prop "returns the second value" $ forAll arbitraryKeepReleases $ \kr ->
+          fromMaybeKeepReleases Nothing (Just kr) `Hspec.shouldBe` kr
+
+      context "and the second value is not present" $
+        it "returns the default value" $
+          fromMaybeKeepReleases Nothing Nothing `Hspec.shouldBe` 5
+
 
   around withSandbox $ do
     describe "pushRelease" $ do
@@ -227,3 +272,9 @@ currentSystem :: TargetSystem
 currentSystem = if os == "linux"
                 then GNULinux
                 else BSD
+
+arbitraryReleaseFormat :: Gen ReleaseFormat
+arbitraryReleaseFormat = elements [ReleaseShort, ReleaseLong]
+
+arbitraryKeepReleases :: Gen Natural
+arbitraryKeepReleases = fromInteger . getPositive  <$> arbitrary

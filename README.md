@@ -72,6 +72,14 @@ The following parameters are *optional*:
   necessary. The platform where Hapistrano is running won't affect the
   available options for commands (g.e. A Mac deploying to a Ubuntu machine,
   doesn't need this flag)
+* `release_format (optional)` - The release timestamp format, the
+  '--release-format' argument passed via the CLI takes precedence over this
+  value. If neither CLI or configuration file value is specified, it defaults
+  to 'short'
+* `keep_releases (optional)` - The number of releases to keep, the
+  '--keep-releases' argument passed via the CLI takes precedence over this
+  value. If neither CLI or configuration file value is specified, it defaults
+  to '5'
 * `run_locally:`- Instructions to run locally on your machine in the
   form of shell commands. Example:
 

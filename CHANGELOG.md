@@ -1,3 +1,6 @@
+## 0.3.7.0
+* Read `release-format` and `keep-releases` from the configuration file.
+
 ## 0.3.6.1
 * Loose upper bound for yaml 0.11
 

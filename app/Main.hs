@@ -38,7 +38,7 @@ data Opts = Opts
 -- | Command to execute and command-specific options.
 
 data Command
-  = Deploy ReleaseFormat Natural -- ^ Deploy a new release (with timestamp
+  = Deploy (Maybe ReleaseFormat) (Maybe Natural) -- ^ Deploy a new release (with timestamp
     -- format and how many releases to keep)
   | Rollback Natural -- ^ Rollback to Nth previous release
 
@@ -77,17 +77,20 @@ optionParser = Opts
 
 deployParser :: Parser Command
 deployParser = Deploy
-  <$> option pReleaseFormat
-  ( long "release-format"
-  <> short 'r'
-  <> value ReleaseShort
-  <> help "Which format release timestamp format to use: ‘long’ or ‘short’, default is ‘short’." )
-  <*> option auto
-  ( long "keep-releases"
-  <> short 'k'
-  <> value 5
-  <> showDefault
-  <> help "How many releases to keep" )
+  <$> optional
+        ( option pReleaseFormat
+            ( long "release-format"
+            <> short 'r'
+            <> help "Which format release timestamp format to use: ‘long’ or ‘short’, default is ‘short’."
+            )
+        )
+  <*> optional
+        ( option auto
+            ( long "keep-releases"
+            <> short 'k'
+            <> help "How many releases to keep, default is '5'"
+            )
+        )
 
 rollbackParser :: Parser Command
 rollbackParser = Rollback
@@ -130,7 +133,9 @@ main = do
       hap sshOpts =  do
         r <- Hap.runHapistrano sshOpts printFnc $
           case optsCommand of
-            Deploy releaseFormat n -> do
+            Deploy cliReleaseFormat cliKeepReleases -> do
+              let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
+                  keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
               forM_ configRunLocally Hap.playScriptLocally
               release <- case configVcAction of
                            True -> Hap.pushRelease (task releaseFormat)
@@ -151,7 +156,7 @@ main = do
               forM_ configBuildScript (Hap.playScript configDeployPath release)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release
-              Hap.dropOldReleases configDeployPath n
+              Hap.dropOldReleases configDeployPath keepReleases
               forM_ configRestartCommand Hap.exec
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
