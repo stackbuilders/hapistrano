@@ -9,6 +9,8 @@
 --
 -- Type definitions for the Hapistrano tool.
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module System.Hapistrano.Types
   ( Hapistrano
   , Failure (..)
@@ -22,13 +24,18 @@ module System.Hapistrano.Types
   , mkRelease
   , releaseTime
   , renderRelease
-  , parseRelease )
+  , parseRelease
+  , fromMaybeReleaseFormat
+  , fromMaybeKeepReleases )
 where
 
 import           Control.Applicative
 import           Control.Monad.Except
 import           Control.Monad.Reader
+import           Data.Aeson
+import           Data.Maybe
 import           Data.Time
+import           Numeric.Natural
 import           Path
 
 -- | Hapistrano monad.
@@ -67,6 +74,13 @@ data ReleaseFormat
   = ReleaseShort -- ^ Standard release path following Capistrano's format
   | ReleaseLong  -- ^ Long release path including picoseconds
   deriving (Show, Read, Eq, Ord, Enum, Bounded)
+
+instance FromJSON ReleaseFormat where
+  parseJSON = withText "release format" $ \t ->
+    case t of
+      "short" -> return ReleaseShort
+      "long"  -> return ReleaseLong
+      _       -> fail "expected 'short' or 'long'"
 
 -- | SSH options.
 
@@ -124,3 +138,16 @@ parseRelease s = (Release ReleaseLong <$> p releaseFormatLong s)
 releaseFormatShort, releaseFormatLong :: String
 releaseFormatShort = "%Y%m%d%H%M%S"
 releaseFormatLong  = "%Y%m%d%H%M%S%q"
+
+-- | Get release format based on the CLI and file configuration values.
+
+fromMaybeReleaseFormat :: Maybe ReleaseFormat -> Maybe ReleaseFormat -> ReleaseFormat
+fromMaybeReleaseFormat cliRF configRF = fromMaybe ReleaseShort (cliRF <|> configRF)
+
+-- | Get keep releases based on the CLI and file configuration values.
+
+fromMaybeKeepReleases :: Maybe Natural -> Maybe Natural -> Natural
+fromMaybeKeepReleases cliKR configKR = fromMaybe defaultKeepReleases (cliKR <|> configKR)
+
+defaultKeepReleases :: Natural
+defaultKeepReleases = 5

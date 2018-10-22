@@ -14,9 +14,11 @@ import           Data.Function              (on)
 import           Data.List                  (nubBy)
 import           Data.Maybe                 (maybeToList)
 import           Data.Yaml
+import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types    (TargetSystem (..))
+import           System.Hapistrano.Types    (ReleaseFormat (..),
+                                             TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
 
@@ -46,6 +48,14 @@ data Config = Config
   , configTargetSystem   :: !TargetSystem
   -- ^ Optional parameter to specify the target system. It's GNU/Linux by
   -- default
+  , configReleaseFormat  :: !(Maybe ReleaseFormat)
+  -- ^ The release timestamp format, the '--release-format' argument passed via
+  -- the CLI takes precedence over this value. If neither CLI or configuration
+  -- file value is specified, it defaults to short
+  , configKeepReleases   :: !(Maybe Natural)
+  -- ^ The number of releases to keep, the '--keep-releases' argument passed via
+  -- the CLI takes precedence over this value. If neither CLI or configuration
+  -- file value is specified, it defaults to 5
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -78,6 +88,8 @@ instance FromJSON Config where
     configRunLocally  <- o .:? "run_locally" >>=
       maybe (return Nothing) (fmap Just . mapM mkCmd)
     configTargetSystem <- o .:? "linux" .!= GNULinux
+    configReleaseFormat <- o .:? "release_format"
+    configKeepReleases <- o .:? "keep_releases"
     return Config {..}
 
 instance FromJSON CopyThing where
