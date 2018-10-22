@@ -72,11 +72,11 @@ The following parameters are *optional*:
   necessary. The platform where Hapistrano is running won't affect the
   available options for commands (g.e. A Mac deploying to a Ubuntu machine,
   doesn't need this flag)
-* `release_format (optional)` - The release timestamp format, the
+* `release_format` - The release timestamp format, the
   '--release-format' argument passed via the CLI takes precedence over this
   value. If neither CLI or configuration file value is specified, it defaults
   to 'short'
-* `keep_releases (optional)` - The number of releases to keep, the
+* `keep_releases` - The number of releases to keep, the
   '--keep-releases' argument passed via the CLI takes precedence over this
   value. If neither CLI or configuration file value is specified, it defaults
   to '5'
@@ -183,7 +183,7 @@ usually, which is mainly useful for testing.
 
 ## Docker
 
-If you would like to use Docker, there is a lightweight image 
+If you would like to use Docker, there is a lightweight image
 available on [Docker Hub](https://hub.docker.com/r/stackbuilders/hapistrano/).
 
 ## License

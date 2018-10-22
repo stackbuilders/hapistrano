@@ -40,43 +40,43 @@ spec = do
         , "cabal build -j" ]
 
   describe "fromMaybeReleaseFormat" $ do
-    context "when the first value is present" $ do
-      context "and the second value is present" $
-        prop "returns the first value" $
+    context "when the command line value is present" $ do
+      context "and the config file value is present" $
+        prop "returns the command line value" $
           forAll ((,) <$> arbitraryReleaseFormat <*> arbitraryReleaseFormat) $
             \(rf1, rf2) -> fromMaybeReleaseFormat (Just rf1) (Just rf2) `Hspec.shouldBe` rf1
 
-      context "and the second value is not present" $
-        prop "returns the first value" $ forAll arbitraryReleaseFormat $ \rf ->
+      context "and the config file value is not present" $
+        prop "returns the command line value" $ forAll arbitraryReleaseFormat $ \rf ->
           fromMaybeReleaseFormat (Just rf) Nothing `Hspec.shouldBe` rf
 
-    context "when the first value is not present" $ do
-      context "and the second value is present" $
-        prop "returns the second value" $ forAll arbitraryReleaseFormat $ \rf ->
+    context "when the command line value is not present" $ do
+      context "and the config file value is present" $
+        prop "returns the config file value" $ forAll arbitraryReleaseFormat $ \rf ->
           fromMaybeReleaseFormat Nothing (Just rf) `Hspec.shouldBe` rf
 
-      context "and the second value is not present" $
+      context "and the config file value is not present" $
         it "returns the default value" $
           fromMaybeReleaseFormat Nothing Nothing `Hspec.shouldBe` ReleaseShort
 
 
   describe "fromMaybeKeepReleases" $ do
-    context "when the first value is present" $ do
-      context "and the second value is present" $
-        prop "returns the first value" $
+    context "when the command line value is present" $ do
+      context "and the config file value is present" $
+        prop "returns the command line value" $
           forAll ((,) <$> arbitraryKeepReleases <*> arbitraryKeepReleases) $
             \(kr1, kr2) -> fromMaybeKeepReleases (Just kr1) (Just kr2) `Hspec.shouldBe` kr1
 
       context "and the second value is not present" $
-        prop "returns the first value" $ forAll arbitraryKeepReleases $ \kr ->
+        prop "returns the command line value" $ forAll arbitraryKeepReleases $ \kr ->
           fromMaybeKeepReleases (Just kr) Nothing `Hspec.shouldBe` kr
 
-    context "when the first value is not present" $ do
-      context "and the second value is present" $
-        prop "returns the second value" $ forAll arbitraryKeepReleases $ \kr ->
+    context "when the command line value is not present" $ do
+      context "and the config file value is present" $
+        prop "returns the config file value" $ forAll arbitraryKeepReleases $ \kr ->
           fromMaybeKeepReleases Nothing (Just kr) `Hspec.shouldBe` kr
 
-      context "and the second value is not present" $
+      context "and the config file value is not present" $
         it "returns the default value" $
           fromMaybeKeepReleases Nothing Nothing `Hspec.shouldBe` 5
 

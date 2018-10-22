@@ -147,4 +147,7 @@ fromMaybeReleaseFormat cliRF configRF = fromMaybe ReleaseShort (cliRF <|> config
 -- | Get keep releases based on the CLI and file configuration values.
 
 fromMaybeKeepReleases :: Maybe Natural -> Maybe Natural -> Natural
-fromMaybeKeepReleases cliKR configKR = fromMaybe 5 (cliKR <|> configKR)
+fromMaybeKeepReleases cliKR configKR = fromMaybe defaultKeepReleases (cliKR <|> configKR)
+
+defaultKeepReleases :: Natural
+defaultKeepReleases = 5
