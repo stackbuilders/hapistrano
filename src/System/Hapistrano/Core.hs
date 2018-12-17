@@ -31,6 +31,9 @@ import           System.Exit
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Types
 import           System.Process
+import           System.Process.Streaming
+import           Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as L8
 
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 
@@ -127,17 +130,32 @@ exec' prog args cmd = do
           Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
   liftIO $ configPrint StdoutDest (putLine hostLabel ++ "$ " ++ cmd ++ "\n")
-  (exitCode, stdout', stderr') <- liftIO
-    (readProcessWithExitCode prog args "")
+  (exitCode_, stdout_, stderr_) <- liftIO
+    (readProcessWithExitCode' prog args)
+  let stdout' = L8.unpack stdout_
+      stderr' = L8.unpack stderr_
   unless (null stdout') . liftIO $
     configPrint StdoutDest stdout'
   unless (null stderr') . liftIO $
     configPrint StderrDest stderr'
-  case exitCode of
+  case exitCode_ of
     ExitSuccess ->
       return stdout'
     ExitFailure n ->
       failWith n Nothing
+
+-- | Prepares a process, reads stdout and stderr and returns exit code
+
+readProcessWithExitCode'
+  :: String
+  -> [String]
+  -> IO (ExitCode, ByteString, ByteString)
+readProcessWithExitCode' prog args =
+  let command = proc prog args
+   in execute command $
+          (,,) <$> exitCode
+               <*> foldOut intoLazyBytes
+               <*> foldErr intoLazyBytes
 
 -- | Put something “inside” a line, sort-of beautifully.
 
