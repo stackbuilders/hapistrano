@@ -14,6 +14,7 @@ import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core     as Hap
 import           System.Hapistrano.Types
+import           System.IO.Silently         (capture_)
 import           System.Info                (os)
 import           System.IO
 import           Test.Hspec                 hiding (shouldBe, shouldReturn)
@@ -26,6 +27,16 @@ testBranchName = "another_branch"
 
 spec :: Spec
 spec = do
+  describe "exec" $
+    context "given a command that prints to stdout" $
+      it "redirects commands' output to stdout first" $
+        let (Just commandTest) = Hap.mkGenericCommand "echo \"hapistrano\"; sleep 2; echo \"onartsipah\""
+            commandExecution = Hap.exec commandTest
+            expectedOutput = "hapistrano\nonartsipah\n*** localhost ******************************************************************\n$ echo \"hapistrano\"; sleep 2; echo \"onartsipah\"\n"
+         in do
+           actualOutput <- capture_ (runHap commandExecution)
+           actualOutput `Hspec.shouldBe` expectedOutput
+
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
       spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
@@ -79,7 +90,6 @@ spec = do
       context "and the config file value is not present" $
         it "returns the default value" $
           fromMaybeKeepReleases Nothing Nothing `Hspec.shouldBe` 5
-
 
   around withSandbox $ do
     describe "pushRelease" $ do
