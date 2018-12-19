@@ -27,11 +27,11 @@ testBranchName = "another_branch"
 
 spec :: Spec
 spec = do
-  describe "exec" $
+  describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
       it "redirects commands' output to stdout first" $
         let (Just commandTest) = Hap.mkGenericCommand "echo \"hapistrano\"; sleep 2; echo \"onartsipah\""
-            commandExecution = Hap.exec commandTest
+            commandExecution = Hap.execWithInheritStdout commandTest
             expectedOutput = "hapistrano\nonartsipah\n*** localhost ******************************************************************\n$ echo \"hapistrano\"; sleep 2; echo \"onartsipah\"\n"
          in do
            actualOutput <- capture_ (runHap commandExecution)

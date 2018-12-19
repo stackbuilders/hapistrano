@@ -18,6 +18,7 @@ module System.Hapistrano.Core
   ( runHapistrano
   , failWith
   , exec
+  , execWithInheritStdout
   , scpFile
   , scpDir )
 where
@@ -25,15 +26,15 @@ where
 import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader
+import           Control.Concurrent.STM (atomically)
 import           Data.Proxy
 import           Path
 import           System.Exit
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Types
 import           System.Process
-import           System.Process.Streaming
-import           Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as L8
+import           System.Process.Typed (ProcessConfig)
+import qualified System.Process.Typed as SPT
 
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 
@@ -63,6 +64,9 @@ failWith n msg = throwError (Failure n msg)
 -- determined from settings contained in the 'Hapistrano' monad
 -- configuration. Commands that return non-zero exit codes will result in
 -- short-cutting of execution.
+-- __NOTE:__ the commands executed with 'exec' will create their own pipe and
+-- will stream output there and once the command finishes its execution it will
+-- parse the result.
 
 exec :: forall a. Command a => a -> Hapistrano (Result a)
 exec typedCmd = do
@@ -74,7 +78,36 @@ exec typedCmd = do
           Just SshOptions {..} ->
             ("ssh", [sshHost, "-p", show sshPort, cmd])
       cmd = renderCommand typedCmd
-  parseResult (Proxy :: Proxy a) <$> exec' prog args cmd
+  parseResult (Proxy :: Proxy a) <$> exec' cmd (readProcessWithExitCode prog args "")
+
+-- | Same as 'exec' but it streams to stdout only for _GenericCommand_s
+
+execWithInheritStdout :: Command a => a -> Hapistrano ()
+execWithInheritStdout typedCmd = do
+  Config {..} <- ask
+  let (prog, args) =
+        case configSshOptions of
+          Nothing ->
+            ("bash", ["-c", cmd])
+          Just SshOptions {..} ->
+            ("ssh", [sshHost, "-p", show sshPort, cmd])
+      cmd = renderCommand typedCmd
+  void $ exec' cmd (readProcessWithExitCode' (SPT.proc prog args))
+    where
+    -- | Prepares a process, reads @stdout@ and @stderr@ and returns exit code
+    -- NOTE: @strdout@ and @stderr@ are empty string because we're writing
+    -- the output to the parent.
+    readProcessWithExitCode'
+      :: ProcessConfig stdin stdoutIgnored stderrIgnored
+      -> IO (ExitCode, String, String)
+    readProcessWithExitCode' pc =
+      SPT.withProcess pc' $ \p -> atomically $
+        (,,) <$> SPT.waitExitCodeSTM p
+             <*> return ""
+             <*> return ""
+        where
+          pc' = SPT.setStdout SPT.inherit
+              $ SPT.setStderr SPT.inherit pc
 
 -- | Copy a file from local path to target server.
 
@@ -111,7 +144,7 @@ scp' src dest extraArgs = do
           Nothing -> ""
           Just x  -> x ++ ":"
       args = extraArgs ++ portArg ++ [src, hostPrefix ++ dest]
-  void (exec' prog args (prog ++ " " ++ unwords args))
+  void (exec' (prog ++ " " ++ unwords args) (readProcessWithExitCode prog args ""))
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -119,43 +152,26 @@ scp' src dest extraArgs = do
 -- | A helper for 'exec' and similar functions.
 
 exec'
-  :: String            -- ^ Name of program to run
-  -> [String]          -- ^ Arguments to that program
-  -> String            -- ^ How to show the command in print-outs
+  :: String            -- ^ How to show the command in print-outs
+  -> IO (ExitCode, String, String) -- ^ TODO
   -> Hapistrano String -- ^ Raw stdout output of that program
-exec' prog args cmd = do
+exec' cmd readProcessOutput = do
   Config {..} <- ask
   let hostLabel =
         case configSshOptions of
           Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
   liftIO $ configPrint StdoutDest (putLine hostLabel ++ "$ " ++ cmd ++ "\n")
-  (exitCode_, stdout_, stderr_) <- liftIO
-    (readProcessWithExitCode' prog args)
-  let stdout' = L8.unpack stdout_
-      stderr' = L8.unpack stderr_
+  (exitCode', stdout', stderr') <- liftIO readProcessOutput
   unless (null stdout') . liftIO $
     configPrint StdoutDest stdout'
   unless (null stderr') . liftIO $
     configPrint StderrDest stderr'
-  case exitCode_ of
+  case exitCode' of
     ExitSuccess ->
       return stdout'
     ExitFailure n ->
       failWith n Nothing
-
--- | Prepares a process, reads stdout and stderr and returns exit code
-
-readProcessWithExitCode'
-  :: String
-  -> [String]
-  -> IO (ExitCode, ByteString, ByteString)
-readProcessWithExitCode' prog args =
-  let command = proc prog args
-   in execute command $
-          (,,) <$> exitCode
-               <*> foldOut intoLazyBytes
-               <*> foldErr intoLazyBytes
 
 -- | Put something “inside” a line, sort-of beautifully.
 
