@@ -153,7 +153,7 @@ scp' src dest extraArgs = do
 
 exec'
   :: String            -- ^ How to show the command in print-outs
-  -> IO (ExitCode, String, String) -- ^ TODO
+  -> IO (ExitCode, String, String) -- ^ Handler to get (ExitCode, Output, Error) it can change accordingly to @stdout@ and @stderr@ of child process
   -> Hapistrano String -- ^ Raw stdout output of that program
 exec' cmd readProcessOutput = do
   Config {..} <- ask

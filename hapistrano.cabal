@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.7.0
+version:             0.3.8.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -52,7 +52,6 @@ library
                      , System.Hapistrano.Types
   build-depends:       aeson              >= 0.11 && < 1.5
                      , base               >= 4.8 && < 5.0
-                     , bytestring         >= 0.10 && < 0.11
                      , filepath           >= 1.2 && < 1.5
                      , formatting         >= 6.2 && < 7.0
                      , gitrev             >= 1.2 && < 1.4

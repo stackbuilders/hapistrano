@@ -1,3 +1,12 @@
+## 0.3.8.0
+### Added
+* `execWithInheritStdout` was added to `System.Hapistrano.Core` to stream output children's
+to the parent's `stdout`.
+
+### Changed
+* `playScript` and `playScriptLocally` use `execWithInheritStdout` to stream children's
+stdout to parent's stdout.
+
 ## 0.3.7.0
 * Read `release-format` and `keep-releases` from the configuration file.
 
