@@ -136,7 +136,7 @@ playScript
   -> Hapistrano ()
 playScript deployDir release cmds = do
   rpath <- releasePath deployDir release
-  forM_ cmds (exec . Cd rpath)
+  forM_ cmds (execWithInheritStdout . Cd rpath)
 
 -- | Plays the given script on your machine locally.
 
@@ -147,7 +147,7 @@ playScriptLocally cmds =
         c
         { configSshOptions = Nothing
         }) $
-  forM_ cmds exec
+  forM_ cmds execWithInheritStdout
 
 ----------------------------------------------------------------------------
 -- Helpers
