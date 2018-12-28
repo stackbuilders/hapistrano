@@ -25,6 +25,7 @@ module System.Hapistrano
   , playScriptLocally
     -- * Path helpers
   , releasePath
+  , sharedPath
   , currentSymlinkPath
   , tempSymlinkPath
   , ctokenPath )
@@ -161,6 +162,7 @@ setupDirs deployPath = do
   (exec . MkDir . releasesPath)  deployPath
   (exec . MkDir . cacheRepoPath) deployPath
   (exec . MkDir . ctokensPath)   deployPath
+  (exec . MkDir . sharedPath)    deployPath
 
 -- | Ensure that the specified repo is cloned and checked out on the given
 -- revision. Idempotent.
@@ -241,6 +243,13 @@ releasesPath
   :: Path Abs Dir      -- ^ Deploy path
   -> Path Abs Dir
 releasesPath deployPath = deployPath </> $(mkRelDir "releases")
+
+-- | Return the full path to the directory containing the shared files/directories.
+
+sharedPath
+  :: Path Abs Dir      -- ^ Deploy path
+  -> Path Abs Dir
+sharedPath deployPath = deployPath </> $(mkRelDir "shared")
 
 -- | Construct path to a particular 'Release'.
 

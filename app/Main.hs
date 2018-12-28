@@ -153,6 +153,16 @@ main = do
                 let dpath = rpath </> destPath
                 (Hap.exec . Hap.MkDir . parent) dpath
                 Hap.scpDir srcPath dpath
+              forM_ configLinkedFiles $ \fileToLink -> do
+                destPath <- parseRelFile fileToLink
+                let dpath = rpath </> destPath
+                    sharedPath = Hap.sharedPath configDeployPath </> destPath
+                Hap.exec $ Hap.Ln configTargetSystem sharedPath dpath
+              forM_ configLinkedDirs $ \directoryToLink -> do
+                destPath <- parseRelFile directoryToLink
+                let dpath = rpath </> destPath
+                    sharedPath = Hap.sharedPath configDeployPath </> destPath
+                Hap.exec $ Hap.Ln configTargetSystem sharedPath dpath
               forM_ configBuildScript (Hap.playScript configDeployPath release)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release

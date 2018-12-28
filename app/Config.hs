@@ -40,6 +40,10 @@ data Config = Config
     -- ^ Collection of files to copy over to target machine before building
   , configCopyDirs       :: ![CopyThing]
     -- ^ Collection of directories to copy over to target machine before building
+  , configLinkedFiles      :: ![FilePath]
+    -- ^ Collection of files to link from each release to _shared_
+  , configLinkedDirs       :: ![FilePath]
+    -- ^ Collection of directories to link from each release to _shared_
   , configVcAction       :: !Bool
   -- ^ Perform version control related actions. By default, it's assumed to be True.
   , configRunLocally     :: !(Maybe [GenericCommand])
@@ -64,6 +68,9 @@ data Config = Config
 data CopyThing = CopyThing FilePath FilePath
   deriving (Eq, Ord, Show)
 
+data LinkThing = LinkThing FilePath FilePath
+  deriving (Eq, Ord, Show)
+
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"
@@ -84,6 +91,8 @@ instance FromJSON Config where
       maybe (return Nothing) (fmap Just . mapM mkCmd)
     configCopyFiles  <- o .:? "copy_files" .!= []
     configCopyDirs   <- o .:? "copy_dirs"  .!= []
+    configLinkedFiles <- o .:? "linked_files" .!= []
+    configLinkedDirs  <- o .:? "linked_dirs"  .!= []
     configVcAction    <- o .:? "vc_action" .!= True
     configRunLocally  <- o .:? "run_locally" >>=
       maybe (return Nothing) (fmap Just . mapM mkCmd)
