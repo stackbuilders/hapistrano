@@ -82,6 +82,13 @@ The following parameters are *optional*:
   to '5'
 * `run_locally:`- Instructions to run locally on your machine in the
   form of shell commands. Example:
+* `linked_files:`- Listed files that will be symlinked from the `{deploy_path}/shared` folder
+into each release directory during deployment. Can be used for configuration files
+that need to be persisted (e.g. dotenv files).
+* `linked_dirs:`- Listed directories that will be symlinked from the `{deploy_path}/shared` folder
+into each release directory during deployment. Can be used for data directories
+that need to be persisted (e.g. upload directories).
+
 
 ```
 run_locally:
