@@ -137,9 +137,9 @@ main = do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
                   keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
               forM_ configRunLocally Hap.playScriptLocally
-              release <- case configVcAction of
-                           True -> Hap.pushRelease (task releaseFormat)
-                           False -> Hap.pushReleaseWithoutVc (task releaseFormat)
+              release <- if configVcAction
+                          then Hap.pushRelease (task releaseFormat)
+                          else Hap.pushReleaseWithoutVc (task releaseFormat)
               rpath <- Hap.releasePath configDeployPath release
               forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
                 srcPath  <- resolveFile' src
@@ -153,16 +153,10 @@ main = do
                 let dpath = rpath </> destPath
                 (Hap.exec . Hap.MkDir . parent) dpath
                 Hap.scpDir srcPath dpath
-              forM_ configLinkedFiles $ \fileToLink -> do
-                destPath <- parseRelFile fileToLink
-                let dpath = rpath </> destPath
-                    sharedPath = Hap.sharedPath configDeployPath </> destPath
-                Hap.exec $ Hap.Ln configTargetSystem sharedPath dpath
-              forM_ configLinkedDirs $ \directoryToLink -> do
-                destPath <- parseRelFile directoryToLink
-                let dpath = rpath </> destPath
-                    sharedPath = Hap.sharedPath configDeployPath </> destPath
-                Hap.exec $ Hap.Ln configTargetSystem sharedPath dpath
+              forM_ configLinkedFiles
+                (Hap.linkToShared configTargetSystem rpath configDeployPath)
+              forM_ configLinkedDirs
+                (Hap.linkToShared configTargetSystem rpath configDeployPath)
               forM_ configBuildScript (Hap.playScript configDeployPath release)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release

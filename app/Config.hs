@@ -68,9 +68,6 @@ data Config = Config
 data CopyThing = CopyThing FilePath FilePath
   deriving (Eq, Ord, Show)
 
-data LinkThing = LinkThing FilePath FilePath
-  deriving (Eq, Ord, Show)
-
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"

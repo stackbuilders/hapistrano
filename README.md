@@ -84,10 +84,14 @@ The following parameters are *optional*:
   form of shell commands. Example:
 * `linked_files:`- Listed files that will be symlinked from the `{deploy_path}/shared` folder
 into each release directory during deployment. Can be used for configuration files
-that need to be persisted (e.g. dotenv files).
+that need to be persisted (e.g. dotenv files).  **NOTE:** The directory structure _must_
+be similar in your release directories in case you need to link a file inside a
+nested directory (e.g. `shared/foo/file.txt`).
 * `linked_dirs:`- Listed directories that will be symlinked from the `{deploy_path}/shared` folder
 into each release directory during deployment. Can be used for data directories
-that need to be persisted (e.g. upload directories).
+that need to be persisted (e.g. upload directories). **NOTE:** Do not add a slash `/`
+at the end of the directory (e.g. `foo/`) because we use `parseRelFile` to create
+the symlink.
 
 
 ```
