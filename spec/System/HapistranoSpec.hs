@@ -260,8 +260,8 @@ spec = do
           justExec sharedDir "echo 'Bar!' > foo/bar.txt"
           justExec sharedDir "echo 'Baz!' > foo/baz.txt"
           Hap.linkToShared currentSystem rpath deployPath "foo"
-          (liftIO . listDirectory . fromAbsDir) (rpath </> $(mkRelDir "foo"))
-            `shouldReturn` ["baz.txt","bar.txt"]
+          files <- (liftIO . listDirectory . fromAbsDir) (rpath </> $(mkRelDir "foo"))
+          liftIO $ files `shouldMatchList` ["baz.txt","bar.txt"]
 
 ----------------------------------------------------------------------------
 -- Helpers
