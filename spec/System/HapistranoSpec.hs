@@ -217,7 +217,7 @@ spec = do
 
       context "when it attemps to link a file" $ do
         context "when the file is not at the root of the shared directory" $
-          it "should link the file successfully" $ \(deployPath, repoPath) -> runHap (do
+          it "should throw an error" $ \(deployPath, repoPath) -> runHap (do
             let task = mkTask deployPath repoPath
                 sharedDir = Hap.sharedPath deployPath
             release <- Hap.pushRelease task
@@ -240,7 +240,7 @@ spec = do
 
       context "when it attemps to link a directory" $ do
         context "when the directory ends in '/'" $
-          it "should link the file successfully" $ \(deployPath, repoPath) -> runHap (do
+          it "should throw an error" $ \(deployPath, repoPath) -> runHap (do
             let task = mkTask deployPath repoPath
                 sharedDir = Hap.sharedPath deployPath
             release <- Hap.pushRelease task

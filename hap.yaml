@@ -1,0 +1,13 @@
+deploy_path: '/tmp/hapistrano'
+port: 2222
+repo: 'https://github.com/stackbuilders/hapistrano.git'
+revision: origin/master
+build_script:
+  - stack setup
+  - stack build
+linked_files:
+  - file.txt
+  - bar.txt
+linked_dirs:
+  - file
+  - foo
