@@ -130,8 +130,8 @@ main = do
                      , taskReleaseFormat = rf }
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
-      hap sshOpts =  do
-        r <- Hap.runHapistrano sshOpts Bash printFnc $
+      hap shell sshOpts =  do
+        r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases -> do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
@@ -180,10 +180,11 @@ main = do
       haps :: [IO (Either Int ())]
       haps =
         case configHosts of
-          [] -> [hap Nothing] -- localhost, no SSH
+          [] -> [hap Bash Nothing] -- localhost, no SSH
           xs ->
-            let f (host, port) = SshOptions host port
-            in hap . Just . f <$> xs
+            let runHap (host, port, shell) =
+                  hap shell (Just $ SshOptions host port)
+            in runHap <$> xs
   results <- (runConcurrently . traverse Concurrently)
     ((Right () <$ printer (length haps)) : haps)
   case sequence_ results of
