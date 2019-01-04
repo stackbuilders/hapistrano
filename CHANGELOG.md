@@ -1,3 +1,7 @@
+## 0.3.8.1
+### Added
+* Support to deploy to a host that has default `zsh` shell
+
 ## 0.3.8.0
 ### Added
 * `execWithInheritStdout` was added to `System.Hapistrano.Core` to stream output children's
