@@ -89,7 +89,14 @@ instance FromJSON ReleaseFormat where
 data Shell =
   Bash
   | Zsh
-  deriving Show
+  deriving (Show, Eq, Ord)
+
+instance FromJSON Shell where
+  parseJSON = withText "shell" $ \t ->
+    case t of
+      "bash" -> return Bash
+      "zsh"  -> return Zsh
+      _       -> fail "supported shells: 'bash' or 'zsh'"
 
 -- | SSH options.
 

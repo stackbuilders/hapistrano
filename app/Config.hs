@@ -17,7 +17,8 @@ import           Data.Yaml
 import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types    (ReleaseFormat (..),
+import           System.Hapistrano.Types    (Shell(..),
+                                             ReleaseFormat (..),
                                              TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
@@ -25,7 +26,7 @@ import           System.Hapistrano.Types    (ReleaseFormat (..),
 data Config = Config
   { configDeployPath     :: !(Path Abs Dir)
     -- ^ Top-level deploy directory on target machine
-  , configHosts          :: ![(String, Word)]
+  , configHosts          :: ![(String, Word, Shell)]
     -- ^ Hosts\/ports to deploy to. If empty, localhost will be assumed.
   , configRepo           :: !String
     -- ^ Location of repository that contains the source code to deploy
@@ -68,14 +69,18 @@ instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"
     let grabPort m = m .:? "port" .!= 22
+        grabShell m = m .:? "shell" .!= Bash
     host             <- o .:? "host"
     port             <- grabPort o
+    shell            <- grabShell o
     hs               <- (o .:? "targets" .!= []) >>= mapM (\m -> do
       host' <- m .: "host"
       port' <- grabPort m
-      return (host', port'))
-    let configHosts = nubBy ((==) `on` fst)
-          (maybeToList ((,) <$> host <*> pure port) ++ hs)
+      shell' <- grabShell m
+      return (host', port', shell'))
+    let first (h, _, _) = h
+        configHosts = nubBy ((==) `on` first)
+          (maybeToList ((,,) <$> host <*> pure port <*> pure shell) ++ hs)
     configRepo       <- o .: "repo"
     configRevision   <- o .: "revision"
     configRestartCommand <- (o .:? "restart_command") >>=

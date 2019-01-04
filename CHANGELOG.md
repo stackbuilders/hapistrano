@@ -1,6 +1,7 @@
-## 0.3.8.1
+## 0.3.9.0
 ### Added
 * Support to deploy to a host that has default `zsh` shell
+* Support to deploy using a different shell. Currently supported: `zsh` and `bash`.
 
 ## 0.3.8.0
 ### Added
