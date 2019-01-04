@@ -245,7 +245,7 @@ instance Command GitFetch where
   renderCommand (GitFetch remote) = formatCmd "git"
     [ Just "fetch"
     , Just remote
-    , Just "+refs/heads/*:refs/heads/*" ]
+    , Just "+refs/heads/\\*:refs/heads/\\*" ]
   parseResult Proxy _ = ()
 
 -- | Git reset.

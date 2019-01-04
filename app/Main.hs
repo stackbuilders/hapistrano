@@ -131,7 +131,7 @@ main = do
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap sshOpts =  do
-        r <- Hap.runHapistrano sshOpts printFnc $
+        r <- Hap.runHapistrano sshOpts Bash printFnc $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases -> do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
