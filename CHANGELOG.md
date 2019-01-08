@@ -1,4 +1,4 @@
-## 0.3.8.0
+## 0.3.9.0
 ### Added
 * `linked_files` and `linked_dirs` to link files and directories located in the
 `{deploy_path}/shared/` directory.
