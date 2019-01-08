@@ -13,19 +13,19 @@ cache:
 matrix:
   include:
     - env: CABALVER=1.24 GHCVER=7.10.3
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3],sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3,zsh],sources: [hvr-ghc]}}
     - env: CABALVER=1.24 GHCVER=8.0.2
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,zsh], sources: [hvr-ghc]}}
     - env: CABALVER=2.0 GHCVER=8.2.2
-      addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2,zsh], sources: [hvr-ghc]}}
     - env: CABALVER=2.2 GHCVER=8.4.3
-      addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.3], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.3,zsh], sources: [hvr-ghc]}}
     - env: CABALVER=2.4 GHCVER=8.6.1
-      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.1], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.1,zsh], sources: [hvr-ghc]}}
     - os: osx
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH && sudo apt-get install zsh -y; fi
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install ghc cabal-install zsh; fi
 
 install:
