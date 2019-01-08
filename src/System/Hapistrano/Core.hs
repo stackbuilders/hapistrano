@@ -99,21 +99,21 @@ execWithInheritStdout typedCmd = do
           pc' = SPT.setStdout SPT.inherit
               $ SPT.setStderr SPT.inherit pc
 
-
--- | Get progs and args to run a command locally or remotelly
+-- | Get program and args to run a command locally or remotelly.
 
 getProgAndArgs :: String -> Hapistrano (String, [String])
 getProgAndArgs cmd = do
   Config {..} <- ask
-  let renderShell :: Shell -> String
-      renderShell Zsh = "zsh"
-      renderShell Bash = "bash"
   return $
     case configSshOptions of
       Nothing ->
         (renderShell configShellOptions, ["-c", cmd])
       Just SshOptions {..} ->
         ("ssh", [sshHost, "-p", show sshPort, cmd])
+    where
+      renderShell :: Shell -> String
+      renderShell Zsh = "zsh"
+      renderShell Bash = "bash"
 
 -- | Copy a file from local path to target server.
 

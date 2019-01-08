@@ -53,7 +53,7 @@ data Config = Config
   { configSshOptions :: !(Maybe SshOptions)
     -- ^ 'Nothing' if we are running locally, or SSH options to use.
   , configShellOptions :: !Shell
-    -- ^ One of the available 'Shell's
+    -- ^ One of the supported 'Shell's
   , configPrint      :: !(OutputDest -> String -> IO ())
     -- ^ How to print messages
   }
