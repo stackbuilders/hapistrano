@@ -10,6 +10,7 @@ import           Data.Maybe                 (catMaybes)
 import           Numeric.Natural
 import           Path
 import           Path.IO
+import           System.Directory           (listDirectory)
 import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core     as Hap
@@ -202,6 +203,73 @@ spec = do
         forM_ (drop 2 rs) $ \r ->
           (Hap.ctokenPath deployPath r >>= doesFileExist)
             `shouldReturn` True
+
+    describe "linkToShared" $ do
+      context "when the deploy_path/shared directory doesn't exist" $
+        it "should create the link anyway" $ \(deployPath, repoPath) -> runHap $ do
+          let task = mkTask deployPath repoPath
+              sharedDir = Hap.sharedPath deployPath
+          release <- Hap.pushRelease task
+          rpath   <- Hap.releasePath deployPath release
+          Hap.exec $ Hap.Rm sharedDir
+          Hap.linkToShared currentSystem rpath deployPath "thing"
+            `shouldReturn` ()
+
+      context "when the file/directory to link exists in the respository" $
+        it "should throw an error" $ \(deployPath, repoPath) -> runHap (do
+          let task = mkTask deployPath repoPath
+          release <- Hap.pushRelease task
+          rpath   <- Hap.releasePath deployPath release
+          Hap.linkToShared currentSystem rpath deployPath "foo.txt")
+            `shouldThrow` anyException
+
+      context "when it attemps to link a file" $ do
+        context "when the file is not at the root of the shared directory" $
+          it "should throw an error" $ \(deployPath, repoPath) -> runHap (do
+            let task = mkTask deployPath repoPath
+                sharedDir = Hap.sharedPath deployPath
+            release <- Hap.pushRelease task
+            rpath   <- Hap.releasePath deployPath release
+            justExec sharedDir "mkdir foo/"
+            justExec sharedDir "echo 'Bar!' > foo/bar.txt"
+            Hap.linkToShared currentSystem rpath deployPath "foo/bar.txt")
+              `shouldThrow` anyException
+
+        context "when the file is at the root of the shared directory" $
+          it "should link the file successfully" $ \(deployPath, repoPath) -> runHap $ do
+            let task = mkTask deployPath repoPath
+                sharedDir = Hap.sharedPath deployPath
+            release <- Hap.pushRelease task
+            rpath   <- Hap.releasePath deployPath release
+            justExec sharedDir "echo 'Bar!' > bar.txt"
+            Hap.linkToShared currentSystem rpath deployPath "bar.txt"
+            (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "bar.txt"))
+              `shouldReturn` "Bar!\n"
+
+      context "when it attemps to link a directory" $ do
+        context "when the directory ends in '/'" $
+          it "should throw an error" $ \(deployPath, repoPath) -> runHap (do
+            let task = mkTask deployPath repoPath
+                sharedDir = Hap.sharedPath deployPath
+            release <- Hap.pushRelease task
+            rpath   <- Hap.releasePath deployPath release
+            justExec sharedDir "mkdir foo/"
+            justExec sharedDir "echo 'Bar!' > foo/bar.txt"
+            justExec sharedDir "echo 'Baz!' > foo/baz.txt"
+            Hap.linkToShared currentSystem rpath deployPath "foo/")
+              `shouldThrow` anyException
+
+        it "should link the file successfully" $ \(deployPath, repoPath) -> runHap $ do
+          let task = mkTask deployPath repoPath
+              sharedDir = Hap.sharedPath deployPath
+          release <- Hap.pushRelease task
+          rpath   <- Hap.releasePath deployPath release
+          justExec sharedDir "mkdir foo/"
+          justExec sharedDir "echo 'Bar!' > foo/bar.txt"
+          justExec sharedDir "echo 'Baz!' > foo/baz.txt"
+          Hap.linkToShared currentSystem rpath deployPath "foo"
+          files <- (liftIO . listDirectory . fromAbsDir) (rpath </> $(mkRelDir "foo"))
+          liftIO $ files `shouldMatchList` ["baz.txt","bar.txt"]
 
 ----------------------------------------------------------------------------
 -- Helpers
