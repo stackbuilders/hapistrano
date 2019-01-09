@@ -1,5 +1,7 @@
 ## 0.3.9.0
 ### Added
+* Support to deploy to a host that has default `zsh` shell.
+* Support to deploy using a different shell. Currently supported: `zsh` and `bash`.
 * `linked_files` and `linked_dirs` to link files and directories located in the
 `{deploy_path}/shared/` directory.
 

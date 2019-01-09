@@ -40,13 +40,15 @@ import qualified System.Process.Typed as SPT
 
 runHapistrano :: MonadIO m
   => Maybe SshOptions  -- ^ SSH options to use or 'Nothing' if we run locally
+  -> Shell             -- ^ Shell to run commands
   -> (OutputDest -> String -> IO ()) -- ^ How to print messages
   -> Hapistrano a      -- ^ The computation to run
   -> m (Either Int a)  -- ^ Status code in 'Left' on failure, result in
               -- 'Right' on success
-runHapistrano sshOptions printFnc m = liftIO $ do
+runHapistrano sshOptions shell' printFnc m = liftIO $ do
   let config = Config
         { configSshOptions = sshOptions
+        , configShellOptions = shell'
         , configPrint      = printFnc }
   r <- runReaderT (runExceptT m) config
   case r of
@@ -70,28 +72,16 @@ failWith n msg = throwError (Failure n msg)
 
 exec :: forall a. Command a => a -> Hapistrano (Result a)
 exec typedCmd = do
-  Config {..} <- ask
-  let (prog, args) =
-        case configSshOptions of
-          Nothing ->
-            ("bash", ["-c", cmd])
-          Just SshOptions {..} ->
-            ("ssh", [sshHost, "-p", show sshPort, cmd])
-      cmd = renderCommand typedCmd
+  let cmd = renderCommand typedCmd
+  (prog, args) <- getProgAndArgs cmd
   parseResult (Proxy :: Proxy a) <$> exec' cmd (readProcessWithExitCode prog args "")
 
 -- | Same as 'exec' but it streams to stdout only for _GenericCommand_s
 
 execWithInheritStdout :: Command a => a -> Hapistrano ()
 execWithInheritStdout typedCmd = do
-  Config {..} <- ask
-  let (prog, args) =
-        case configSshOptions of
-          Nothing ->
-            ("bash", ["-c", cmd])
-          Just SshOptions {..} ->
-            ("ssh", [sshHost, "-p", show sshPort, cmd])
-      cmd = renderCommand typedCmd
+  let cmd = renderCommand typedCmd
+  (prog, args) <- getProgAndArgs cmd
   void $ exec' cmd (readProcessWithExitCode' (SPT.proc prog args))
     where
     -- | Prepares a process, reads @stdout@ and @stderr@ and returns exit code
@@ -108,6 +98,22 @@ execWithInheritStdout typedCmd = do
         where
           pc' = SPT.setStdout SPT.inherit
               $ SPT.setStderr SPT.inherit pc
+
+-- | Get program and args to run a command locally or remotelly.
+
+getProgAndArgs :: String -> Hapistrano (String, [String])
+getProgAndArgs cmd = do
+  Config {..} <- ask
+  return $
+    case configSshOptions of
+      Nothing ->
+        (renderShell configShellOptions, ["-c", cmd])
+      Just SshOptions {..} ->
+        ("ssh", [sshHost, "-p", show sshPort, cmd])
+    where
+      renderShell :: Shell -> String
+      renderShell Zsh = "zsh"
+      renderShell Bash = "bash"
 
 -- | Copy a file from local path to target server.
 

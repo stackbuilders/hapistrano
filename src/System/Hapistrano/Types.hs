@@ -21,6 +21,7 @@ module System.Hapistrano.Types
   , OutputDest (..)
   , Release
   , TargetSystem(..)
+  , Shell(..)
   , mkRelease
   , releaseTime
   , renderRelease
@@ -51,6 +52,8 @@ data Failure = Failure Int (Maybe String)
 data Config = Config
   { configSshOptions :: !(Maybe SshOptions)
     -- ^ 'Nothing' if we are running locally, or SSH options to use.
+  , configShellOptions :: !Shell
+    -- ^ One of the supported 'Shell's
   , configPrint      :: !(OutputDest -> String -> IO ())
     -- ^ How to print messages
   }
@@ -81,6 +84,19 @@ instance FromJSON ReleaseFormat where
       "short" -> return ReleaseShort
       "long"  -> return ReleaseLong
       _       -> fail "expected 'short' or 'long'"
+
+-- | Current shells supported.
+data Shell =
+  Bash
+  | Zsh
+  deriving (Show, Eq, Ord)
+
+instance FromJSON Shell where
+  parseJSON = withText "shell" $ \t ->
+    case t of
+      "bash" -> return Bash
+      "zsh"  -> return Zsh
+      _       -> fail "supported shells: 'bash' or 'zsh'"
 
 -- | SSH options.
 

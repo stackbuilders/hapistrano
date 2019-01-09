@@ -94,6 +94,14 @@ spec = do
 
   around withSandbox $ do
     describe "pushRelease" $ do
+      it "sets up repo all right in Zsh" $ \(deployPath, repoPath) -> runHapWithShell Zsh $ do
+        let task = mkTask deployPath repoPath
+        release <- Hap.pushRelease task
+        rpath   <- Hap.releasePath deployPath release
+        -- let's check that the dir exists and contains the right files
+        (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt"))
+          `shouldReturn` "Foo!\n"
+
       it "sets up repo all right" $ \(deployPath, repoPath) -> runHap $ do
         let task = mkTask deployPath repoPath
         release <- Hap.pushRelease task
@@ -321,12 +329,17 @@ justExec path cmd' =
 -- | Run 'Hapistrano' monad locally.
 
 runHap :: Hapistrano a -> IO a
-runHap m = do
+runHap = runHapWithShell Bash
+
+-- | Run 'Hapistrano' monad setting a particular shell.
+
+runHapWithShell :: Shell -> Hapistrano a -> IO a
+runHapWithShell shell m = do
   let printFnc dest str =
         case dest of
           StdoutDest -> putStr str
           StderrDest -> hPutStr stderr str
-  r <- Hap.runHapistrano Nothing printFnc m
+  r <- Hap.runHapistrano Nothing shell printFnc m
   case r of
     Left n -> do
       expectationFailure ("Failed with status code: " ++ show n)
