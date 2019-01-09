@@ -1,3 +1,8 @@
+## 0.3.9.0
+### Added
+* `linked_files` and `linked_dirs` to link files and directories located in the
+`{deploy_path}/shared/` directory.
+
 ## 0.3.8.0
 ### Added
 * `execWithInheritStdout` was added to `System.Hapistrano.Core` to stream output children's

@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.8.0
+version:             0.3.9.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -99,7 +99,7 @@ test-suite test
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
   build-depends:       base               >= 4.8 && < 5.0
-                     , directory          >= 1.2.2 && < 1.4
+                     , directory          >= 1.2.5 && < 1.4
                      , filepath           >= 1.2 && < 1.5
                      , hapistrano
                      , hspec              >= 2.0 && < 3.0

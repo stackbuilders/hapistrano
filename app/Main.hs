@@ -137,9 +137,9 @@ main = do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
                   keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
               forM_ configRunLocally Hap.playScriptLocally
-              release <- case configVcAction of
-                           True -> Hap.pushRelease (task releaseFormat)
-                           False -> Hap.pushReleaseWithoutVc (task releaseFormat)
+              release <- if configVcAction
+                          then Hap.pushRelease (task releaseFormat)
+                          else Hap.pushReleaseWithoutVc (task releaseFormat)
               rpath <- Hap.releasePath configDeployPath release
               forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
                 srcPath  <- resolveFile' src
@@ -153,6 +153,10 @@ main = do
                 let dpath = rpath </> destPath
                 (Hap.exec . Hap.MkDir . parent) dpath
                 Hap.scpDir srcPath dpath
+              forM_ configLinkedFiles
+                (Hap.linkToShared configTargetSystem rpath configDeployPath)
+              forM_ configLinkedDirs
+                (Hap.linkToShared configTargetSystem rpath configDeployPath)
               forM_ configBuildScript (Hap.playScript configDeployPath release)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release
