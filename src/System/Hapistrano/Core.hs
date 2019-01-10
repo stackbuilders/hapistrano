@@ -28,6 +28,7 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Concurrent.STM (atomically)
 import           Data.Proxy
+import           Data.Time
 import           Path
 import           System.Exit
 import           System.Hapistrano.Commands
@@ -163,11 +164,15 @@ exec'
   -> Hapistrano String -- ^ Raw stdout output of that program
 exec' cmd readProcessOutput = do
   Config {..} <- ask
-  let hostLabel =
+  time <- liftIO getZonedTime
+
+  let timeStampFormat = "%T,  %F (%Z)"
+      printableTime = formatTime defaultTimeLocale timeStampFormat time
+      hostLabel =
         case configSshOptions of
           Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
-  liftIO $ configPrint StdoutDest (putLine hostLabel ++ "$ " ++ cmd ++ "\n")
+  liftIO $ configPrint StdoutDest (putLine hostLabel ++ "[" ++ printableTime ++ "] INFO -- : " ++ "$ " ++ cmd ++ "\n")
   (exitCode', stdout', stderr') <- liftIO readProcessOutput
   unless (null stdout') . liftIO $
     configPrint StdoutDest stdout'
