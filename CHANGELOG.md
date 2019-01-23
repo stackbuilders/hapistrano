@@ -1,3 +1,12 @@
+## 0.3.9.1
+### Added
+* Add timestamp to output commands:
+```
+[16:29:58,  2019-01-23 (-05)] INFO -- : $ find /tmp/hapistrano/releases/ -maxdepth 1 -type d
+/tmp/hapistrano/releases/
+/tmp/hapistrano/releases/20190123212933
+```
+
 ## 0.3.9.0
 ### Added
 * Support to deploy to a host that has default `zsh` shell.
