@@ -6,6 +6,7 @@ where
 
 import           Control.Monad
 import           Control.Monad.Reader
+import           Data.List                  (isPrefixOf)
 import           Data.Maybe                 (catMaybes)
 import           Numeric.Natural
 import           Path
@@ -33,10 +34,10 @@ spec = do
       it "redirects commands' output to stdout first" $
         let (Just commandTest) = Hap.mkGenericCommand "echo \"hapistrano\"; sleep 2; echo \"onartsipah\""
             commandExecution = Hap.execWithInheritStdout commandTest
-            expectedOutput = "hapistrano\nonartsipah\n*** localhost ******************************************************************\n$ echo \"hapistrano\"; sleep 2; echo \"onartsipah\"\n"
+            expectedOutput = "hapistrano\nonartsipah"
          in do
            actualOutput <- capture_ (runHap commandExecution)
-           actualOutput `Hspec.shouldBe` expectedOutput
+           expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
 
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
