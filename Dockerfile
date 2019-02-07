@@ -1,5 +1,5 @@
 # Build Hapistrano
-FROM alpine:3.7 as build-env
+FROM alpine:3.9 as build-env
 
 MAINTAINER Javier Casas <jcasas@stackbuilders.com>
 
@@ -42,11 +42,13 @@ RUN cabal build hap
 RUN upx /hapistrano/dist/build/hap/hap
 
 # Copy Hapistrano to a basic Alpine with SSH
-FROM alpine:3.7
+FROM alpine:3.9
 
 RUN apk update \
  && apk add \
-        openssh-client
+        openssh-client \
+        ca-certificates \
+        git
 
 RUN mkdir ~/.ssh
 
