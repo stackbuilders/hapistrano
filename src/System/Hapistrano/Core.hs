@@ -92,7 +92,7 @@ execWithInheritStdout typedCmd = do
       :: ProcessConfig stdin stdoutIgnored stderrIgnored
       -> IO (ExitCode, String, String)
     readProcessWithExitCode' pc =
-      SPT.withProcess pc' $ \p -> atomically $
+      SPT.withProcessTerm pc' $ \p -> atomically $
         (,,) <$> SPT.waitExitCodeSTM p
              <*> return ""
              <*> return ""
