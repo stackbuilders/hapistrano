@@ -1,3 +1,7 @@
+## 0.3.9.3
+### Changed
+* Support for optparse-applicative-0.15
+
 ## 0.3.9.2
 ### Changed
 * Update Docker base image from alpine:3.7 to alpine:3.9
