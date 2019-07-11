@@ -1,3 +1,9 @@
+## 0.3.9.3
+### Changed
+* Support for optparse-applicative-0.15
+* Replace deprecated function "withProcess" to "withProcessTerm"
+  and add the version of "typed-process-0.2.6.0" as extra dependency.
+
 ## 0.3.9.2
 ### Changed
 * Update Docker base image from alpine:3.7 to alpine:3.9

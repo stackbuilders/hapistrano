@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.9.2
+version:             0.3.9.3
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -79,7 +79,7 @@ executable hap
                      , formatting         >= 6.2 && < 7.0
                      , gitrev             >= 1.2 && < 1.4
                      , hapistrano
-                     , optparse-applicative >= 0.11 && < 0.15
+                     , optparse-applicative >= 0.11 && < 0.16
                      , path               >= 0.5 && < 0.7
                      , path-io            >= 1.2 && < 1.5
                      , stm                >= 2.4 && < 2.6
