@@ -1,9 +1,9 @@
 -- |
 -- Module      :  System.Hapistrano.Types
--- Copyright   :  © 2015-2017 Stack Builders
+-- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
+-- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
