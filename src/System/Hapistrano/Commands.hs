@@ -288,7 +288,7 @@ unGenericCommand (GenericCommand x) = x
 -- | Read commands from a file.
 
 readScript :: MonadIO m => Path Abs File -> m [GenericCommand]
-readScript path = liftIO $ catMaybes . fmap mkGenericCommand . lines
+readScript path = liftIO $ mapMaybe mkGenericCommand . lines
   <$> readFile (fromAbsFile path)
 
 ----------------------------------------------------------------------------

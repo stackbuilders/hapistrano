@@ -7,7 +7,7 @@ where
 import           Control.Monad
 import           Control.Monad.Reader
 import           Data.List                  (isPrefixOf)
-import           Data.Maybe                 (catMaybes)
+import           Data.Maybe                 (mapMaybe)
 import           Numeric.Natural
 import           Path
 import           Path.IO
@@ -143,7 +143,7 @@ spec = do
 
     describe "playScriptLocally (successful run)" $
        it "check that local scripts are run and deployment is successful" $ \(deployPath, repoPath) -> runHap $ do
-        let localCommands = catMaybes $ map Hap.mkGenericCommand ["pwd", "ls"]
+        let localCommands = mapMaybe Hap.mkGenericCommand ["pwd", "ls"]
             task = mkTask deployPath repoPath
         Hap.playScriptLocally localCommands
         release <- Hap.pushRelease task
@@ -152,7 +152,7 @@ spec = do
 
     describe "playScriptLocally (error exit)" $
        it "check that deployment isn't done" $ \(deployPath, repoPath) -> (runHap $ do
-        let localCommands = catMaybes $ map Hap.mkGenericCommand ["pwd", "ls", "false"]
+        let localCommands = mapMaybe Hap.mkGenericCommand ["pwd", "ls", "false"]
             task = mkTask deployPath repoPath
         Hap.playScriptLocally localCommands
         release <- Hap.pushRelease task
