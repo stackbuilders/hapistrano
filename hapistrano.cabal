@@ -22,13 +22,13 @@ license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
 maintainer:          jpaucar@stackbuilders.com
-copyright:           2015-2018 Stack Builders Inc.
+copyright:           2015-Present Stack Builders Inc.
 category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
 cabal-version:       >=1.18
-tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.3, GHC==8.6.1
+tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5
 extra-source-files:  CHANGELOG.md
                    , README.md
                    , Dockerfile

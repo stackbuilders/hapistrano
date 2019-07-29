@@ -20,8 +20,8 @@ matrix:
       addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2,zsh], sources: [hvr-ghc]}}
     - env: CABALVER=2.2 GHCVER=8.4.4
       addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.4,zsh], sources: [hvr-ghc]}}
-    - env: CABALVER=2.4 GHCVER=8.6.3
-      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.3,zsh], sources: [hvr-ghc]}}
+    - env: CABALVER=2.4 GHCVER=8.6.5
+      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.5,zsh], sources: [hvr-ghc]}}
     - os: osx
 
 before_install:

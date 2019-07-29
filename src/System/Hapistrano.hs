@@ -1,9 +1,9 @@
 -- |
 -- Module      :  System.Hapistrano
--- Copyright   :  © 2015-2017 Stack Builders
+-- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
+-- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -35,9 +35,9 @@ where
 import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader       (local)
-import           Data.List                  (dropWhileEnd, genericDrop, sortBy)
+import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (mapMaybe)
-import           Data.Ord                   (Down (..), comparing)
+import           Data.Ord                   (Down (..))
 import           Data.Time
 import           Numeric.Natural
 import           Path
@@ -219,7 +219,7 @@ deployedReleases deployPath = do
   let rpath = releasesPath deployPath
   xs <- exec (Find 1 rpath :: Find Dir)
   ps <- stripDirs rpath (filter (/= rpath) xs)
-  (return . sortBy (comparing Down) . mapMaybe parseRelease)
+  (return . sortOn Down . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelDir <$> ps)
 
 -- | Return a list of successfully completed releases sorted newest first.
@@ -231,7 +231,7 @@ completedReleases deployPath = do
   let cpath = ctokensPath deployPath
   xs <- exec (Find 1 cpath :: Find File)
   ps <- stripDirs cpath xs
-  (return . sortBy (comparing Down) . mapMaybe parseRelease)
+  (return . sortOn Down . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelFile <$> ps)
 
 ----------------------------------------------------------------------------

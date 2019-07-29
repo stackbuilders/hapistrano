@@ -1,9 +1,9 @@
 -- |
 -- Module      :  System.Hapistrano.Commands
--- Copyright   :  © 2015-2017 Stack Builders
+-- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
+-- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -288,7 +288,7 @@ unGenericCommand (GenericCommand x) = x
 -- | Read commands from a file.
 
 readScript :: MonadIO m => Path Abs File -> m [GenericCommand]
-readScript path = liftIO $ catMaybes . fmap mkGenericCommand . lines
+readScript path = liftIO $ mapMaybe mkGenericCommand . lines
   <$> readFile (fromAbsFile path)
 
 ----------------------------------------------------------------------------

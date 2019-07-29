@@ -1,15 +1,16 @@
 -- |
 -- Module      :  System.Hapistrano.Types
--- Copyright   :  © 2015-2017 Stack Builders
+-- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Justin Leitgeb <justin@stackbuilders.com>
+-- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
 -- Type definitions for the Hapistrano tool.
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module System.Hapistrano.Types
   ( Hapistrano
@@ -79,8 +80,7 @@ data ReleaseFormat
   deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
 instance FromJSON ReleaseFormat where
-  parseJSON = withText "release format" $ \t ->
-    case t of
+  parseJSON = withText "release format" $ \case
       "short" -> return ReleaseShort
       "long"  -> return ReleaseLong
       _       -> fail "expected 'short' or 'long'"
@@ -92,11 +92,10 @@ data Shell =
   deriving (Show, Eq, Ord)
 
 instance FromJSON Shell where
-  parseJSON = withText "shell" $ \t ->
-    case t of
+  parseJSON = withText "shell" $ \case
       "bash" -> return Bash
       "zsh"  -> return Zsh
-      _       -> fail "supported shells: 'bash' or 'zsh'"
+      _      -> fail "supported shells: 'bash' or 'zsh'"
 
 -- | SSH options.
 
