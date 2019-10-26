@@ -61,6 +61,7 @@ The following parameters are *optional*:
   is useful for testing and playing with `hap` locally).
 * `port` — SSH port number to use. If missing, 22 will be used.
 * `shell` — Shell to use. Currently supported: `zsh` ans `bash`. If missing, `Bash` will be used.
+* `ssh_args` — Optional ssh arguments. By default none are passed.
 * `build_script` — instructions how to build the application in the form of
   shell commands.
 * `restart_command` — if you need to restart a remote web server after a

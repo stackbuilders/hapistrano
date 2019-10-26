@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.9.3
+version:             0.3.9.4
 synopsis:            A deployment library for Haskell applications
 description:
   .

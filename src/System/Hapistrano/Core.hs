@@ -110,7 +110,7 @@ getProgAndArgs cmd = do
       Nothing ->
         (renderShell configShellOptions, ["-c", cmd])
       Just SshOptions {..} ->
-        ("ssh", [sshHost, "-p", show sshPort, cmd])
+        ("ssh", sshArgs ++ [sshHost, "-p", show sshPort, cmd])
     where
       renderShell :: Shell -> String
       renderShell Zsh = "zsh"

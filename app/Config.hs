@@ -6,7 +6,8 @@
 
 module Config
   ( Config (..)
-  , CopyThing (..) )
+  , CopyThing (..)
+  , Target (..))
 where
 
 import           Data.Aeson
@@ -26,8 +27,8 @@ import           System.Hapistrano.Types    (Shell(..),
 data Config = Config
   { configDeployPath     :: !(Path Abs Dir)
     -- ^ Top-level deploy directory on target machine
-  , configHosts          :: ![(String, Word, Shell)]
-    -- ^ Hosts\/ports to deploy to. If empty, localhost will be assumed.
+  , configHosts          :: ![Target]
+    -- ^ Hosts\/ports\/shell\/ssh args to deploy to. If empty, localhost will be assumed.
   , configRepo           :: !String
     -- ^ Location of repository that contains the source code to deploy
   , configRevision       :: !String
@@ -69,22 +70,33 @@ data Config = Config
 data CopyThing = CopyThing FilePath FilePath
   deriving (Eq, Ord, Show)
 
+data Target =
+  Target
+    { targetHost    :: String
+    , targetPort    :: Word
+    , targetShell   :: Shell
+    , targetSshArgs :: [String]
+    } deriving (Eq, Ord, Show)
+
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"
     let grabPort m = m .:? "port" .!= 22
         grabShell m = m .:? "shell" .!= Bash
+        grabSshArgs m = m .:? "ssh_args" .!= []
     host             <- o .:? "host"
     port             <- grabPort o
     shell            <- grabShell o
-    hs               <- (o .:? "targets" .!= []) >>= mapM (\m -> do
-      host' <- m .: "host"
-      port' <- grabPort m
-      shell' <- grabShell m
-      return (host', port', shell'))
-    let first (h, _, _) = h
+    sshArgs          <- grabSshArgs o
+    hs               <- (o .:? "targets" .!= []) >>= mapM (\m ->
+      Target
+        <$> m .: "host"
+        <*> grabPort m
+        <*> grabShell m
+        <*> grabSshArgs m)
+    let first Target{..} = host
         configHosts = nubBy ((==) `on` first)
-          (maybeToList ((,,) <$> host <*> pure port <*> pure shell) ++ hs)
+          (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
     configRepo       <- o .: "repo"
     configRevision   <- o .: "revision"
     configRestartCommand <- (o .:? "restart_command") >>=
