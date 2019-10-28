@@ -12,16 +12,18 @@ cache:
 
 matrix:
   include:
-    - env: CABALVER=1.24 GHCVER=7.10.3
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3,zsh],sources: [hvr-ghc]}}
-    - env: CABALVER=1.24 GHCVER=8.0.2
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,zsh], sources: [hvr-ghc]}}
-    - env: CABALVER=2.0 GHCVER=8.2.2
-      addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2,zsh], sources: [hvr-ghc]}}
-    - env: CABALVER=2.2 GHCVER=8.4.4
-      addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.4,zsh], sources: [hvr-ghc]}}
-    - env: CABALVER=2.4 GHCVER=8.6.5
-      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.5,zsh], sources: [hvr-ghc]}}
+    - env: CABALVER=3.0 GHCVER=7.10.3
+      addons: {apt: {packages: [cabal-install-3.0,ghc-7.10.3,zsh],sources: [hvr-ghc]}}
+    - env: CABALVER=3.0 GHCVER=8.0.2
+      addons: {apt: {packages: [cabal-install-3.0,ghc-8.0.2,zsh], sources: [hvr-ghc]}}
+    - env: CABALVER=3.0 GHCVER=8.2.2
+      addons: {apt: {packages: [cabal-install-3.0,ghc-8.2.2,zsh], sources: [hvr-ghc]}}
+    - env: CABALVER=3.0 GHCVER=8.4.4
+      addons: {apt: {packages: [cabal-install-3.0,ghc-8.4.4,zsh], sources: [hvr-ghc]}}
+    - env: CABALVER=3.0 GHCVER=8.6.5
+      addons: {apt: {packages: [cabal-install-3.0,ghc-8.6.5,zsh], sources: [hvr-ghc]}}
+    - env: CABALVER=3.0 GHCVER=8.8.1
+      addons: {apt: {packages: [cabal-install-3.0,ghc-8.8.1,zsh], sources: [hvr-ghc]}}
     - os: osx
 
 before_install:
@@ -33,12 +35,10 @@ install:
  - cabal --version
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
  - travis_retry cabal update
- - cabal install --only-dependencies --enable-tests
 
 script:
- - cabal configure --enable-tests -v2 -f dev
- - cabal build
- - cabal test --show-details=always
+ - cabal build --enable-tests
+ - cabal test --enable-tests
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep "4"
  # There is a single Docker image, there are no variants for different versions of GHC
