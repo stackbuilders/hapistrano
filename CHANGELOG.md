@@ -1,3 +1,8 @@
+## 0.3.9.4
+### Added
+* Support for GHC 8.8
+* Support for ssh args in the config file.
+
 ## 0.3.9.3
 ### Changed
 * Support for optparse-applicative-0.15
