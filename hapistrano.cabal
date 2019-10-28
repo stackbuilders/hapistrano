@@ -50,6 +50,7 @@ library
                      , System.Hapistrano.Commands
                      , System.Hapistrano.Core
                      , System.Hapistrano.Types
+                     , System.Hapistrano.Commands.Internal
   build-depends:       aeson              >= 0.11 && < 1.5
                      , base               >= 4.8 && < 5.0
                      , filepath           >= 1.2 && < 1.5
