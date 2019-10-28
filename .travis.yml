@@ -22,11 +22,20 @@ matrix:
       addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.4,zsh], sources: [hvr-ghc]}}
     - env: CABALVER=2.4 GHCVER=8.6.5
       addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.5,zsh], sources: [hvr-ghc]}}
-    - os: osx
+    - env: CABALVER=2.4.0.0 GHCVER=8.6.5
+      os: osx
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install ghc cabal-install zsh; fi
+before_install: |
+  if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH; fi
+  if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    # Set up ghcup
+    ( mkdir -p ~/.ghcup/bin && curl https://gitlab.haskell.org/haskell/ghcup/raw/master/ghcup > ~/.ghcup/bin/ghcup && chmod +x ~/.ghcup/bin/ghcup) && echo "Success"
+    export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
+    # Install cabal and ghc
+    ghcup install $GHCVER
+    ghcup install-cabal $CABALVER
+    ghcup set $GHCVER
+  fi
 
 install:
  - zsh --version
