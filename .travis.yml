@@ -35,12 +35,10 @@ install:
  - cabal --version
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
  - travis_retry cabal update
- - cabal install --only-dependencies --enable-tests
 
 script:
- - cabal configure --enable-tests -v2 -f dev
- - cabal build
- - cabal test --show-details=always
+ - cabal build --enable-tests
+ - cabal test --enable-tests --show-details=always
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep "4"
  # There is a single Docker image, there are no variants for different versions of GHC
