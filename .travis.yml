@@ -38,7 +38,7 @@ install:
 
 script:
  - cabal build --enable-tests
- - cabal test --enable-tests --show-details=always
+ - cabal test --enable-tests
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep "4"
  # There is a single Docker image, there are no variants for different versions of GHC
