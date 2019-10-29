@@ -15,7 +15,7 @@ import Path.IO
 import System.Directory (listDirectory)
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
-import System.Hapistrano.Commands.Internal (quoteCmd)
+import System.Hapistrano.Commands.Internal (quoteCmd, trim)
 import qualified System.Hapistrano.Core as Hap
 import System.Hapistrano.Types
 import System.IO
@@ -32,8 +32,9 @@ testBranchName = "another_branch"
 spec :: Spec
 spec = do
   describe "QuickCheck" $
-    context "Properties" $
-    it "property of quote command" $ property $ propQuote'
+    context "Properties" $ do
+      it "property of quote command" $ property propQuote'
+      it "property of trimming a command" $ property propTrim'
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
     it "redirects commands' output to stdout first" $
@@ -390,3 +391,19 @@ propQuote str =
 
 propQuote' str =
   classify (any isSpace str) "has at least a space" $ propQuote str
+
+-- | Is trimmed
+isTrimmed' :: String -> Bool
+isTrimmed' [] = True
+isTrimmed' [_] = True
+isTrimmed' str =
+  let a = not . isSpace $ head str
+      b = not . isSpace $ last str
+   in a && b
+
+-- | Prop trimm
+propTrim :: String -> Bool
+propTrim = isTrimmed' . trim
+
+propTrim' str =
+  classify (not $ isTrimmed' str) "non trimmed strings" $ propTrim str
