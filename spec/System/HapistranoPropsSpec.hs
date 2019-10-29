@@ -5,17 +5,15 @@ module System.HapistranoPropsSpec
 import Data.Char (isSpace)
 import System.Hapistrano.Commands.Internal (quoteCmd, trim)
 import Test.Hspec hiding (shouldBe, shouldReturn)
-import qualified Test.Hspec as Hspec
-import Test.Hspec.QuickCheck
 import Test.QuickCheck
 
 spec :: Spec
-spec = do
+spec =
   describe "QuickCheck" $
-    context "Properties" $ do
-      it "property of quote command" $ property propQuote'
-      it "property of trimming a command" $
-        property $ forAll trimGenerator propTrim'
+  context "Properties" $ do
+    it "property of quote command" $ property propQuote'
+    it "property of trimming a command" $
+      property $ forAll trimGenerator propTrim'
 
 -- Is quoted determine
 isQuoted :: String -> Bool

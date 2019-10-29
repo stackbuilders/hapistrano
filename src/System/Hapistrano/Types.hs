@@ -8,18 +8,17 @@
 -- Portability :  portable
 --
 -- Type definitions for the Hapistrano tool.
-
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
 module System.Hapistrano.Types
   ( Hapistrano
-  , Failure (..)
-  , Config (..)
-  , Task (..)
+  , Failure(..)
+  , Config(..)
+  , Task(..)
   , ReleaseFormat(..)
-  , SshOptions (..)
-  , OutputDest (..)
+  , SshOptions(..)
+  , OutputDest(..)
   , Release
   , TargetSystem(..)
   , Shell(..)
@@ -28,142 +27,142 @@ module System.Hapistrano.Types
   , renderRelease
   , parseRelease
   , fromMaybeReleaseFormat
-  , fromMaybeKeepReleases )
-where
+  , fromMaybeKeepReleases
+  ) where
 
-import           Control.Applicative
-import           Control.Monad.Except
-import           Control.Monad.Reader
-import           Data.Aeson
-import           Data.Maybe
-import           Data.Time
-import           Numeric.Natural
-import           Path
+import Control.Applicative
+import Control.Monad.Except
+import Control.Monad.Reader
+import Data.Aeson
+import Data.Maybe
+import Data.Time
+import Numeric.Natural
+import Path
 
 -- | Hapistrano monad.
-
 type Hapistrano a = ExceptT Failure (ReaderT Config IO) a
 
 -- | Failure with status code and a message.
-
-data Failure = Failure Int (Maybe String)
+data Failure =
+  Failure Int (Maybe String)
 
 -- | Hapistrano configuration options.
-
-data Config = Config
-  { configSshOptions :: !(Maybe SshOptions)
+data Config =
+  Config
+    { configSshOptions :: !(Maybe SshOptions)
     -- ^ 'Nothing' if we are running locally, or SSH options to use.
-  , configShellOptions :: !Shell
+    , configShellOptions :: !Shell
     -- ^ One of the supported 'Shell's
-  , configPrint      :: !(OutputDest -> String -> IO ())
+    , configPrint :: !(OutputDest -> String -> IO ())
     -- ^ How to print messages
-  }
+    }
 
 -- | The records describes deployment task.
-
-data Task = Task
-  { taskDeployPath    :: Path Abs Dir
+data Task =
+  Task
+    { taskDeployPath :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
-  , taskRepository    :: String
+    , taskRepository :: String
     -- ^ The URL of remote Git repo to deploy
-  , taskRevision      :: String
+    , taskRevision :: String
     -- ^ A SHA1 or branch to release
-  , taskReleaseFormat :: ReleaseFormat
+    , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
-  } deriving (Show, Eq, Ord)
+    }
+  deriving (Show, Eq, Ord)
 
 -- | Release format mode.
-
 data ReleaseFormat
   = ReleaseShort -- ^ Standard release path following Capistrano's format
-  | ReleaseLong  -- ^ Long release path including picoseconds
+  | ReleaseLong -- ^ Long release path including picoseconds
   deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
 instance FromJSON ReleaseFormat where
-  parseJSON = withText "release format" $ \case
+  parseJSON =
+    withText "release format" $ \case
       "short" -> return ReleaseShort
-      "long"  -> return ReleaseLong
-      _       -> fail "expected 'short' or 'long'"
+      "long" -> return ReleaseLong
+      _ -> fail "expected 'short' or 'long'"
 
 -- | Current shells supported.
-data Shell =
-  Bash
+data Shell
+  = Bash
   | Zsh
   deriving (Show, Eq, Ord)
 
 instance FromJSON Shell where
-  parseJSON = withText "shell" $ \case
+  parseJSON =
+    withText "shell" $ \case
       "bash" -> return Bash
-      "zsh"  -> return Zsh
-      _      -> fail "supported shells: 'bash' or 'zsh'"
+      "zsh" -> return Zsh
+      _ -> fail "supported shells: 'bash' or 'zsh'"
 
 -- | SSH options.
-
-data SshOptions = SshOptions
-  { sshHost :: String   -- ^ Host to use
-  , sshPort :: Word     -- ^ Port to use
-  , sshArgs :: [String] -- ^ Arguments for ssh
-  } deriving (Show, Read, Eq, Ord)
+data SshOptions =
+  SshOptions
+    { sshHost :: String -- ^ Host to use
+    , sshPort :: Word -- ^ Port to use
+    , sshArgs :: [String] -- ^ Arguments for ssh
+    }
+  deriving (Show, Read, Eq, Ord)
 
 -- | Output destination.
-
 data OutputDest
   = StdoutDest
   | StderrDest
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
 -- | Release indentifier.
-
-data Release = Release ReleaseFormat UTCTime
+data Release =
+  Release ReleaseFormat UTCTime
   deriving (Eq, Show, Ord)
 
 -- | Target's system where application will be deployed
-
 data TargetSystem
   = GNULinux
   | BSD
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
 -- | Create a 'Release' indentifier.
-
 mkRelease :: ReleaseFormat -> UTCTime -> Release
 mkRelease = Release
 
 -- | Extract deployment time from 'Release'.
-
 releaseTime :: Release -> UTCTime
 releaseTime (Release _ time) = time
 
 -- | Render 'Release' indentifier as a 'String'.
-
 renderRelease :: Release -> String
 renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
   where
-    fmt = case rfmt of
-      ReleaseShort -> releaseFormatShort
-      ReleaseLong  -> releaseFormatLong
+    fmt =
+      case rfmt of
+        ReleaseShort -> releaseFormatShort
+        ReleaseLong -> releaseFormatLong
 
 -- | Parse 'Release' identifier from a 'String'.
-
 parseRelease :: String -> Maybe Release
-parseRelease s = (Release ReleaseLong <$> p releaseFormatLong s)
-  <|> (Release ReleaseShort <$> p releaseFormatShort s)
+parseRelease s =
+  (Release ReleaseLong <$> p releaseFormatLong s) <|>
+  (Release ReleaseShort <$> p releaseFormatShort s)
   where
     p = parseTimeM False defaultTimeLocale
 
 releaseFormatShort, releaseFormatLong :: String
 releaseFormatShort = "%Y%m%d%H%M%S"
-releaseFormatLong  = "%Y%m%d%H%M%S%q"
+
+releaseFormatLong = "%Y%m%d%H%M%S%q"
 
 -- | Get release format based on the CLI and file configuration values.
-
-fromMaybeReleaseFormat :: Maybe ReleaseFormat -> Maybe ReleaseFormat -> ReleaseFormat
-fromMaybeReleaseFormat cliRF configRF = fromMaybe ReleaseShort (cliRF <|> configRF)
+fromMaybeReleaseFormat ::
+     Maybe ReleaseFormat -> Maybe ReleaseFormat -> ReleaseFormat
+fromMaybeReleaseFormat cliRF configRF =
+  fromMaybe ReleaseShort (cliRF <|> configRF)
 
 -- | Get keep releases based on the CLI and file configuration values.
-
 fromMaybeKeepReleases :: Maybe Natural -> Maybe Natural -> Natural
-fromMaybeKeepReleases cliKR configKR = fromMaybe defaultKeepReleases (cliKR <|> configKR)
+fromMaybeKeepReleases cliKR configKR =
+  fromMaybe defaultKeepReleases (cliKR <|> configKR)
 
 defaultKeepReleases :: Natural
 defaultKeepReleases = 5

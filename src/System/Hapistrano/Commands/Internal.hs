@@ -167,7 +167,7 @@ instance Command (Find Dir) where
       , Just "-type"
       , Just "d"
       ]
-  parseResult Proxy = mapMaybe parseAbsDir . fmap trim . lines
+  parseResult Proxy = mapMaybe (parseAbsDir . trim) . lines
 
 instance Command (Find File) where
   type Result (Find File) = [Path Abs File]
@@ -180,7 +180,7 @@ instance Command (Find File) where
       , Just "-type"
       , Just "f"
       ]
-  parseResult Proxy = mapMaybe parseAbsFile . fmap trim . lines
+  parseResult Proxy = mapMaybe (parseAbsFile . trim) . lines
 
 -- | @touch@.
 data Touch =
