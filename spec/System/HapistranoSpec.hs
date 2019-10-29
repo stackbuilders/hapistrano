@@ -34,7 +34,8 @@ spec = do
   describe "QuickCheck" $
     context "Properties" $ do
       it "property of quote command" $ property propQuote'
-      it "property of trimming a command" $ property propTrim'
+      it "property of trimming a command" $
+        property $ forAll trimGenerator propTrim'
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
     it "redirects commands' output to stdout first" $
@@ -389,6 +390,7 @@ propQuote str =
     then isQuoted $ quoteCmd str
     else Hap.quoteCmd str == str
 
+propQuote' :: String -> Property
 propQuote' str =
   classify (any isSpace str) "has at least a space" $ propQuote str
 
@@ -405,5 +407,15 @@ isTrimmed' str =
 propTrim :: String -> Bool
 propTrim = isTrimmed' . trim
 
+propTrim' :: String -> Property
 propTrim' str =
   classify (not $ isTrimmed' str) "non trimmed strings" $ propTrim str
+
+-- | Trim String Generator
+trimGenerator :: Gen String
+trimGenerator =
+  let strGen = listOf arbitraryUnicodeChar
+   in frequency
+        [ (1, suchThat strGen isTrimmed')
+        , (1, suchThat strGen (not . isTrimmed'))
+        ]
