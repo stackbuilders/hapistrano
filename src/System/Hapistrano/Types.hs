@@ -100,8 +100,9 @@ instance FromJSON Shell where
 -- | SSH options.
 
 data SshOptions = SshOptions
-  { sshHost :: String  -- ^ Host to use
-  , sshPort :: Word    -- ^ Port to use
+  { sshHost :: String   -- ^ Host to use
+  , sshPort :: Word     -- ^ Port to use
+  , sshArgs :: [String] -- ^ Arguments for ssh
   } deriving (Show, Read, Eq, Ord)
 
 -- | Output destination.
