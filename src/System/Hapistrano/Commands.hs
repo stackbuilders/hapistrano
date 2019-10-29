@@ -33,7 +33,6 @@ module System.Hapistrano.Commands
   , GenericCommand
   , mkGenericCommand
   , unGenericCommand
-  , quoteCmd
   , readScript
   ) where
 

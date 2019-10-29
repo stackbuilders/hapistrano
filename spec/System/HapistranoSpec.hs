@@ -15,7 +15,6 @@ import Path.IO
 import System.Directory (listDirectory)
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
-import System.Hapistrano.Commands.Internal (quoteCmd, trim)
 import qualified System.Hapistrano.Core as Hap
 import System.Hapistrano.Types
 import System.IO
@@ -31,11 +30,6 @@ testBranchName = "another_branch"
 
 spec :: Spec
 spec = do
-  describe "QuickCheck" $
-    context "Properties" $ do
-      it "property of quote command" $ property propQuote'
-      it "property of trimming a command" $
-        property $ forAll trimGenerator propTrim'
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
     it "redirects commands' output to stdout first" $
@@ -378,44 +372,3 @@ arbitraryReleaseFormat = elements [ReleaseShort, ReleaseLong]
 
 arbitraryKeepReleases :: Gen Natural
 arbitraryKeepReleases = fromInteger . getPositive <$> arbitrary
-
--- Is quoted determine
-isQuoted :: String -> Bool
-isQuoted str = head str == '"' && last str == '"'
-
--- | Quote function property
-propQuote :: String -> Bool
-propQuote str =
-  if any isSpace str
-    then isQuoted $ quoteCmd str
-    else Hap.quoteCmd str == str
-
-propQuote' :: String -> Property
-propQuote' str =
-  classify (any isSpace str) "has at least a space" $ propQuote str
-
--- | Is trimmed
-isTrimmed' :: String -> Bool
-isTrimmed' [] = True
-isTrimmed' [_] = True
-isTrimmed' str =
-  let a = not . isSpace $ head str
-      b = not . isSpace $ last str
-   in a && b
-
--- | Prop trimm
-propTrim :: String -> Bool
-propTrim = isTrimmed' . trim
-
-propTrim' :: String -> Property
-propTrim' str =
-  classify (not $ isTrimmed' str) "non trimmed strings" $ propTrim str
-
--- | Trim String Generator
-trimGenerator :: Gen String
-trimGenerator =
-  let strGen = listOf arbitraryUnicodeChar
-   in frequency
-        [ (1, suchThat strGen isTrimmed')
-        , (1, suchThat strGen (not . isTrimmed'))
-        ]
