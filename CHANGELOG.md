@@ -1,4 +1,4 @@
-## 0.3.9.5
+## 0.3.10.0
 ### Added
 * Colorize the output in the terminal.
 
