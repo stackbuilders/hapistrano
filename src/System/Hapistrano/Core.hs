@@ -23,19 +23,20 @@ module System.Hapistrano.Core
   , scpDir )
 where
 
+import           Control.Concurrent.STM     (atomically)
 import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader
-import           Control.Concurrent.STM (atomically)
 import           Data.Proxy
 import           Data.Time
 import           Path
+import           System.Console.ANSI
 import           System.Exit
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Types
 import           System.Process
-import           System.Process.Typed (ProcessConfig)
-import qualified System.Process.Typed as SPT
+import           System.Process.Typed       (ProcessConfig)
+import qualified System.Process.Typed       as SPT
 
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 
@@ -113,7 +114,7 @@ getProgAndArgs cmd = do
         ("ssh", sshArgs ++ [sshHost, "-p", show sshPort, cmd])
     where
       renderShell :: Shell -> String
-      renderShell Zsh = "zsh"
+      renderShell Zsh  = "zsh"
       renderShell Bash = "bash"
 
 -- | Copy a file from local path to target server.
@@ -172,7 +173,10 @@ exec' cmd readProcessOutput = do
         case configSshOptions of
           Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
-  liftIO $ configPrint StdoutDest (putLine hostLabel ++ "[" ++ printableTime ++ "] INFO -- : " ++ "$ " ++ cmd ++ "\n")
+      hostInfo = colorizeString Blue $ putLine hostLabel
+      timestampInfo = colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
+      cmdInfo = colorizeString Green (cmd ++ "\n")
+  liftIO $ configPrint StdoutDest (hostInfo ++ timestampInfo ++ cmdInfo)
   (exitCode', stdout', stderr') <- liftIO readProcessOutput
   unless (null stdout') . liftIO $
     configPrint StdoutDest stdout'
@@ -190,3 +194,7 @@ putLine :: String -> String
 putLine str = "*** " ++ str ++ padding ++ "\n"
   where
     padding = ' ' : replicate (75 - length str) '*'
+
+colorizeString :: Color -> String -> String
+colorizeString color msg =
+  setSGRCode [SetColor Foreground Vivid color] ++ msg ++ setSGRCode [Reset]

@@ -1,3 +1,7 @@
+## 0.3.10.0
+### Added
+* Colorize the output in the terminal.
+
 ## 0.3.9.4
 ### Added
 * Support for GHC 8.8
