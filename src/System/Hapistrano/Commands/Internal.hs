@@ -262,7 +262,7 @@ mkGenericCommand str =
     then Nothing
     else Just (GenericCommand str')
   where
-    str' = trim (takeWhile (/= '#') str) -- This works except for commands and filepaths that include # Just check that it is not a comment
+    str' = trim (takeWhile (/= '#') str)
 
 -- | Get the raw command back from 'GenericCommand'.
 unGenericCommand :: GenericCommand -> String
