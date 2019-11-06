@@ -29,9 +29,7 @@ import System.Hapistrano.Types (TargetSystem(..))
 ----------------------------------------------------------------------------
 -- Commands
 -- | Class for data types that represent shell commands in typed way.
-class Command a
-  -- | Type of result.
-  where
+class Command a where
   type Result a :: *
   -- | How to render the command before feeding it into shell (possibly via
   -- SSH).
