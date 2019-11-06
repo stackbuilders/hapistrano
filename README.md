@@ -203,6 +203,7 @@ available on [Docker Hub](https://hub.docker.com/r/stackbuilders/hapistrano/).
 ## Nix
 
 If you want to use Nix for building Hapistrano, the required release.nix and default.nix are available.
+
 For installing the hap binary in your local path: 
 ```bash 
 nix-env -i hapistrano -f release.nix
