@@ -3,7 +3,12 @@ module System.HapistranoPropsSpec
   ) where
 
 import Data.Char (isSpace)
-import System.Hapistrano.Commands.Internal (quoteCmd, trim)
+import System.Hapistrano.Commands.Internal
+  ( mkGenericCommand
+  , quoteCmd
+  , trim
+  , unGenericCommand
+  )
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import Test.QuickCheck
 
@@ -14,6 +19,8 @@ spec =
     it "property of quote command" $ property propQuote'
     it "property of trimming a command" $
       property $ forAll trimGenerator propTrim'
+    it "property of mkGenericCommand and unGenericCommand" $
+      property $ forAll genericCmdGenerator propGenericCmd'
 
 -- Is quoted determine
 isQuoted :: String -> Bool
@@ -47,6 +54,21 @@ propTrim' :: String -> Property
 propTrim' str =
   classify (not $ isTrimmed' str) "non trimmed strings" $ propTrim str
 
+-- | Prop Generic Command
+-- If the string does not contain # or \n and is trimmed and non null, the command should be created 
+propGenericCmd :: String -> Bool
+propGenericCmd str =
+  if (not . null) str && notElem '#' str && notElem '\n' str && isTrimmed' str
+    then maybe False ((== str) . unGenericCommand) (mkGenericCommand str)
+    else maybe True ((/= str) . unGenericCommand) (mkGenericCommand str) -- Either the command cannot be created or the command str is different to the original
+
+propGenericCmd' :: String -> Property
+propGenericCmd' str =
+  classify
+    ((not . null) str && notElem '#' str && notElem '\n' str && isTrimmed' str)
+    "perfect command string"
+    propGenericCmd
+
 -- | Trim String Generator
 trimGenerator :: Gen String
 trimGenerator =
@@ -54,4 +76,17 @@ trimGenerator =
    in frequency
         [ (1, suchThat strGen isTrimmed')
         , (1, suchThat strGen (not . isTrimmed'))
+        ]
+
+-- | Generic Command generator
+genericCmdGenerator :: Gen String
+genericCmdGenerator =
+  let strGen = listOf arbitraryUnicodeChar
+   in frequency
+        [ ( 1
+          , suchThat
+              strGen
+              (\x ->
+                 and [isTrimmed' x, notElem '#' x, notElem '\n' x, not $ null x]))
+        , (1, suchThat strGen (elem '#'))
         ]
