@@ -19,23 +19,23 @@ module System.Hapistrano.Core
   , exec
   , execWithInheritStdout
   , scpFile
-  , scpDir
-  ) where
+  , scpDir )
+where
 
-import Control.Concurrent.STM (atomically)
-import Control.Monad
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Proxy
-import Data.Time
-import Path
-import System.Console.ANSI
-import System.Exit
-import System.Hapistrano.Commands
-import System.Hapistrano.Types
-import System.Process
-import System.Process.Typed (ProcessConfig)
-import qualified System.Process.Typed as SPT
+import           Control.Concurrent.STM     (atomically)
+import           Control.Monad
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.Proxy
+import           Data.Time
+import           Path
+import           System.Console.ANSI
+import           System.Exit
+import           System.Hapistrano.Commands
+import           System.Hapistrano.Types
+import           System.Process
+import           System.Process.Typed       (ProcessConfig)
+import qualified System.Process.Typed       as SPT
 
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 runHapistrano ::
@@ -110,10 +110,11 @@ getProgAndArgs cmd = do
       Nothing -> (renderShell configShellOptions, ["-c", cmd])
       Just SshOptions {..} ->
         ("ssh", sshArgs ++ [sshHost, "-p", show sshPort, cmd])
-  where
-    renderShell :: Shell -> String
-    renderShell Zsh = "zsh"
-    renderShell Bash = "bash"
+    where
+      renderShell :: Shell -> String
+      renderShell Zsh  = "zsh"
+      renderShell Bash = "bash"
+
 
 -- | Copy a file from local path to target server.
 scpFile ::
@@ -162,8 +163,7 @@ exec' cmd readProcessOutput = do
           Nothing -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
       hostInfo = colorizeString Blue $ putLine hostLabel
-      timestampInfo =
-        colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
+      timestampInfo = colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
       cmdInfo = colorizeString Green (cmd ++ "\n")
   liftIO $ configPrint StdoutDest (hostInfo ++ timestampInfo ++ cmdInfo)
   (exitCode', stdout', stderr') <- liftIO readProcessOutput
