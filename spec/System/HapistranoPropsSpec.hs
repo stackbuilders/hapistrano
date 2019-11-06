@@ -54,20 +54,21 @@ propTrim' :: String -> Property
 propTrim' str =
   classify (not $ isTrimmed' str) "non trimmed strings" $ propTrim str
 
+-- | Check that the string is perfect command String
+isCmdString :: String -> Bool
+isCmdString str = all ($str) [not . null, notElem '#', notElem '\n', isTrimmed']
+
 -- | Prop Generic Command
--- If the string does not contain # or \n and is trimmed and non null, the command should be created 
+-- If the string does not contain # or \n, is trimmed and non null, the command should be created 
 propGenericCmd :: String -> Bool
 propGenericCmd str =
-  if (not . null) str && notElem '#' str && notElem '\n' str && isTrimmed' str
+  if isCmdString str
     then maybe False ((== str) . unGenericCommand) (mkGenericCommand str)
     else maybe True ((/= str) . unGenericCommand) (mkGenericCommand str) -- Either the command cannot be created or the command str is different to the original
 
 propGenericCmd' :: String -> Property
 propGenericCmd' str =
-  classify
-    ((not . null) str && notElem '#' str && notElem '\n' str && isTrimmed' str)
-    "perfect command string"
-    propGenericCmd
+  classify (isCmdString str) "perfect command string" propGenericCmd
 
 -- | Trim String Generator
 trimGenerator :: Gen String
@@ -83,10 +84,4 @@ genericCmdGenerator :: Gen String
 genericCmdGenerator =
   let strGen = listOf arbitraryUnicodeChar
    in frequency
-        [ ( 1
-          , suchThat
-              strGen
-              (\x ->
-                 and [isTrimmed' x, notElem '#' x, notElem '\n' x, not $ null x]))
-        , (1, suchThat strGen (elem '#'))
-        ]
+        [(1, suchThat strGen isCmdString), (1, suchThat strGen (elem '#'))]
