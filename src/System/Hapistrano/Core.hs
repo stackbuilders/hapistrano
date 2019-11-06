@@ -29,6 +29,7 @@ import Control.Monad.Reader
 import Data.Proxy
 import Data.Time
 import Path
+import System.Console.ANSI
 import System.Exit
 import System.Hapistrano.Commands
 import System.Hapistrano.Types
@@ -160,11 +161,11 @@ exec' cmd readProcessOutput = do
         case configSshOptions of
           Nothing -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
-  liftIO $
-    configPrint
-      StdoutDest
-      (putLine hostLabel ++
-       "[" ++ printableTime ++ "] INFO -- : " ++ "$ " ++ cmd ++ "\n")
+      hostInfo = colorizeString Blue $ putLine hostLabel
+      timestampInfo =
+        colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
+      cmdInfo = colorizeString Green (cmd ++ "\n")
+  liftIO $ configPrint StdoutDest (hostInfo ++ timestampInfo ++ cmdInfo)
   (exitCode', stdout', stderr') <- liftIO readProcessOutput
   unless (null stdout') . liftIO $ configPrint StdoutDest stdout'
   unless (null stderr') . liftIO $ configPrint StderrDest stderr'
@@ -177,3 +178,7 @@ putLine :: String -> String
 putLine str = "*** " ++ str ++ padding ++ "\n"
   where
     padding = ' ' : replicate (75 - length str) '*'
+
+colorizeString :: Color -> String -> String
+colorizeString color msg =
+  setSGRCode [SetColor Foreground Vivid color] ++ msg ++ setSGRCode [Reset]
