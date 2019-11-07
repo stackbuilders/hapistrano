@@ -9,29 +9,28 @@
 --
 -- Collection of type safe shell commands that can be fed into
 -- 'System.Hapistrano.Core.runCommand'.
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE GADTs               #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module System.Hapistrano.Commands.Internal where
 
-import Control.Monad.IO.Class
-import Data.Char (isSpace)
-import Data.List (dropWhileEnd)
-import Data.Maybe (catMaybes, fromJust, mapMaybe)
-import Data.Proxy
-import Numeric.Natural
-import Path
+import           Control.Monad.IO.Class
+import           Data.Char               (isSpace)
+import           Data.List               (dropWhileEnd)
+import           Data.Maybe              (catMaybes, fromJust, mapMaybe)
+import           Data.Proxy
+import           Numeric.Natural
+import           Path
 
-import System.Hapistrano.Types (TargetSystem(..))
+import           System.Hapistrano.Types (TargetSystem (..))
 
 ----------------------------------------------------------------------------
 -- Commands
 -- | Class for data types that represent shell commands in typed way.
-class Command a
+class Command a where
   -- | Type of result.
-  where
   type Result a :: *
   -- | How to render the command before feeding it into shell (possibly via
   -- SSH).
@@ -216,7 +215,7 @@ instance Command GitClone where
           else Nothing
       , Just
           (case src of
-             Left repoUrl -> repoUrl
+             Left repoUrl  -> repoUrl
              Right srcPath -> fromAbsDir srcPath)
       , Just (fromAbsDir dest)
       ]
@@ -290,5 +289,6 @@ quoteCmd str =
 trim :: String -> String
 trim = dropWhileEnd isSpace . dropWhile isSpace
 
+-- | Determines whether or not the target system is a Linux machine.
 isLinux :: TargetSystem -> Bool
 isLinux = (== GNULinux)

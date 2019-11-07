@@ -2,15 +2,13 @@ module System.HapistranoPropsSpec
   ( spec
   ) where
 
-import Data.Char (isSpace)
-import System.Hapistrano.Commands.Internal
-  ( mkGenericCommand
-  , quoteCmd
-  , trim
-  , unGenericCommand
-  )
-import Test.Hspec hiding (shouldBe, shouldReturn)
-import Test.QuickCheck
+import           Data.Char                           (isSpace)
+import           System.Hapistrano.Commands.Internal (mkGenericCommand,
+                                                      quoteCmd, trim,
+                                                      unGenericCommand)
+import           Test.Hspec                          hiding (shouldBe,
+                                                      shouldReturn)
+import           Test.QuickCheck
 
 spec :: Spec
 spec =
@@ -40,7 +38,7 @@ propQuote' str =
 -- | Is trimmed
 isTrimmed' :: String -> Bool
 isTrimmed' [] = True
-isTrimmed' [_] = True
+isTrimmed' [x] = not $ isSpace x
 isTrimmed' str =
   let a = not . isSpace $ head str
       b = not . isSpace $ last str
@@ -59,7 +57,7 @@ isCmdString :: String -> Bool
 isCmdString str = all ($str) [not . null, notElem '#', notElem '\n', isTrimmed']
 
 -- | Prop Generic Command
--- If the string does not contain # or \n, is trimmed and non null, the command should be created 
+-- If the string does not contain # or \n, is trimmed and non null, the command should be created
 propGenericCmd :: String -> Bool
 propGenericCmd str =
   if isCmdString str
@@ -82,6 +80,6 @@ trimGenerator =
 -- | Generic Command generator
 genericCmdGenerator :: Gen String
 genericCmdGenerator =
-  let strGen = listOf arbitraryUnicodeChar
+  let strGen = listOf $ elements $ ['A'..'Z'] ++ ['a'..'z'] ++ [' ', '#', '*', '/', '.']
    in frequency
         [(1, suchThat strGen isCmdString), (1, suchThat strGen (elem '#'))]

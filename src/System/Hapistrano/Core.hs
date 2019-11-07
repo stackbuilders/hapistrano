@@ -9,8 +9,8 @@
 --
 -- Core Hapistrano functions that provide basis on which all the
 -- functionality is built.
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Hapistrano.Core
@@ -88,10 +88,10 @@ execWithInheritStdout typedCmd = do
   let cmd = renderCommand typedCmd
   (prog, args) <- getProgAndArgs cmd
   void $ exec' cmd (readProcessWithExitCode' (SPT.proc prog args))
+    where
     -- | Prepares a process, reads @stdout@ and @stderr@ and returns exit code
     -- NOTE: @strdout@ and @stderr@ are empty string because we're writing
     -- the output to the parent.
-  where
     readProcessWithExitCode' ::
          ProcessConfig stdin stdoutIgnored stderrIgnored
       -> IO (ExitCode, String, String)
@@ -137,11 +137,11 @@ scp' src dest extraArgs = do
       portArg =
         case sshPort <$> configSshOptions of
           Nothing -> []
-          Just x -> ["-P", show x]
+          Just x  -> ["-P", show x]
       hostPrefix =
         case sshHost <$> configSshOptions of
           Nothing -> ""
-          Just x -> x ++ ":"
+          Just x  -> x ++ ":"
       args = extraArgs ++ portArg ++ [src, hostPrefix ++ dest]
   void
     (exec' (prog ++ " " ++ unwords args) (readProcessWithExitCode prog args ""))
@@ -160,7 +160,7 @@ exec' cmd readProcessOutput = do
       printableTime = formatTime defaultTimeLocale timeStampFormat time
       hostLabel =
         case configSshOptions of
-          Nothing -> "localhost"
+          Nothing              -> "localhost"
           Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
       hostInfo = colorizeString Blue $ putLine hostLabel
       timestampInfo = colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
@@ -170,7 +170,7 @@ exec' cmd readProcessOutput = do
   unless (null stdout') . liftIO $ configPrint StdoutDest stdout'
   unless (null stderr') . liftIO $ configPrint StderrDest stderr'
   case exitCode' of
-    ExitSuccess -> return stdout'
+    ExitSuccess   -> return stdout'
     ExitFailure n -> failWith n Nothing
 
 -- | Put something “inside” a line, sort-of beautifully.
