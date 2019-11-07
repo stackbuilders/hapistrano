@@ -1,3 +1,6 @@
 resolver: lts-14.12
 packages:
   - '.'
+nix:
+  enable: true
+  packages: [git zsh zlib]
