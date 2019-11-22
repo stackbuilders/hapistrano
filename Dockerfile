@@ -1,23 +1,22 @@
 # Build Hapistrano
 FROM alpine:3.9 as build-env
 
-MAINTAINER Javier Casas <jcasas@stackbuilders.com>
+MAINTAINER Nicolas Vivar <nvivar@stackbuilders.com>
 
-RUN echo '@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories
 RUN apk update \
  && apk add \
         alpine-sdk \
         bash \
         ca-certificates \
-        cabal@testing \
-        ghc-dev@testing \
-        ghc@testing \
+        cabal \
+        ghc-dev \
+        ghc \
         git \
         gmp-dev \
         gnupg \
         libffi-dev \
         linux-headers \
-        upx@testing \
+        upx \
         zlib-dev
 
 WORKDIR /hapistrano
