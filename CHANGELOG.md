@@ -1,3 +1,7 @@
+## 0.3.10.1
+### Added
+* Update Dockerfile and maintainer.
+
 ## 0.3.10.0
 ### Added
 * Colorize the output in the terminal.
