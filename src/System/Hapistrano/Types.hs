@@ -16,7 +16,6 @@ module System.Hapistrano.Types
   , Failure(..)
   , Config(..)
   , Repository(..)
-  , toMaybePath
   , Task(..)
   , ReleaseFormat(..)
   , SshOptions(..)
@@ -24,12 +23,14 @@ module System.Hapistrano.Types
   , Release
   , TargetSystem(..)
   , Shell(..)
+  -- * Types helpers
   , mkRelease
   , releaseTime
   , renderRelease
   , parseRelease
   , fromMaybeReleaseFormat
   , fromMaybeKeepReleases
+  , toMaybePath
   ) where
 
 import Control.Applicative
@@ -74,17 +75,13 @@ data Repository
       }
   deriving (Eq, Ord, Show)
 
-toMaybePath :: Repository -> Maybe (Path Abs Dir)
-toMaybePath (LocalDirectory path) = Just path
-toMaybePath _                     = Nothing
-
 -- | The records describes deployment task.
 data Task =
   Task
     { taskDeployPath :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
     , taskRepository :: Repository
-    -- ^ The repository to deploy
+    -- ^ The 'Repository' to deploy
     , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
     }
@@ -159,6 +156,9 @@ renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
         ReleaseShort -> releaseFormatShort
         ReleaseLong -> releaseFormatLong
 
+----------------------------------------------------------------------------
+-- Types helpers
+
 -- | Parse 'Release' identifier from a 'String'.
 parseRelease :: String -> Maybe Release
 parseRelease s =
@@ -185,3 +185,8 @@ fromMaybeKeepReleases cliKR configKR =
 
 defaultKeepReleases :: Natural
 defaultKeepReleases = 5
+
+-- | Get the local path to copy from the configuration value.
+toMaybePath :: Repository -> Maybe (Path Abs Dir)
+toMaybePath (LocalDirectory path) = Just path
+toMaybePath _                     = Nothing
