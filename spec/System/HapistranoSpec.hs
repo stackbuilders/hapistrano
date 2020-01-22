@@ -356,8 +356,11 @@ mkTaskWithCustomRevision :: Path Abs Dir -> Path Abs Dir -> String -> Task
 mkTaskWithCustomRevision deployPath repoPath revision =
   Task
     { taskDeployPath = deployPath
-    , taskRepository = fromAbsDir repoPath
-    , taskRevision = revision
+    , taskRepository =
+        ExternalRepository
+          { externalRepositoryURL = fromAbsDir repoPath
+          , externalRepositoryRevision = revision
+          }
     , taskReleaseFormat = ReleaseLong
     }
 

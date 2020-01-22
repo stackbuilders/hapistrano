@@ -10,6 +10,7 @@ module Config
   , Target (..))
 where
 
+import           Control.Applicative        ((<|>))
 import           Data.Aeson
 import           Data.Function              (on)
 import           Data.List                  (nubBy)
@@ -20,6 +21,7 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Types    (Shell(..),
                                              ReleaseFormat (..),
+                                             Repository(..),
                                              TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
@@ -29,10 +31,8 @@ data Config = Config
     -- ^ Top-level deploy directory on target machine
   , configHosts          :: ![Target]
     -- ^ Hosts\/ports\/shell\/ssh args to deploy to. If empty, localhost will be assumed.
-  , configRepo           :: !String
+  , configRepository     :: !Repository
     -- ^ Location of repository that contains the source code to deploy
-  , configRevision       :: !String
-    -- ^ Revision to use
   , configRestartCommand :: !(Maybe GenericCommand)
     -- ^ The command to execute when switching to a different release
     -- (usually after a deploy or rollback).
@@ -97,8 +97,11 @@ instance FromJSON Config where
     let first Target{..} = host
         configHosts = nubBy ((==) `on` first)
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
-    configRepo       <- o .: "repo"
-    configRevision   <- o .: "revision"
+        getRepository m =
+              LocalDirectory <$> m .: "local_directory"
+          <|> (m .: "external-repository" >>= \m' -> ExternalRepository <$> m' .: "url" <*> m' .: "revision")
+          <|> ExternalRepository <$> m .: "repo" <*> m .: "revision"
+    configRepository  <- getRepository o
     configRestartCommand <- (o .:? "restart_command") >>=
       maybe (return Nothing) (fmap Just . mkCmd)
     configBuildScript <- o .:? "build_script" >>=

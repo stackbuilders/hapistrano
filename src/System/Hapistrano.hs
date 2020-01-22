@@ -55,11 +55,18 @@ import           System.Hapistrano.Types
 pushRelease :: Task -> Hapistrano Release
 pushRelease Task {..} = do
   setupDirs taskDeployPath
-  ensureCacheInPlace taskRepository taskDeployPath
-  release <- newRelease taskReleaseFormat
-  cloneToRelease taskDeployPath release
-  setReleaseRevision taskDeployPath release taskRevision
-  return release
+  pushReleaseForRepository taskRepository
+  where
+    -- When the configuration is set for a local directory, it will only create
+    -- the release directory without any version control operations.
+    pushReleaseForRepository ExternalRepository {..} = do
+      ensureCacheInPlace externalRepositoryURL taskDeployPath
+      release <- newRelease taskReleaseFormat
+      cloneToRelease taskDeployPath release
+      setReleaseRevision taskDeployPath release externalRepositoryRevision
+      return release
+    pushReleaseForRepository LocalDirectory {..} =
+      newRelease taskReleaseFormat
 
 -- | Same as 'pushRelease' but doesn't perform any version control
 -- related operations.

@@ -15,6 +15,8 @@ module System.Hapistrano.Types
   ( Hapistrano
   , Failure(..)
   , Config(..)
+  , Repository(..)
+  , toMaybePath
   , Task(..)
   , ReleaseFormat(..)
   , SshOptions(..)
@@ -57,15 +59,32 @@ data Config =
     -- ^ How to print messages
     }
 
+-- | The origin of the repository. It can be from a version control provider
+-- like GitHub or a local directory.
+data Repository
+  = ExternalRepository
+      { externalRepositoryURL :: String
+      -- ^ The URL of remote Git repository to deploy
+      , externalRepositoryRevision :: String
+      -- ^ The SHA1 or branch to release
+      }
+  | LocalDirectory
+      { localDirectoryPath :: Path Abs Dir
+      -- ^ The local repository to deploy
+      }
+  deriving (Eq, Ord, Show)
+
+toMaybePath :: Repository -> Maybe (Path Abs Dir)
+toMaybePath (LocalDirectory path) = Just path
+toMaybePath _                     = Nothing
+
 -- | The records describes deployment task.
 data Task =
   Task
     { taskDeployPath :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
-    , taskRepository :: String
-    -- ^ The URL of remote Git repo to deploy
-    , taskRevision :: String
-    -- ^ A SHA1 or branch to release
+    , taskRepository :: Repository
+    -- ^ The repository to deploy
     , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
     }
