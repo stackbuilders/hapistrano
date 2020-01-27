@@ -15,7 +15,7 @@ module System.Hapistrano.Types
   ( Hapistrano
   , Failure(..)
   , Config(..)
-  , Repository(..)
+  , Source(..)
   , Task(..)
   , ReleaseFormat(..)
   , SshOptions(..)
@@ -60,13 +60,13 @@ data Config =
     -- ^ How to print messages
     }
 
--- | The origin of the repository. It can be from a version control provider
+-- | The source of the repository. It can be from a version control provider
 -- like GitHub or a local directory.
-data Repository
-  = ExternalRepository
-      { externalRepositoryURL :: String
+data Source
+  = GitRepository
+      { gitRepositoryURL :: String
       -- ^ The URL of remote Git repository to deploy
-      , externalRepositoryRevision :: String
+      , gitRepositoryRevision :: String
       -- ^ The SHA1 or branch to release
       }
   | LocalDirectory
@@ -80,8 +80,8 @@ data Task =
   Task
     { taskDeployPath :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
-    , taskRepository :: Repository
-    -- ^ The 'Repository' to deploy
+    , taskSource :: Source
+    -- ^ The 'Source' to deploy
     , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
     }
@@ -186,7 +186,7 @@ fromMaybeKeepReleases cliKR configKR =
 defaultKeepReleases :: Natural
 defaultKeepReleases = 5
 
--- | Get the local path to copy from the configuration value.
-toMaybePath :: Repository -> Maybe (Path Abs Dir)
+-- | Get the local path to copy from the 'Source' configuration value.
+toMaybePath :: Source -> Maybe (Path Abs Dir)
 toMaybePath (LocalDirectory path) = Just path
 toMaybePath _                     = Nothing

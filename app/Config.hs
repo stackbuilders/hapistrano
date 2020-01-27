@@ -21,7 +21,7 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Types    (Shell(..),
                                              ReleaseFormat (..),
-                                             Repository(..),
+                                             Source(..),
                                              TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
@@ -31,8 +31,8 @@ data Config = Config
     -- ^ Top-level deploy directory on target machine
   , configHosts          :: ![Target]
     -- ^ Hosts\/ports\/shell\/ssh args to deploy to. If empty, localhost will be assumed.
-  , configRepository     :: !Repository
-    -- ^ Location of repository that contains the source code to deploy
+  , configSource         :: !Source
+    -- ^ Location of the 'Source' that contains the code to deploy
   , configRestartCommand :: !(Maybe GenericCommand)
     -- ^ The command to execute when switching to a different release
     -- (usually after a deploy or rollback).
@@ -99,9 +99,8 @@ instance FromJSON Config where
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
         getRepository m =
               LocalDirectory <$> m .: "local_directory"
-          <|> (m .: "external-repository" >>= \m' -> ExternalRepository <$> m' .: "url" <*> m' .: "revision")
-          <|> ExternalRepository <$> m .: "repo" <*> m .: "revision"
-    configRepository  <- getRepository o
+          <|> GitRepository <$> m .: "repo" <*> m .: "revision"
+    configSource  <- getRepository o
     configRestartCommand <- (o .:? "restart_command") >>=
       maybe (return Nothing) (fmap Just . mkCmd)
     configBuildScript <- o .:? "build_script" >>=

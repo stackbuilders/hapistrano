@@ -125,7 +125,7 @@ main = do
   C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
   chan <- newTChanIO
   let task rf = Task { taskDeployPath    = configDeployPath
-                     , taskRepository    = configRepository
+                     , taskSource        = configSource
                      , taskReleaseFormat = rf }
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
@@ -140,7 +140,7 @@ main = do
                           then Hap.pushRelease (task releaseFormat)
                           else Hap.pushReleaseWithoutVc (task releaseFormat)
               rpath <- Hap.releasePath configDeployPath release
-              forM_ (toMaybePath configRepository) $ \src ->
+              forM_ (toMaybePath configSource) $ \src ->
                 Hap.scpDir src rpath
               forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
                 srcPath  <- resolveFile' src
