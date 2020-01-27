@@ -4,7 +4,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Config
+module System.Hapistrano.Config
   ( Config (..)
   , CopyThing (..)
   , Target (..))
@@ -98,8 +98,8 @@ instance FromJSON Config where
         configHosts = nubBy ((==) `on` first)
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
         getRepository m =
-              LocalDirectory <$> m .: "local_directory"
-          <|> GitRepository <$> m .: "repo" <*> m .: "revision"
+              GitRepository <$> m .: "repo" <*> m .: "revision"
+          <|> LocalDirectory <$> m .: "local_directory"
     configSource  <- getRepository o
     configRestartCommand <- (o .:? "restart_command") >>=
       maybe (return Nothing) (fmap Just . mkCmd)

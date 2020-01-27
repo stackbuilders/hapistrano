@@ -4,7 +4,6 @@
 
 module Main (main) where
 
-import qualified Config                     as C
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Monad
@@ -21,6 +20,7 @@ import           Paths_hapistrano           (version)
 import           System.Exit
 import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
+import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
 import           System.Hapistrano.Types
 import           System.IO

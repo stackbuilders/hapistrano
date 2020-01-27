@@ -1,0 +1,4 @@
+deploy_path: '/'
+host: www.example.com
+repo: 'my-repo'
+revision: 'my-revision'

@@ -1,0 +1,3 @@
+deploy_path: '/'
+host: www.example.com
+local_directory: '/'
