@@ -1,3 +1,7 @@
+## 0.4.0.0
+### Added
+* Option to copy a directory's contents instead of using "git".
+
 ## 0.3.10.1
 ### Added
 * Update Dockerfile and maintainer.

@@ -101,6 +101,7 @@ test-suite test
   hs-source-dirs:      spec
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
+                     , System.HapistranoConfigSpec
                      , System.HapistranoPropsSpec
   build-depends:       base               >= 4.8 && < 5.0
                      , directory          >= 1.2.5 && < 1.4
