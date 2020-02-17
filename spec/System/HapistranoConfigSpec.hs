@@ -18,12 +18,17 @@ spec =
     context "when the key 'local-repository' is present" $
       it "loads LocalRepository as the configuration's source" $
         Yaml.loadYamlSettings ["fixtures/local_directory_config.yaml"] [] Yaml.useEnv
-          >>= (`shouldBe` defaultConfiguration)
+          >>=
+            (`shouldBe`
+              (defaultConfiguration
+              { configSource = LocalDirectory { localDirectoryPath = $(mkAbsDir "/") } }
+              )
+            )
 
     context "when the keys 'repo' and 'revision' are present" $
       it "loads GitRepository as the configuration's source" $
         Yaml.loadYamlSettings ["fixtures/git_repository_config.yaml"] [] Yaml.useEnv
-          >>= (`shouldBe` (defaultConfiguration { configSource = GitRepository "my-repo" "my-revision" }))
+          >>= (`shouldBe` defaultConfiguration)
 
 
 defaultConfiguration :: Config
@@ -38,7 +43,8 @@ defaultConfiguration =
           , targetSshArgs = []
           }
       ]
-    , configSource = LocalDirectory { localDirectoryPath = $(mkAbsDir "/") }
+
+    , configSource = GitRepository "my-repo" "my-revision"
     , configRestartCommand = Nothing
     , configBuildScript = Nothing
     , configCopyFiles = []

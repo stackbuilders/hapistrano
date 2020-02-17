@@ -54,7 +54,7 @@ The following parameters are required:
 
 * `deploy_path` — the root of the deploy target on the remote host.
 * Related to the `source` of the repository, you have the following options:
-  - _Git repository_ — consists of two parameters. When these are set,
+  - _Git repository_ **default** — consists of two parameters. When these are set,
     hapistrano will perform version control related operations.
     **Note:** Only GitHub is supported.
     * `repo` — the origin repository.

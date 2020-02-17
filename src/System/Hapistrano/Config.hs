@@ -97,10 +97,10 @@ instance FromJSON Config where
     let first Target{..} = host
         configHosts = nubBy ((==) `on` first)
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
-        getRepository m =
+        source m =
               GitRepository <$> m .: "repo" <*> m .: "revision"
           <|> LocalDirectory <$> m .: "local_directory"
-    configSource  <- getRepository o
+    configSource  <- source o
     configRestartCommand <- (o .:? "restart_command") >>=
       maybe (return Nothing) (fmap Just . mkCmd)
     configBuildScript <- o .:? "build_script" >>=
