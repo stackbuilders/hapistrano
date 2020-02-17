@@ -42,7 +42,7 @@ spec = do
            expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
-      spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
+      let spath = $(mkRelFile "script/clean-build.sh")
       (fmap Hap.unGenericCommand <$> Hap.readScript spath) `Hspec.shouldReturn`
         [ "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
         , "cabal sandbox delete"
