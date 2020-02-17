@@ -1,6 +1,6 @@
 ## 0.4.0.0
 ### Added
-* Option to copy a directory's contents instead of using "git".
+* Copy a directory's contents with `local_directory` instead of using _git_ with `repo` and `revision`.
 
 ## 0.3.10.1
 ### Added
