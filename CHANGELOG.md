@@ -1,4 +1,4 @@
-## 0.3.10.2
+## master
 ### Changed
 * Update upper bounds for `path` and `path-io` packages.
 
