@@ -1,3 +1,7 @@
+## master
+### Changed
+* Update upper bounds for `path` and `path-io` packages.
+
 ## 0.3.10.1
 ### Added
 * Update Dockerfile and maintainer.
