@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP             #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module System.HapistranoSpec
@@ -42,7 +43,11 @@ spec = do
            expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
+#if MIN_VERSION_path_io(1,6,0)
+      let spath = $(mkRelFile "script/clean-build.sh")
+#else
       spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
+#endif
       (fmap Hap.unGenericCommand <$> Hap.readScript spath) `Hspec.shouldReturn`
         [ "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
         , "cabal sandbox delete"
