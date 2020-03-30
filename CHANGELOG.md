@@ -1,3 +1,7 @@
+## Unreleased
+### Changed
+* Allow `time` 1.10
+
 ## 0.4.0.0
 ### Added
 * Copy a directory's contents with `local_directory` instead of using _git_ with `repo` and `revision`.
