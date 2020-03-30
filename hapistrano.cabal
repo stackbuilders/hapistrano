@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.3.10.1
+version:             0.4.0.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -48,6 +48,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     System.Hapistrano
                      , System.Hapistrano.Commands
+                     , System.Hapistrano.Config
                      , System.Hapistrano.Core
                      , System.Hapistrano.Types
                      , System.Hapistrano.Commands.Internal
@@ -64,6 +65,7 @@ library
                      , typed-process      >= 0.2 && < 0.3
                      , time               >= 1.5 && < 1.10
                      , transformers       >= 0.4 && < 0.6
+                     , yaml               >= 0.8.16 && < 0.12
   if flag(dev)
     ghc-options:       -Wall -Werror
   else
@@ -73,8 +75,7 @@ library
 executable hap
   hs-source-dirs:      app
   main-is:             Main.hs
-  other-modules:       Config
-                     , Paths_hapistrano
+  other-modules:       Paths_hapistrano
   build-depends:       aeson              >= 0.11 && < 1.5
                      , async              >= 2.0.1.6 && < 2.4
                      , base               >= 4.8 && < 5.0
@@ -100,6 +101,7 @@ test-suite test
   hs-source-dirs:      spec
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
+                     , System.HapistranoConfigSpec
                      , System.HapistranoPropsSpec
   build-depends:       base               >= 4.8 && < 5.0
                      , directory          >= 1.2.5 && < 1.4
@@ -113,6 +115,7 @@ test-suite test
                      , QuickCheck         >= 2.5.1 && < 3.0
                      , silently           >= 1.2 && < 1.3
                      , temporary          >= 1.1 && < 1.4
+                     , yaml               >= 0.8.16 && < 0.12
   build-tools:        hspec-discover   >= 2.0  && < 3.0
 
   if flag(dev)

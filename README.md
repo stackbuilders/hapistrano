@@ -32,15 +32,18 @@ filesystem and deletes previous releases to avoid filling up the disk.
 
 ## Usage
 
-Hapistrano 0.3.0.0 looks for a configuration file called `hap.yaml` that
+Hapistrano 0.4.0.0 looks for a configuration file called `hap.yaml` that
 typically looks like this:
 
 ```yaml
 deploy_path: '/var/projects/my-project'
 host: myserver.com
 port: 2222
+# To perform version control operations
 repo: 'https://github.com/stackbuilders/hapistrano.git'
 revision: origin/master
+# To copy the contents of the directory
+local_directory: '/tmp/my-project'
 build_script:
   - stack setup
   - stack build
@@ -50,10 +53,16 @@ restart_command: systemd restart my-app-service
 The following parameters are required:
 
 * `deploy_path` — the root of the deploy target on the remote host.
-* `repo` — the origin repository.
-* `revision` — the SHA1 or branch to deploy. If a branch, you will need to
-  specify it as `origin/branch_name` due to the way that the cache repo is
-  configured.
+* Related to the `source` of the repository, you have the following options:
+  - _Git repository_ **default** — consists of two parameters. When these are set,
+    hapistrano will perform version control related operations.
+    **Note:** Only GitHub is supported.
+    * `repo` — the origin repository.
+    * `revision` — the SHA1 or branch to deploy. If a branch, you will need to
+      specify it as `origin/branch_name` due to the way that the cache repo is
+      configured.
+  * `local_directory` — when this parameter is set, hapistrano will copy the
+    contents of the directory.
 
 The following parameters are *optional*:
 
@@ -204,8 +213,8 @@ available on [Docker Hub](https://hub.docker.com/r/stackbuilders/hapistrano/).
 
 If you want to use Nix for building Hapistrano, the required release.nix and default.nix are available.
 
-For installing the hap binary in your local path: 
-```bash 
+For installing the hap binary in your local path:
+```bash
 nix-env -i hapistrano -f release.nix
 ```
 For developing Hapistrano with Nix, you can create a development environment using:

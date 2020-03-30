@@ -15,6 +15,7 @@ module System.Hapistrano.Types
   ( Hapistrano
   , Failure(..)
   , Config(..)
+  , Source(..)
   , Task(..)
   , ReleaseFormat(..)
   , SshOptions(..)
@@ -22,12 +23,14 @@ module System.Hapistrano.Types
   , Release
   , TargetSystem(..)
   , Shell(..)
+  -- * Types helpers
   , mkRelease
   , releaseTime
   , renderRelease
   , parseRelease
   , fromMaybeReleaseFormat
   , fromMaybeKeepReleases
+  , toMaybePath
   ) where
 
 import Control.Applicative
@@ -57,15 +60,28 @@ data Config =
     -- ^ How to print messages
     }
 
+-- | The source of the repository. It can be from a version control provider
+-- like GitHub or a local directory.
+data Source
+  = GitRepository
+      { gitRepositoryURL :: String
+      -- ^ The URL of remote Git repository to deploy
+      , gitRepositoryRevision :: String
+      -- ^ The SHA1 or branch to release
+      }
+  | LocalDirectory
+      { localDirectoryPath :: Path Abs Dir
+      -- ^ The local repository to deploy
+      }
+  deriving (Eq, Ord, Show)
+
 -- | The records describes deployment task.
 data Task =
   Task
     { taskDeployPath :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
-    , taskRepository :: String
-    -- ^ The URL of remote Git repo to deploy
-    , taskRevision :: String
-    -- ^ A SHA1 or branch to release
+    , taskSource :: Source
+    -- ^ The 'Source' to deploy
     , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
     }
@@ -140,6 +156,9 @@ renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
         ReleaseShort -> releaseFormatShort
         ReleaseLong -> releaseFormatLong
 
+----------------------------------------------------------------------------
+-- Types helpers
+
 -- | Parse 'Release' identifier from a 'String'.
 parseRelease :: String -> Maybe Release
 parseRelease s =
@@ -166,3 +185,8 @@ fromMaybeKeepReleases cliKR configKR =
 
 defaultKeepReleases :: Natural
 defaultKeepReleases = 5
+
+-- | Get the local path to copy from the 'Source' configuration value.
+toMaybePath :: Source -> Maybe (Path Abs Dir)
+toMaybePath (LocalDirectory path) = Just path
+toMaybePath _                     = Nothing

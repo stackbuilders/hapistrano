@@ -1,4 +1,7 @@
-## master
+## 0.4.0.0
+### Added
+* Copy a directory's contents with `local_directory` instead of using _git_ with `repo` and `revision`.
+
 ### Changed
 * Update upper bounds for `path` and `path-io` packages.
 

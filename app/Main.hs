@@ -4,7 +4,6 @@
 
 module Main (main) where
 
-import qualified Config                     as C
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Monad
@@ -21,6 +20,7 @@ import           Paths_hapistrano           (version)
 import           System.Exit
 import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
+import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
 import           System.Hapistrano.Types
 import           System.IO
@@ -125,8 +125,7 @@ main = do
   C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
   chan <- newTChanIO
   let task rf = Task { taskDeployPath    = configDeployPath
-                     , taskRepository    = configRepo
-                     , taskRevision      = configRevision
+                     , taskSource        = configSource
                      , taskReleaseFormat = rf }
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
@@ -141,6 +140,8 @@ main = do
                           then Hap.pushRelease (task releaseFormat)
                           else Hap.pushReleaseWithoutVc (task releaseFormat)
               rpath <- Hap.releasePath configDeployPath release
+              forM_ (toMaybePath configSource) $ \src ->
+                Hap.scpDir src rpath
               forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
                 srcPath  <- resolveFile' src
                 destPath <- parseRelFile dest

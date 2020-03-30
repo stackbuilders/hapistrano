@@ -4,12 +4,13 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Config
+module System.Hapistrano.Config
   ( Config (..)
   , CopyThing (..)
   , Target (..))
 where
 
+import           Control.Applicative        ((<|>))
 import           Data.Aeson
 import           Data.Function              (on)
 import           Data.List                  (nubBy)
@@ -20,6 +21,7 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Types    (Shell(..),
                                              ReleaseFormat (..),
+                                             Source(..),
                                              TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
@@ -29,10 +31,8 @@ data Config = Config
     -- ^ Top-level deploy directory on target machine
   , configHosts          :: ![Target]
     -- ^ Hosts\/ports\/shell\/ssh args to deploy to. If empty, localhost will be assumed.
-  , configRepo           :: !String
-    -- ^ Location of repository that contains the source code to deploy
-  , configRevision       :: !String
-    -- ^ Revision to use
+  , configSource         :: !Source
+    -- ^ Location of the 'Source' that contains the code to deploy
   , configRestartCommand :: !(Maybe GenericCommand)
     -- ^ The command to execute when switching to a different release
     -- (usually after a deploy or rollback).
@@ -97,8 +97,10 @@ instance FromJSON Config where
     let first Target{..} = host
         configHosts = nubBy ((==) `on` first)
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
-    configRepo       <- o .: "repo"
-    configRevision   <- o .: "revision"
+        source m =
+              GitRepository <$> m .: "repo" <*> m .: "revision"
+          <|> LocalDirectory <$> m .: "local_directory"
+    configSource  <- source o
     configRestartCommand <- (o .:? "restart_command") >>=
       maybe (return Nothing) (fmap Just . mkCmd)
     configBuildScript <- o .:? "build_script" >>=
