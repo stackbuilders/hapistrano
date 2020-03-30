@@ -1,6 +1,7 @@
-## Unreleased
+## 0.4.0.1
 ### Changed
 * Allow `time` 1.10
+* Correct the package to reenable Hapistrano in Stackage
 
 ## 0.4.0.0
 ### Added
