@@ -33,6 +33,7 @@ extra-source-files:  CHANGELOG.md
                    , README.md
                    , Dockerfile
 data-files:          script/clean-build.sh
+                   , fixtures/*.yaml
 
 flag dev
   description:        Turn on development settings.
