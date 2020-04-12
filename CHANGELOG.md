@@ -1,3 +1,7 @@
+## Unreleased
+### Added
+* Support for GHC 8.10
+
 ## 0.4.0.1
 ### Changed
 * Allow `time` 1.10
