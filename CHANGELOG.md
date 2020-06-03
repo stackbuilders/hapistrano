@@ -1,6 +1,7 @@
-## Unreleased
+## 0.4.1.0
 ### Added
 * Support for GHC 8.10
+* Support for aeson-1.5
 
 ## 0.4.0.1
 ### Changed
