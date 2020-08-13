@@ -1,3 +1,7 @@
+## 0.4.1.1
+### Changed
+* Allow `ansi-terminal` 0.11
+
 ## 0.4.1.0
 ### Added
 * Support for GHC 8.10
