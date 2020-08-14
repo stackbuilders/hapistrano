@@ -1,3 +1,7 @@
+## 0.4.1.2
+### Changed
+* Allow optparse-applicative-0.16.0.0
+
 ## 0.4.1.1
 ### Changed
 * Allow `ansi-terminal` 0.11
