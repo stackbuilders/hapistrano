@@ -2,6 +2,21 @@
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 [![Docker Hub](https://img.shields.io/docker/build/stackbuilders/hapistrano.svg?style=flat)](https://hub.docker.com/r/stackbuilders/hapistrano)
 
+# Table of Contents
+
+ * [Hapistrano](#hapistrano)
+ * [Purpose](#purpose)
+ * [How it Works](#how-it-works)
+ * [Usage](#usage)
+    * [Environment Variables](#environment-variables)
+ * [What to do when compiling on server is not viable](#what-to-do-when-compiling-on-server-is-not-viable)
+ * [Deploying to multiple machines concurrently](#deploying-to-multiple-machines-concurrently)
+ * [Docker](#docker)
+ * [Nix](#nix)
+ * [License](#license)
+ * [Contributing](#contributing)
+ 
+ 
 # Hapistrano
 
 Hapistrano is a deployment library for Haskell applications similar to
