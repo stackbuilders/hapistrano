@@ -16,3 +16,5 @@ cabal.sandbox.config
 .stack-work/
 dist-newstyle
 result
+nix/
+shell.nix
