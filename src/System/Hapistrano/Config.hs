@@ -62,7 +62,7 @@ data Config = Config
   -- ^ The number of releases to keep, the '--keep-releases' argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to 5
-  , configWorkingDirectory :: !(Maybe FilePath)
+  , configWorkingDirectory :: !(Maybe (Path Rel Dir))
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory

@@ -139,11 +139,12 @@ dropOldReleases deployPath n = do
 -- | Play the given script switching to directory of given release.
 
 playScript
-  :: Path Abs Dir      -- ^ Deploy path
-  -> Release           -- ^ Release identifier
-  -> [GenericCommand] -- ^ Commands to execute
+  :: Path Abs Dir         -- ^ Deploy path
+  -> Release              -- ^ Release identifier
+  -> Maybe (Path Rel Dir) -- ^ Working directory
+  -> [GenericCommand]     -- ^ Commands to execute
   -> Hapistrano ()
-playScript deployDir release cmds = do
+playScript deployDir release mworkingDir cmds = do
   rpath <- releasePath deployDir release
   forM_ cmds (execWithInheritStdout . Cd rpath)
 
