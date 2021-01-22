@@ -99,7 +99,7 @@ spec = do
         runHapWithShell Zsh $ do
           let task = mkTask deployPath repoPath
           release <- Hap.pushRelease task
-          rpath <- Hap.releasePath deployPath release
+          rpath <- Hap.releasePath deployPath release Nothing
         -- let's check that the dir exists and contains the right files
           (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt")) `shouldReturn`
             "Foo!\n"
@@ -107,7 +107,7 @@ spec = do
         runHap $ do
           let task = mkTask deployPath repoPath
           release <- Hap.pushRelease task
-          rpath <- Hap.releasePath deployPath release
+          rpath <- Hap.releasePath deployPath release Nothing
         -- let's check that the dir exists and contains the right files
           (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt")) `shouldReturn`
             "Foo!\n"
@@ -115,7 +115,7 @@ spec = do
         runHap $ do
           let task = mkTaskWithCustomRevision deployPath repoPath testBranchName
           release <- Hap.pushRelease task
-          rpath <- Hap.releasePath deployPath release
+          rpath <- Hap.releasePath deployPath release Nothing
         -- let's check that the dir exists and contains the right files
           (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "bar.txt")) `shouldReturn`
             "Bar!\n"
@@ -139,7 +139,7 @@ spec = do
           let task = mkTask deployPath repoPath
           release <- Hap.pushRelease task
           Hap.activateRelease currentSystem deployPath release
-          rpath <- Hap.releasePath deployPath release
+          rpath <- Hap.releasePath deployPath release Nothing
           let rc :: Hap.Readlink Dir
               rc =
                 Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
@@ -172,7 +172,7 @@ spec = do
             let task = mkTask deployPath repoPath
             rs <- replicateM 5 (Hap.pushRelease task)
             Hap.rollback currentSystem deployPath 2
-            rpath <- Hap.releasePath deployPath (rs !! 2)
+            rpath <- Hap.releasePath deployPath (rs !! 2) Nothing
             let rc :: Hap.Readlink Dir
                 rc =
                   Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
@@ -185,7 +185,7 @@ spec = do
             rs <- replicateM 5 (Hap.pushRelease task)
             forM_ (take 3 rs) (Hap.registerReleaseAsComplete deployPath)
             Hap.rollback currentSystem deployPath 2
-            rpath <- Hap.releasePath deployPath (rs !! 0)
+            rpath <- Hap.releasePath deployPath (rs !! 0) Nothing
             let rc :: Hap.Readlink Dir
                 rc =
                   Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
@@ -202,10 +202,10 @@ spec = do
           Hap.dropOldReleases deployPath 5
         -- two oldest releases should not survive:
           forM_ (take 2 rs) $ \r ->
-            (Hap.releasePath deployPath r >>= doesDirExist) `shouldReturn` False
+            (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` False
         -- 5 most recent releases should stay alive:
           forM_ (drop 2 rs) $ \r ->
-            (Hap.releasePath deployPath r >>= doesDirExist) `shouldReturn` True
+            (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
         -- two oldest completion tokens should not survive:
           forM_ (take 2 rs) $ \r ->
             (Hap.ctokenPath deployPath r >>= doesFileExist) `shouldReturn` False
@@ -219,7 +219,7 @@ spec = do
             let task = mkTask deployPath repoPath
                 sharedDir = Hap.sharedPath deployPath
             release <- Hap.pushRelease task
-            rpath <- Hap.releasePath deployPath release
+            rpath <- Hap.releasePath deployPath release Nothing
             Hap.exec $ Hap.Rm sharedDir
             Hap.linkToShared currentSystem rpath deployPath "thing" `shouldReturn`
               ()
@@ -228,7 +228,7 @@ spec = do
           runHap
             (do let task = mkTask deployPath repoPath
                 release <- Hap.pushRelease task
-                rpath <- Hap.releasePath deployPath release
+                rpath <- Hap.releasePath deployPath release Nothing
                 Hap.linkToShared currentSystem rpath deployPath "foo.txt") `shouldThrow`
           anyException
       context "when it attemps to link a file" $ do
@@ -238,7 +238,7 @@ spec = do
               (do let task = mkTask deployPath repoPath
                       sharedDir = Hap.sharedPath deployPath
                   release <- Hap.pushRelease task
-                  rpath <- Hap.releasePath deployPath release
+                  rpath <- Hap.releasePath deployPath release Nothing
                   justExec sharedDir "mkdir foo/"
                   justExec sharedDir "echo 'Bar!' > foo/bar.txt"
                   Hap.linkToShared currentSystem rpath deployPath "foo/bar.txt") `shouldThrow`
@@ -249,7 +249,7 @@ spec = do
               let task = mkTask deployPath repoPath
                   sharedDir = Hap.sharedPath deployPath
               release <- Hap.pushRelease task
-              rpath <- Hap.releasePath deployPath release
+              rpath <- Hap.releasePath deployPath release Nothing
               justExec sharedDir "echo 'Bar!' > bar.txt"
               Hap.linkToShared currentSystem rpath deployPath "bar.txt"
               (liftIO . readFile . fromAbsFile)
@@ -262,7 +262,7 @@ spec = do
               (do let task = mkTask deployPath repoPath
                       sharedDir = Hap.sharedPath deployPath
                   release <- Hap.pushRelease task
-                  rpath <- Hap.releasePath deployPath release
+                  rpath <- Hap.releasePath deployPath release Nothing
                   justExec sharedDir "mkdir foo/"
                   justExec sharedDir "echo 'Bar!' > foo/bar.txt"
                   justExec sharedDir "echo 'Baz!' > foo/baz.txt"
@@ -273,7 +273,7 @@ spec = do
             let task = mkTask deployPath repoPath
                 sharedDir = Hap.sharedPath deployPath
             release <- Hap.pushRelease task
-            rpath <- Hap.releasePath deployPath release
+            rpath <- Hap.releasePath deployPath release Nothing
             justExec sharedDir "mkdir foo/"
             justExec sharedDir "echo 'Bar!' > foo/bar.txt"
             justExec sharedDir "echo 'Baz!' > foo/baz.txt"
