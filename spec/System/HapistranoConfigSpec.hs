@@ -56,4 +56,5 @@ defaultConfiguration =
     , configTargetSystem = GNULinux
     , configReleaseFormat = Nothing
     , configKeepReleases = Nothing
+    , configWorkingDir = Nothing
     }
