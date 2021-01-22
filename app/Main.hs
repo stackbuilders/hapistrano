@@ -158,7 +158,7 @@ main = do
                 (Hap.linkToShared configTargetSystem rpath configDeployPath)
               forM_ configLinkedDirs
                 (Hap.linkToShared configTargetSystem rpath configDeployPath)
-              forM_ configBuildScript (Hap.playScript configDeployPath release)
+              forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDirectory)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release
               Hap.dropOldReleases configDeployPath keepReleases
