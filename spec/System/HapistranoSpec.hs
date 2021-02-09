@@ -31,6 +31,16 @@ testBranchName = "another_branch"
 
 spec :: Spec
 spec = do
+  fdescribe "releasePath" $ do
+    context "when the configWorkingDir is Nothing" $
+      it "..." $ do
+        runHap $ Hap.releasePath undefined undefined Nothing
+        pending
+
+    context "when the configWorkingDir is Just" $
+      it "..." $
+        pending
+
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
     it "redirects commands' output to stdout first" $
