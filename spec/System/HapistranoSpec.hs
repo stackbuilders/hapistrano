@@ -22,7 +22,6 @@ import System.Hapistrano.Types
 import System.IO
 import System.IO.Silently (capture_)
 import System.Info (os)
-import qualified System.FilePath as SF
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
@@ -32,10 +31,10 @@ testBranchName :: String
 testBranchName = "another_branch"
 
 workingDir :: Path Rel Dir
-workingDir = Path "working_dir"
+workingDir = $(mkRelDir "working_dir")
 
-releaseDir :: FilePath
-releaseDir = toFilePath (Path "releases")
+releaseDir :: Path Rel Dir
+releaseDir = $(mkRelDir "releases")
 
 spec :: Spec
 spec = do
@@ -110,7 +109,8 @@ spec = do
             (,) <$> Hap.releasePath deployPath release Nothing
                 <*> pure release
 
-          toFilePath rpath `shouldBe` toFilePath deployPath SF.</> releaseDir SF.</> (renderRelease release <> [SF.pathSeparator])
+          rel <- parseRelDir $ renderRelease release
+          rpath `shouldBe` deployPath </> releaseDir </> rel
 
       context "when the configWorkingDir is Just" $
         it "should return the release path with WorkingDir" $ \(deployPath, repoPath) -> do
@@ -119,7 +119,8 @@ spec = do
             (,) <$> Hap.releasePath deployPath release (Just workingDir)
                 <*> pure release
 
-          toFilePath rpath `shouldBe` toFilePath deployPath SF.</> releaseDir SF.</> renderRelease release SF.</> "working_dir"
+          rel <- parseRelDir $ renderRelease release
+          rpath `shouldBe` deployPath </> releaseDir </> rel </> workingDir
 
     describe "pushRelease" $ do
       it "sets up repo all right in Zsh" $ \(deployPath, repoPath) ->
