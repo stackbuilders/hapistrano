@@ -1,3 +1,7 @@
+## 0.4.2.0
+### Added
+* Add support for working directory
+
 ## 0.4.1.3
 ### Changed
 * Allow formatting-7.0
