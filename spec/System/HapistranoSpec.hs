@@ -12,6 +12,7 @@ import Data.List (isPrefixOf)
 import Data.Maybe (mapMaybe)
 import Numeric.Natural
 import Path
+import Path.Internal (Path(..))
 import Path.IO
 import System.Directory (listDirectory)
 import qualified System.Hapistrano as Hap
@@ -21,6 +22,7 @@ import System.Hapistrano.Types
 import System.IO
 import System.IO.Silently (capture_)
 import System.Info (os)
+import qualified System.FilePath as SF
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
@@ -29,18 +31,14 @@ import Test.QuickCheck
 testBranchName :: String
 testBranchName = "another_branch"
 
+workingDir :: Path Rel Dir
+workingDir = Path "working_dir"
+
+releaseDir :: FilePath
+releaseDir = toFilePath (Path "releases")
+
 spec :: Spec
 spec = do
-  fdescribe "releasePath" $ do
-    context "when the configWorkingDir is Nothing" $
-      it "..." $ do
-        runHap $ Hap.releasePath undefined undefined Nothing
-        pending
-
-    context "when the configWorkingDir is Just" $
-      it "..." $
-        pending
-
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
     it "redirects commands' output to stdout first" $
@@ -104,6 +102,25 @@ spec = do
         it "returns the default value" $
         fromMaybeKeepReleases Nothing Nothing `Hspec.shouldBe` 5
   around withSandbox $ do
+    fdescribe "releasePath" $ do
+      context "when the configWorkingDir is Nothing" $
+        it "should return the release path" $ \(deployPath, repoPath) -> do
+          (rpath, release) <- runHap $ do
+            release <- Hap.pushRelease $ mkTask deployPath repoPath
+            (,) <$> Hap.releasePath deployPath release Nothing
+                <*> pure release
+
+          toFilePath rpath `shouldBe` toFilePath deployPath SF.</> releaseDir SF.</> (renderRelease release <> [SF.pathSeparator])
+
+      context "when the configWorkingDir is Just" $
+        it "should return the release path with WorkingDir" $ \(deployPath, repoPath) -> do
+          (rpath, release) <- runHap $ do
+            release <- Hap.pushRelease $ mkTask deployPath repoPath
+            (,) <$> Hap.releasePath deployPath release (Just workingDir)
+                <*> pure release
+
+          toFilePath rpath `shouldBe` toFilePath deployPath SF.</> releaseDir SF.</> renderRelease release SF.</> "working_dir"
+
     describe "pushRelease" $ do
       it "sets up repo all right in Zsh" $ \(deployPath, repoPath) ->
         runHapWithShell Zsh $ do
