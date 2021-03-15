@@ -11,7 +11,7 @@ import           Data.Monoid                ((<>))
 import           Data.Version               (showVersion)
 import qualified Data.Yaml.Config           as Yaml
 import           Development.GitRev
-import           Formatting
+import           Formatting                 (formatToString, string, (%))
 import           Numeric.Natural
 import           Options.Applicative        hiding (str)
 import           Path
