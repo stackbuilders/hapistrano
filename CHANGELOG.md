@@ -1,3 +1,7 @@
+## 0.4.1.3
+### Changed
+* Allow formatting-7.0
+
 ## 0.4.1.2
 ### Changed
 * Allow optparse-applicative-0.16.0.0
