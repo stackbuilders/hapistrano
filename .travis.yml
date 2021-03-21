@@ -26,7 +26,7 @@ matrix:
       addons: {apt: {packages: [cabal-install-3.0,ghc-8.8.3,zsh], sources: [hvr-ghc]}}
     - env: CABALVER=3.0 GHCVER=8.10.1
       addons: {apt: {packages: [cabal-install-3.0,ghc-8.10.1,zsh], sources: [hvr-ghc]}}
-    - os: osx
+    # - os: osx
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH; fi
