@@ -15,8 +15,8 @@
  * [Nix](#nix)
  * [License](#license)
  * [Contributing](#contributing)
- 
- 
+
+
 # Hapistrano
 
 Hapistrano is a deployment library for Haskell applications similar to

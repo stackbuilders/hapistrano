@@ -101,7 +101,7 @@ spec = do
         it "returns the default value" $
         fromMaybeKeepReleases Nothing Nothing `Hspec.shouldBe` 5
   around withSandbox $ do
-    fdescribe "releasePath" $ do
+    describe "releasePath" $ do
       context "when the configWorkingDir is Nothing" $
         it "should return the release path" $ \(deployPath, repoPath) -> do
           (rpath, release) <- runHap $ do
