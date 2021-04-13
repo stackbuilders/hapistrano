@@ -1,25 +1,17 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.33.0.
---
--- see: https://github.com/sol/hpack
---
--- hash: 1f6aeb3e795c2bccaa4432822f9e5c194ffa58d28b566ac28ac0c28e11ac863c
-
+cabal-version:  1.12
 name:           example
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/example#readme>
-homepage:       https://github.com/githubuser/example#readme
-bug-reports:    https://github.com/githubuser/example/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2021 Author name here
-license:        BSD3
-license-file:   LICENSE
+description:
+  This is an example project that has been created in order to test
+  the deployment process using the working_dir feature of hapistrano.
+author:         Justin Leitgeb
+maintainer:     jpaucar@stackbuilders.com
+copyright:      2015-Present Stack Builders Inc.
+license:        MIT
+license-file:   LICENSE (Hapistrano directory)
 build-type:     Simple
 extra-source-files:
     README.md
-    ChangeLog.md
 
 source-repository head
   type: git
