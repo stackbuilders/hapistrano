@@ -45,7 +45,10 @@ script:
  - cabal sdist
  - cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
  # There is a single Docker image, there are no variants for different versions of GHC
- - if [[ "$GHCVER" == "8.0.2" ]]; then docker build . -t hapistrano; docker run --rm hapistrano --version; fi
+ # Due to some rate limits we are turning this off since we need to modify the
+ # build script in order to run docker login first. See
+ # https://www.docker.com/increase-rate-limits
+ # - if [[ "$GHCVER" == "8.0.2" ]]; then docker build . -t hapistrano; docker run --rm hapistrano --version; fi
 
 notifications:
   email: false
