@@ -6,4 +6,4 @@ port: 2222
 working_directory: example
 
 build_script:
-  - stack build
+  - stack build -j1
