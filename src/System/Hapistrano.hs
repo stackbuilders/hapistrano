@@ -144,8 +144,8 @@ playScript
   -> Maybe (Path Rel Dir) -- ^ Working directory
   -> [GenericCommand]     -- ^ Commands to execute
   -> Hapistrano ()
-playScript deployDir release mworkingDir cmds = do
-  rpath <- releasePath deployDir release mworkingDir
+playScript deployDir release mWorkingDir cmds = do
+  rpath <- releasePath deployDir release mWorkingDir
   forM_ cmds (execWithInheritStdout . Cd rpath)
 
 -- | Plays the given script on your machine locally.
@@ -282,12 +282,12 @@ releasePath
   -> Release              -- ^ 'Release' identifier
   -> Maybe (Path Rel Dir) -- ^ Working directory
   -> Hapistrano (Path Abs Dir)
-releasePath deployPath release mworkingDir =
+releasePath deployPath release mWorkingDir =
   let rendered = renderRelease release
   in case parseRelDir rendered of
     Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered)
     Just rpath ->
-      return $ case mworkingDir of
+      return $ case mWorkingDir of
         Nothing         -> releasesPath deployPath </> rpath
         Just workingDir -> releasesPath deployPath </> rpath </> workingDir
 
