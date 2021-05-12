@@ -1,0 +1,38 @@
+name: Build and Test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - synchronize
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cabal: ["3.0"]
+        ghc: ["7.10.3", "8.0.2", "8.2.2", "8.4.4", "8.6.5", "8.8.3", "8.10.1"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-haskell@v1.1.4
+        id: setup-haskell-cabal
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: ${{ matrix.cabal }}
+      - run: cabal freeze
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+            dist-newstyle
+          key: dependencies-${{ matrix.ghc }}-${{ hashFiles('cabal.config') }}
+          restore-keys: |
+            dependencies-${{ matrix.ghc }}-${{ hashFiles('cabal.config') }}
+            dependencies-${{ matrix.ghc }}-
+      - run: cabal update
+      - run: cabal build --enable-tests
+      - run: cabal test --enable-tests
+      - run: cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+      - run: cabal sdist
