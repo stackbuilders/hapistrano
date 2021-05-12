@@ -21,8 +21,8 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ matrix.cabal }}
-      - run: cabal v2-update
-      - run: cabal v2-freeze
+      - run: cabal v2-update --enable-tests
+      - run: cabal v2-freeze --enable-tests
       - uses: actions/cache@v2
         with:
           path: |
@@ -34,5 +34,5 @@ jobs:
             dependencies-${{ matrix.ghc }}-
       - run: cabal v2-build --enable-tests
       - run: cabal v2-test --enable-tests
-      - run: cabal v2-haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+      - run: cabal v2-haddock --enable-tests | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
       - run: cabal v2-sdist
