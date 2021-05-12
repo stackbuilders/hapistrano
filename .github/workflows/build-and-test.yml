@@ -9,14 +9,15 @@ on:
       - synchronize
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         cabal: ["3.0"]
         ghc: ["8.0.2", "8.2.2", "8.4.4", "8.6.5", "8.8.3", "8.10.1"]
+        os: [ubuntu-latest]
         include:
           - os: macos-latest
             ghc: "8.10.1"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - name: Install Zsh
