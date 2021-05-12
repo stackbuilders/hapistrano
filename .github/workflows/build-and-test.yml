@@ -8,24 +8,31 @@ on:
       - opened
       - synchronize
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         cabal: ["3.0"]
         ghc: ["8.0.2", "8.2.2", "8.4.4", "8.6.5", "8.8.3", "8.10.1"]
+        include:
+          - os: macos-latest
+            ghc: "8.10.1"
     steps:
       - uses: actions/checkout@v2
       - name: Install Zsh
         run: |
-          sudo apt-get update
-          sudo apt-get install zsh
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install zsh
+          else
+            brew update
+            brew install zsh
+          fi
       - uses: actions/setup-haskell@v1.1.4
         id: setup-haskell-cabal
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ matrix.cabal }}
-      - run: export PATH=/opt/ghc/${{ matrix.ghc }}/bin:/opt/cabal/${{ matrix.cabal }}/bin:$PATH
       - run: cabal update --enable-tests
       - run: cabal freeze --enable-tests
       - uses: actions/cache@v2
@@ -33,10 +40,10 @@ jobs:
           path: |
             ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
             dist-newstyle
-          key: dependencies-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          key: dependencies-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: |
-            dependencies-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
-            dependencies-${{ matrix.ghc }}-
+            dependencies-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+            dependencies-${{ runner.os }}-${{ matrix.ghc }}-
       - run: cabal build --enable-tests
       - run: cabal test --enable-tests
       - run: cabal haddock --enable-tests | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
