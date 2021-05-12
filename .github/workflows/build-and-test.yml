@@ -45,7 +45,7 @@ jobs:
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-
       - run: |
-          cat ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+          cd ${{ steps.setup-haskell-cabal.outputs.ghc-path }}
           cd ..
           find . settings
       - name: Compile project and dependencies
