@@ -21,6 +21,7 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ matrix.cabal }}
+      - run: export PATH=/opt/ghc/${{ matrix.ghc }}/bin:/opt/cabal/${{ matrix.cabal }}/bin:$PATH
       - run: cabal update --enable-tests
       - run: cabal freeze --enable-tests
       - uses: actions/cache@v2
