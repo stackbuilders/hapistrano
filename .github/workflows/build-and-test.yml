@@ -11,11 +11,14 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        ghc: ["7.10.3"]
+        ghc: ["8.0.2", "8.2.2", "8.4.4", "8.6.5", "8.8.3", "8.10.1"]
         os: [ubuntu-latest]
         include:
           - os: macos-latest
             ghc: "8.10.1"
+          - os: ubuntu-16.04
+            ghc: "7.10.3"
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -44,17 +47,7 @@ jobs:
           restore-keys: |
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-
-      - run: |
-          cd ${{ steps.setup-haskell-cabal.outputs.ghc-path }}
-          cd ..
-          find . settings
-      - name: Compile project and dependencies
-        run: |
-          if [ "${{ matrix.ghc }}" == "7.10.3" ]; then
-            cabal build --enable-tests --ghc-option="-pie"
-          else
-            cabal build --enable-tests
-          fi
+      - run: cabal build --enable-tests
       - run: cabal test --enable-tests
       - run: cabal haddock --enable-tests | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
       - run: cabal sdist
