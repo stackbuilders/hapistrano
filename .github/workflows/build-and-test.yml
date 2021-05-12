@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        cabal: ["3.0"]
+        cabal: ["3.2"]
         ghc: ["7.10.3", "8.0.2", "8.2.2", "8.4.4", "8.6.5", "8.8.3", "8.10.1"]
     steps:
       - uses: actions/checkout@v2
@@ -21,8 +21,8 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ matrix.cabal }}
-      - run: cabal update
-      - run: cabal freeze
+      - run: cabal v2-update
+      - run: cabal v2-freeze
       - uses: actions/cache@v2
         with:
           path: |
@@ -32,8 +32,7 @@ jobs:
           restore-keys: |
             dependencies-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             dependencies-${{ matrix.ghc }}-
-      - run: cabal install
-      - run: cabal build --enable-tests
-      - run: cabal test --enable-tests
-      - run: cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
-      - run: cabal sdist
+      - run: cabal v2-build --enable-tests
+      - run: cabal v2-test --enable-tests
+      - run: cabal v2-haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+      - run: cabal v2-sdist
