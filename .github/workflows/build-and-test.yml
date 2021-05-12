@@ -32,6 +32,7 @@ jobs:
           restore-keys: |
             dependencies-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             dependencies-${{ matrix.ghc }}-
+      - run: cabal install
       - run: cabal build --enable-tests
       - run: cabal test --enable-tests
       - run: cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
