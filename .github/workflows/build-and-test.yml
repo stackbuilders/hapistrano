@@ -46,8 +46,8 @@ jobs:
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-
       - name: Compile project and dependencies
         run: |
-          if [ "${{ matrix.ghc }}" == "7.10.3" ]; then
-            cabal build --enable-tests --hsc2hs-option=--cflag=-fPIC --configure-option='CFLAGS=-fPIC'
+          if [ "${{ matrix.ghc }}" == "7.10.3"]; then
+            cabal build --enable-tests --ghc-option="-pie"
           else
             cabal build --enable-tests
           fi
