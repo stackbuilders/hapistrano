@@ -16,6 +16,10 @@ jobs:
         ghc: ["8.0.2", "8.2.2", "8.4.4", "8.6.5", "8.8.3", "8.10.1"]
     steps:
       - uses: actions/checkout@v2
+      - name: Install Zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install zsh
       - uses: actions/setup-haskell@v1.1.4
         id: setup-haskell-cabal
         with:
