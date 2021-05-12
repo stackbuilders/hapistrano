@@ -44,7 +44,7 @@ jobs:
           restore-keys: |
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-
-      - run:
+      - run: |
           if [ "${{ matrix.ghc }}" == "7.10.3"]; then
             cabal build --enable-tests --ghc-option="-fPIE"
           else
