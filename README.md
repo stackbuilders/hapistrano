@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stackbuilders/hapistrano.svg?branch=master)](https://travis-ci.org/stackbuilders/hapistrano)
+[![Build and Test](https://github.com/stackbuilders/hapistrano/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/build-and-test.yml)
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 [![Docker Hub](https://img.shields.io/docker/build/stackbuilders/hapistrano.svg?style=flat)](https://hub.docker.com/r/stackbuilders/hapistrano)
 
@@ -15,8 +15,8 @@
  * [Nix](#nix)
  * [License](#license)
  * [Contributing](#contributing)
- 
- 
+
+
 # Hapistrano
 
 Hapistrano is a deployment library for Haskell applications similar to
