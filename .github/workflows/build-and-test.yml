@@ -36,7 +36,7 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: "3.4"
-      - run: cabal update --enable-tests
+      - run: cabal update
       - run: cabal freeze --enable-tests
       - uses: actions/cache@v2
         with:
@@ -47,9 +47,12 @@ jobs:
           restore-keys: |
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             dependencies-${{ runner.os }}-${{ matrix.ghc }}-
-      - run: cabal build --enable-tests
-      - run: cabal test --enable-tests
-      - run: cabal haddock --enable-tests | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+      - name: Compile dependencies
+        run: cabal build --only-dependencies
+      - name: Compile project
+        run: cabal build --enable-tests
+      - run: cabal test
+      - run: cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
       - run: cabal sdist
       - if: matrix.ghc == '8.0.2'
         name: Login to Docker Hub
