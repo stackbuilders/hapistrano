@@ -35,7 +35,7 @@ jobs:
         id: setup-haskell-cabal
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: "3.0"
+          cabal-version: "3.4"
       - run: cabal update --enable-tests
       - run: cabal freeze --enable-tests
       - uses: actions/cache@v2
