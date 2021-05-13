@@ -44,7 +44,7 @@ spec = do
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
 #if MIN_VERSION_path_io(1,6,0)
-      let spath = $(mkRelFile "script/clean-build.sh")
+      let spath = $(mkAbsFile "script/clean-build.sh")
 #else
       spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
 #endif
