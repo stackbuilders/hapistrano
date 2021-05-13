@@ -13,7 +13,7 @@ import Data.Maybe (mapMaybe)
 import Numeric.Natural
 import Path
 import Path.IO
-import System.Directory (listDirectory)
+import System.Directory (getCurrentDirectory, listDirectory)
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core as Hap
@@ -44,7 +44,9 @@ spec = do
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
 #if MIN_VERSION_path_io(1,6,0)
-      let spath = $(mkAbsFile "script/clean-build.sh")
+      spath <- do
+        currentDirectory <- getCurrentDirectory
+        parseAbsFile (currentDirectory ++ "script/clean-build.sh")
 #else
       spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
 #endif
