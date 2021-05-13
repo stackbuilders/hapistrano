@@ -51,7 +51,7 @@ jobs:
         run: cabal build --only-dependencies
       - name: Compile project
         run: cabal build --enable-tests
-      - run: cabal test
+      - run: cabal test --enable-tests
       - run: cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
       - run: cabal sdist
       - if: matrix.ghc == '8.0.2'
