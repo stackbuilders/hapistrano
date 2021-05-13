@@ -43,13 +43,9 @@ spec = do
            expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
-#if MIN_VERSION_path_io(1,6,0)
       spath <- do
         currentDirectory <- getCurrentDirectory
-        parseAbsFile (currentDirectory ++ "script/clean-build.sh")
-#else
-      spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
-#endif
+        parseAbsFile (currentDirectory ++ "/script/clean-build.sh")
       (fmap Hap.unGenericCommand <$> Hap.readScript spath) `Hspec.shouldReturn`
         [ "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
         , "cabal sandbox delete"
