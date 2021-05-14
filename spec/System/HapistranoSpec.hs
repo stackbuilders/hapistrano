@@ -44,8 +44,9 @@ spec = do
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
       spath <- do
-        currentDirectory <- getCurrentDirectory
-        parseAbsFile (currentDirectory ++ "/script/clean-build.sh")
+        currentDirectory <- getCurrentDirectory >>= parseAbsDir
+        scriptFile <- parseRelFile "script/clean-build.sh"
+        return (currentDirectory </> scriptFile)
       (fmap Hap.unGenericCommand <$> Hap.readScript spath) `Hspec.shouldReturn`
         [ "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
         , "cabal sandbox delete"
