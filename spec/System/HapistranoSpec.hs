@@ -13,7 +13,7 @@ import Data.Maybe (mapMaybe)
 import Numeric.Natural
 import Path
 import Path.IO
-import System.Directory (listDirectory)
+import System.Directory (getCurrentDirectory, listDirectory)
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core as Hap
@@ -43,11 +43,10 @@ spec = do
            expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
   describe "readScript" $
     it "performs all the necessary normalizations correctly" $ do
-#if MIN_VERSION_path_io(1,6,0)
-      let spath = $(mkRelFile "script/clean-build.sh")
-#else
-      spath <- makeAbsolute $(mkRelFile "script/clean-build.sh")
-#endif
+      spath <- do
+        currentDirectory <- getCurrentDirectory >>= parseAbsDir
+        scriptFile <- parseRelFile "script/clean-build.sh"
+        return (currentDirectory </> scriptFile)
       (fmap Hap.unGenericCommand <$> Hap.readScript spath) `Hspec.shouldReturn`
         [ "export PATH=~/.cabal/bin:/usr/local/bin:$PATH"
         , "cabal sandbox delete"
