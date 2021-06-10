@@ -60,7 +60,7 @@ library
                      , gitrev             >= 1.2 && < 1.4
                      , mtl                >= 2.0 && < 3.0
                      , stm                >= 2.0 && < 2.6
-                     , path               >= 0.5 && < 0.8
+                     , path               >= 0.5 && < 0.9
                      , process            >= 1.4 && < 1.7
                      , typed-process      >= 0.2 && < 0.3
                      , time               >= 1.5 && < 1.11
@@ -83,7 +83,7 @@ executable hap
                      , gitrev             >= 1.2 && < 1.4
                      , hapistrano
                      , optparse-applicative >= 0.11 && < 0.17
-                     , path               >= 0.5 && < 0.8
+                     , path               >= 0.5 && < 0.9
                      , path-io            >= 1.2 && < 1.7
                      , stm                >= 2.4 && < 2.6
                      , yaml               >= 0.8.16 && < 0.12
@@ -109,7 +109,7 @@ test-suite test
                      , hapistrano
                      , hspec              >= 2.0 && < 3.0
                      , mtl                >= 2.0 && < 3.0
-                     , path               >= 0.5 && < 0.7.1
+                     , path               >= 0.5 && < 0.9
                      , path-io            >= 1.2 && < 1.7
                      , process            >= 1.4 && < 1.7
                      , QuickCheck         >= 2.5.1 && < 3.0

@@ -8,7 +8,7 @@ import           System.Hapistrano.Types  (Shell (..),
                                            Source (..), TargetSystem (..))
 
 import qualified Data.Yaml.Config         as Yaml
-import           Path                     (mkAbsDir)
+import           Path                     (mkAbsDir, Abs, Dir)
 import           Test.Hspec
 
 

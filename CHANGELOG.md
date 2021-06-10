@@ -2,6 +2,10 @@
 ### Added
 * Add support for working directory
 
+## 0.4.1.4
+### Changed
+* Bump path version upper constraint to 0.9
+
 ## 0.4.1.3
 ### Changed
 * Allow formatting-7.0
