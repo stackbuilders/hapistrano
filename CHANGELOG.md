@@ -1,3 +1,7 @@
+## 0.4.2.0
+
+* Correct bounds for base. GHC support for versions older than 8.0 was dropped.
+
 ## 0.4.1.4
 ### Changed
 * Bump path version upper constraint to 0.9
