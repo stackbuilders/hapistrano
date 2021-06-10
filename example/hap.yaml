@@ -1,6 +1,6 @@
 deploy_path: "/tmp/hap-example"
 repo: "https://github.com/stackbuilders/hapistrano.git"
-revision: "origin/add_working_directory"
+revision: "origin"
 host: vagrant@127.0.0.1
 port: 2222
 working_directory: example

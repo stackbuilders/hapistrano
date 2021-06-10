@@ -17,8 +17,8 @@ To do this we need to:
     $ vagrant up
     $ hap deploy
     ```
-    If everything went good, this should trigger the deployment procces to the virtual machine.
-7. To check that the project was built you can ssh the vagrant vm, and do the folowing:
+    If everything went fine, this should trigger the deployment procces to the virtual machine.
+7. To check if the project was built you can ssh the vagrant vm, and do the folowing:
     ```bash
     vagrant ssh
     cd /tmp/hap-examle/current/example
@@ -26,7 +26,7 @@ To do this we need to:
    ```
    Nothing should happen since your project is already compiled.
 
-`*` A know issue occurs if you have other vagrant vms. When trying to run `hap deploy` you could get the following console result. To avoid this issue remove the line that contains the previous RSA host key and try running `hap deploy` again.
+`*` A known issue occurs if you have other vagrant vms. When trying to run `hap deploy` you could get the following console result. To avoid this issue remove the line that contains the previous RSA host key and try running `hap deploy` again.
 
 ```bash
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
