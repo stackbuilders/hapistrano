@@ -62,6 +62,7 @@ data Config = Config
   -- ^ The number of releases to keep, the '--keep-releases' argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to 5
+  , configWorkingDir :: !(Maybe (Path Rel Dir))
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -115,6 +116,7 @@ instance FromJSON Config where
     configTargetSystem <- o .:? "linux" .!= GNULinux
     configReleaseFormat <- o .:? "release_format"
     configKeepReleases <- o .:? "keep_releases"
+    configWorkingDir <- o .:? "working_directory"
     return Config {..}
 
 instance FromJSON CopyThing where

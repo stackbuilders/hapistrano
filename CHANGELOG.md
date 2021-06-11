@@ -1,4 +1,6 @@
 ## 0.4.2.0
+### Added
+* Add support for working directory
 
 ### Removed
 * GHC support for versions older than 8.0. Bounds for base corrected

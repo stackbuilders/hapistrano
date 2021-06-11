@@ -96,7 +96,7 @@ activateRelease
   -> Release           -- ^ Release identifier to activate
   -> Hapistrano ()
 activateRelease ts deployPath release = do
-  rpath <- releasePath deployPath release
+  rpath <- releasePath deployPath release Nothing
   let tpath = tempSymlinkPath deployPath
       cpath = currentSymlinkPath deployPath
   exec (Ln ts rpath tpath) -- create a symlink for the new candidate
@@ -129,7 +129,7 @@ dropOldReleases
 dropOldReleases deployPath n = do
   dreleases <- deployedReleases deployPath
   forM_ (genericDrop n dreleases) $ \release -> do
-    rpath <- releasePath deployPath release
+    rpath <- releasePath deployPath release Nothing
     exec (Rm rpath)
   creleases <- completedReleases deployPath
   forM_ (genericDrop n creleases) $ \release -> do
@@ -139,12 +139,13 @@ dropOldReleases deployPath n = do
 -- | Play the given script switching to directory of given release.
 
 playScript
-  :: Path Abs Dir      -- ^ Deploy path
-  -> Release           -- ^ Release identifier
-  -> [GenericCommand] -- ^ Commands to execute
+  :: Path Abs Dir         -- ^ Deploy path
+  -> Release              -- ^ Release identifier
+  -> Maybe (Path Rel Dir) -- ^ Working directory
+  -> [GenericCommand]     -- ^ Commands to execute
   -> Hapistrano ()
-playScript deployDir release cmds = do
-  rpath <- releasePath deployDir release
+playScript deployDir release mWorkingDir cmds = do
+  rpath <- releasePath deployDir release mWorkingDir
   forM_ cmds (execWithInheritStdout . Cd rpath)
 
 -- | Plays the given script on your machine locally.
@@ -201,7 +202,7 @@ cloneToRelease
   -> Release           -- ^ 'Release' to create
   -> Hapistrano ()
 cloneToRelease deployPath release = do
-  rpath <- releasePath deployPath release
+  rpath <- releasePath deployPath release Nothing
   let cpath = cacheRepoPath deployPath
   exec (GitClone False (Right cpath) rpath)
 
@@ -214,7 +215,7 @@ setReleaseRevision
   -> String            -- ^ Revision to checkout
   -> Hapistrano ()
 setReleaseRevision deployPath release revision = do
-  rpath <- releasePath deployPath release
+  rpath <- releasePath deployPath release Nothing
   exec (Cd rpath (GitCheckout revision))
 
 -- | Return a list of all currently deployed releases sorted newest first.
@@ -277,14 +278,18 @@ linkToShared configTargetSystem rpath configDeployPath thingToLink = do
 -- | Construct path to a particular 'Release'.
 
 releasePath
-  :: Path Abs Dir      -- ^ Deploy path
-  -> Release           -- ^ 'Release' identifier
+  :: Path Abs Dir         -- ^ Deploy path
+  -> Release              -- ^ 'Release' identifier
+  -> Maybe (Path Rel Dir) -- ^ Working directory
   -> Hapistrano (Path Abs Dir)
-releasePath deployPath release = do
+releasePath deployPath release mWorkingDir =
   let rendered = renderRelease release
-  case parseRelDir rendered of
+  in case parseRelDir rendered of
     Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered)
-    Just rpath -> return (releasesPath deployPath </> rpath)
+    Just rpath ->
+      return $ case mWorkingDir of
+        Nothing         -> releasesPath deployPath </> rpath
+        Just workingDir -> releasesPath deployPath </> rpath </> workingDir
 
 -- | Return the full path to the git repo used for cache purposes on the
 -- target host filesystem.

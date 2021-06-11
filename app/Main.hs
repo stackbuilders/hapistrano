@@ -139,7 +139,7 @@ main = do
               release <- if configVcAction
                           then Hap.pushRelease (task releaseFormat)
                           else Hap.pushReleaseWithoutVc (task releaseFormat)
-              rpath <- Hap.releasePath configDeployPath release
+              rpath <- Hap.releasePath configDeployPath release configWorkingDir
               forM_ (toMaybePath configSource) $ \src ->
                 Hap.scpDir src rpath
               forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
@@ -158,7 +158,7 @@ main = do
                 (Hap.linkToShared configTargetSystem rpath configDeployPath)
               forM_ configLinkedDirs
                 (Hap.linkToShared configTargetSystem rpath configDeployPath)
-              forM_ configBuildScript (Hap.playScript configDeployPath release)
+              forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release
               Hap.dropOldReleases configDeployPath keepReleases
