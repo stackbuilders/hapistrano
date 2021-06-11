@@ -1,6 +1,7 @@
 ## 0.4.2.0
 
-* Correct bounds for base. GHC support for versions older than 8.0 was dropped.
+### Removed
+* GHC support for versions older than 8.0. Bounds for base corrected
 
 ## 0.4.1.4
 ### Changed
