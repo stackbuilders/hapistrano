@@ -16,8 +16,6 @@ jobs:
         include:
           - os: macos-latest
             ghc: "8.10.1"
-          - os: ubuntu-16.04
-            ghc: "7.10.3"
 
     runs-on: ${{ matrix.os }}
     steps:

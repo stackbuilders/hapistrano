@@ -1,5 +1,5 @@
 name:                hapistrano
-version:             0.4.1.4
+version:             0.4.2.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -28,7 +28,7 @@ homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
 cabal-version:       >=1.18
-tested-with:         GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.3, GHC==8.10.1
+tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.3, GHC==8.10.1
 extra-source-files:  CHANGELOG.md
                    , README.md
                    , Dockerfile
@@ -55,7 +55,7 @@ library
                      , System.Hapistrano.Commands.Internal
   build-depends:       aeson              >= 0.11 && < 1.6
                      , ansi-terminal      >= 0.9 && < 0.12
-                     , base               >= 4.8 && < 5.0
+                     , base               >= 4.9 && < 5.0
                      , filepath           >= 1.2 && < 1.5
                      , gitrev             >= 1.2 && < 1.4
                      , mtl                >= 2.0 && < 3.0
@@ -78,7 +78,7 @@ executable hap
   other-modules:       Paths_hapistrano
   build-depends:       aeson              >= 0.11 && < 1.6
                      , async              >= 2.0.1.6 && < 2.4
-                     , base               >= 4.8 && < 5.0
+                     , base               >= 4.9 && < 5.0
                      , formatting         >= 6.2 && < 8.0
                      , gitrev             >= 1.2 && < 1.4
                      , hapistrano
@@ -103,7 +103,7 @@ test-suite test
   other-modules:       System.HapistranoSpec
                      , System.HapistranoConfigSpec
                      , System.HapistranoPropsSpec
-  build-depends:       base               >= 4.8 && < 5.0
+  build-depends:       base               >= 4.9 && < 5.0
                      , directory          >= 1.2.5 && < 1.4
                      , filepath           >= 1.2 && < 1.5
                      , hapistrano
