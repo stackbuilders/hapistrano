@@ -2,6 +2,9 @@
 ### Added
 * Add support for working directory
 
+### Removed
+* GHC support for versions older than 8.0. Bounds for base corrected
+
 ## 0.4.1.4
 ### Changed
 * Bump path version upper constraint to 0.9
