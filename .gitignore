@@ -6,6 +6,8 @@ cabal-dev
 *.chs.h
 *.dyn_o
 *.dyn_hi
+.envrc
+.direnv
 .hpc
 .hsenv
 .cabal-sandbox/
