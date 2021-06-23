@@ -1,43 +1,56 @@
 {-# LANGUAGE RecordWildCards #-}
 
+-- TODO: replace all String with more efficient types
 module System.Hapistrano.EDSL where
 
+import qualified Data.HashMap.Strict as M
+
 import Control.Monad.Writer
+-- import System.Process
 
 data Config = Config
-  { configRepoUrl :: String
-  , configRepoPath :: String
+  { configDeployTo :: String
+  , configRepoUrl :: String
+  , configBranch :: String
   }
 
 data Task m
   = Namespace String [Task m]
-  | Task String [String] (m ())
+  | Task String (m ())
 
 namespace :: String -> Writer [Task m] () -> Writer [Task m] ()
 namespace name tasks = tell [Namespace name $ execWriter tasks]
 
-task :: String -> [String] -> m () -> Writer [Task m] ()
-task name deps f = tell [Task name deps f]
+task :: String -> m () -> Writer [Task m] ()
+task name f = tell [Task name f]
 
-main :: Monad m => Writer [Task m] ()
-main =
+invoke = undefined
+
+tasks :: Writer [Task IO] ()
+tasks =
   namespace "deploy" $ do
-    task "check" [] $ do
-      undefined
+    task "starting" $ do
+      putStrLn "Starting"
+      invoke "deploy:started"
 
-    task "updating" [] $ do
-      Config{..} <- getConfig
-      execute "git" ["clone", "--mirror", configRepoUrl, configRepoPath]
+    task "started" $ do
+      putStrLn "Started"
+      invoke "deploy:updating"
 
-    task "update" [] $ do
-      -- within repoPath
-      execute "git" ["remote", "update", "--prune"]
+    task "updating" $ do
+      putStrLn "Updating"
 
-    task "create_release" ["git:update"] $ do
-      undefined
+events :: [Task m] -> M.HashMap String (m ())
+events = M.fromList . concatMap (event Nothing)
 
-getConfig :: m Config
-getConfig = undefined
-
-execute :: String -> [String] -> m ()
-execute = undefined
+event :: Maybe String -> Task m -> [(String, m ())]
+event mprefix task =
+  case mprefix of
+    Nothing ->
+      case task of
+        Namespace name tasks -> concatMap (event (Just name)) tasks
+        Task name f -> [(name, f)]
+    Just prefix ->
+      case task of
+        Namespace name tasks -> concatMap (event (Just (prefix <> ":" <> name))) tasks
+        Task name f -> [(prefix <> ":" <> name, f)]

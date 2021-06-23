@@ -3,7 +3,28 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: reactive-banana-1.2.1.0@sha256:af0a41dec95e1478acd5280f0fdde51afddf9fbfa4e0a4c226a2c6fa65702796,3975
+    pantry-tree:
+      size: 2443
+      sha256: 367a55194ed03065dd7cf9e63c851ae4fe56f8533d07cdfe751fa68da9c7d66d
+  original:
+    hackage: reactive-banana-1.2.1.0
+- completed:
+    hackage: hashable-1.3.0.0@sha256:d60cad00223d46172020c136e68acef0481a47d0302b2e74b1805b4f3a446a9b,5389
+    pantry-tree:
+      size: 1521
+      sha256: e7d5dbcea435993e180947216759031527ee3c2ddba276f1942f815d629e1e3a
+  original:
+    hackage: hashable-1.3.0.0
+- completed:
+    hackage: semigroups-0.19.1@sha256:ecae129621e0d2f77bef2f01e4458c2e0567ab6e1f39579c61d7cec8058ebb0e,6262
+    pantry-tree:
+      size: 534
+      sha256: 61160272cccf0dcffe7fe23b7644412b959a8ec232bed4d43be235176f0bd90b
+  original:
+    hackage: semigroups-0.19.1
 snapshots:
 - completed:
     size: 567241

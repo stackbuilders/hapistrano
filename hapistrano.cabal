@@ -66,6 +66,7 @@ library
                      , time               >= 1.5 && < 1.11
                      , transformers       >= 0.4 && < 0.6
                      , yaml               >= 0.8.16 && < 0.12
+                     , unordered-containers
   if flag(dev)
     ghc-options:       -Wall -Werror
   else
