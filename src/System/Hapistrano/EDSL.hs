@@ -5,8 +5,9 @@ module System.Hapistrano.EDSL where
 
 import qualified Data.HashMap.Strict as M
 
+import Control.Monad.Reader
 import Control.Monad.Writer
--- import System.Process
+import Data.IORef
 
 data Config = Config
   { configDeployTo :: String
@@ -24,21 +25,38 @@ namespace name tasks = tell [Namespace name $ execWriter tasks]
 task :: String -> m () -> Writer [Task m] ()
 task name f = tell [Task name f]
 
-invoke = undefined
+invoke :: MonadIO m => IORef (Context m) -> String -> m ()
+invoke ref name = do
+  tasks <- liftIO $ readIORef ref
+  case M.lookup name tasks of
+    Nothing -> undefined
+    Just task -> task
 
-tasks :: Writer [Task IO] ()
-tasks =
+
+run :: String -> IO ()
+run name = do
+  ref <- newIORef M.empty
+  let context = events $ execWriter $ tasks ref
+  writeIORef ref context
+  case M.lookup name context of
+    Nothing -> undefined
+    Just task -> task
+
+type Context m = M.HashMap String (m ())
+
+tasks :: MonadIO m => IORef (Context m) -> Writer [Task m] ()
+tasks ref =
   namespace "deploy" $ do
     task "starting" $ do
-      putStrLn "Starting"
-      invoke "deploy:started"
+      liftIO $ putStrLn "Starting"
+      invoke ref "deploy:started"
 
     task "started" $ do
-      putStrLn "Started"
-      invoke "deploy:updating"
+      liftIO $ putStrLn "Started"
+      invoke ref "deploy:updating"
 
     task "updating" $ do
-      putStrLn "Updating"
+      liftIO $ putStrLn "Updating"
 
 events :: [Task m] -> M.HashMap String (m ())
 events = M.fromList . concatMap (event Nothing)
