@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
--- TODO: replace all String with more efficient types
+-- TODO: replace all String with a more efficient type
 module System.Hapistrano.EDSL where
 
 import qualified Data.HashMap.Strict as M
@@ -31,6 +31,12 @@ data Step m
 data Task m
   = Namespace String [Task m]
   | Task String (m ())
+
+before :: String -> String -> Writer [Step m] ()
+before srcTask targetTask = tell [StepHook $ Before srcTask targetTask]
+
+after :: String -> String -> Writer [Step m] ()
+after srcTask targetTask = tell [StepHook $ After srcTask targetTask]
 
 data Hook
   = After String String
@@ -80,6 +86,12 @@ deploySteps ref = do
   {- task "deploy" $ do
     liftIO $ putStrLn "Deploy"
     invoke ref "deploy:starting" -}
+
+  namespace "custom" $ do
+    task "install" $ do
+      liftIO $ putStrLn "Install"
+
+  after "deploy:started" "custom:install"
 
 
 events :: [Task m] -> M.HashMap String (m ())
