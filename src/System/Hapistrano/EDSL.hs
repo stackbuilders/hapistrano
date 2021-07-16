@@ -24,10 +24,9 @@ data Context m = Context
 emptyContext :: Context m
 emptyContext = Context mempty mempty mempty
 
--- TODO: Rename type and constructors
-data Foo m
-  = FooTask (Task m)
-  | FooHook Hook
+data Step m
+  = StepTask (Task m)
+  | StepHook Hook
 
 data Task m
   = Namespace String [Task m]
@@ -37,8 +36,8 @@ data Hook
   = After String String
   | Before String String
 
-namespace :: String -> Writer [Task m] () -> Writer [Foo m] ()
-namespace name tasks = tell [FooTask $ Namespace name $ execWriter tasks]
+namespace :: String -> Writer [Task m] () -> Writer [Step m] ()
+namespace name tasks = tell [StepTask $ Namespace name $ execWriter tasks]
 
 task :: String -> m () -> Writer [Task m] ()
 task name f = tell [Task name f]
@@ -64,8 +63,8 @@ run name = do
     Nothing -> undefined
     Just task -> task
 
-defaultTasks :: MonadIO m => IORef (Context m) -> Writer [Foo m] ()
-defaultTasks ref = do
+deploySteps :: MonadIO m => IORef (Context m) -> Writer [Step m] ()
+deploySteps ref = do
   namespace "deploy" $ do
     task "starting" $ do
       liftIO $ putStrLn "Starting"
