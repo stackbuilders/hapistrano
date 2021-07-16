@@ -15,14 +15,14 @@ data Config = Config
   , configBranch :: String
   }
 
-data Bar m = Bar
-  { barTasks :: M.HashMap String (m ())
-  , barBeforeHooks :: M.HashMap String [String]
-  , barAfterHooks :: M.HashMap String [String]
+data Context m = Context
+  { contextTasks :: M.HashMap String (m ())
+  , contextBeforeHooks :: M.HashMap String [String]
+  , contextAfterHooks :: M.HashMap String [String]
   }
 
-emptyBar :: Bar m
-emptyBar = Bar mempty mempty mempty
+emptyContext :: Context m
+emptyContext = Context mempty mempty mempty
 
 -- TODO: Rename type and constructors
 data Foo m
@@ -43,9 +43,9 @@ namespace name tasks = tell [FooTask $ Namespace name $ execWriter tasks]
 task :: String -> m () -> Writer [Task m] ()
 task name f = tell [Task name f]
 
-invoke :: MonadIO m => IORef (Bar m) -> String -> m ()
+invoke :: MonadIO m => IORef (Context m) -> String -> m ()
 invoke ref name = do
-  tasks <- barTasks <$> liftIO (readIORef ref)
+  tasks <- contextTasks <$> liftIO (readIORef ref)
   case M.lookup name tasks of
     Nothing -> undefined
     Just task -> task
@@ -53,20 +53,18 @@ invoke ref name = do
 
 run :: String -> IO ()
 run name = do
-  ref <- newIORef emptyBar
-  let context = Bar
-        { barTasks = undefined
-        , barBeforeHooks = undefined
-        , barAfterHooks = undefined
+  ref <- newIORef emptyContext
+  let context = Context
+        { contextTasks = undefined
+        , contextBeforeHooks = undefined
+        , contextAfterHooks = undefined
         }
   writeIORef ref context
-  case M.lookup name $ barTasks context of
+  case M.lookup name $ contextTasks context of
     Nothing -> undefined
     Just task -> task
 
-type Context m = M.HashMap String (m ())
-
-defaultTasks :: MonadIO m => IORef (Bar m) -> Writer [Foo m] ()
+defaultTasks :: MonadIO m => IORef (Context m) -> Writer [Foo m] ()
 defaultTasks ref = do
   namespace "deploy" $ do
     task "starting" $ do
