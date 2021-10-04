@@ -2,13 +2,13 @@
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 [![Docker Hub](https://img.shields.io/docker/build/stackbuilders/hapistrano.svg?style=flat)](https://hub.docker.com/r/stackbuilders/hapistrano)
 
-# Table of Contents
+# Table of Contents 📑
 
  * [Hapistrano](#hapistrano)
  * [Purpose](#purpose)
  * [How it Works](#how-it-works)
  * [Usage](#usage)
-    * [Environment Variables](#environment-variables)
+ * [Environment Variables](#environment-variables)
  * [What to do when compiling on server is not viable](#what-to-do-when-compiling-on-server-is-not-viable)
  * [Deploying to multiple machines concurrently](#deploying-to-multiple-machines-concurrently)
  * [Docker](#docker)
@@ -17,12 +17,12 @@
  * [Contributing](#contributing)
 
 
-# Hapistrano
+# Hapistrano 🤩
 
 Hapistrano is a deployment library for Haskell applications similar to
 Ruby's [Capistrano](http://capistranorb.com/).
 
-## Purpose
+## Purpose 💜
 
 We created Hapistrano because:
 
@@ -30,9 +30,9 @@ We created Hapistrano because:
   they shouldn't require much application downtime).
 * Rollback should be trivial to achieve to bring the application back
   to the last-deployed state.
-* Deploys shouldn't fail because of dependency problems.
+* Deployments should not fail due to dependency issues.
 
-## How it Works
+## How it Works 👨‍🏭
 
 Hapistrano (like Capistrano for Ruby) deploys applications to a new
 directory marked with a timestamp on the remote host. It creates this
@@ -45,7 +45,7 @@ release directory, and optionally restarts the web server.
 By default, Hapistrano keeps the last five releases on the target host
 filesystem and deletes previous releases to avoid filling up the disk.
 
-## Usage
+## Usage  💻
 
 Hapistrano 0.4.0.0 looks for a configuration file called `hap.yaml` that
 typically looks like this:
@@ -147,7 +147,7 @@ $ hap rollback # to rollback to previous successful deploy
 $ hap rollback -n 2 # go two deploys back in time, etc.
 ```
 
-### Environment Variables
+### Environment Variables 🌍
 
 Configuration files are parsed using
 [loadYamlSettings](http://hackage.haskell.org/package/yaml-0.10.2.0/docs/Data-Yaml-Config.html#v:loadYamlSettings),
@@ -164,7 +164,7 @@ The `revision` value could be overwritten as follows:
 HAPISTRANO_REVISION=origin/feature_branch hap deploy
 ```
 
-## What to do when compiling on server is not viable
+## What to do when compiling on server is not viable 👨‍🔧
 
 Sometimes the target machine (server) is not capable of compiling your
 application because e.g. it has not enough memory and GHC exhausts it all.
@@ -186,7 +186,7 @@ repo) and specifies where to put the files/directories on target machine.
 Directories and files with clashing names will be overwritten. Directories
 are copied recursively.
 
-## Deploying to multiple machines concurrently
+## Deploying to multiple machines concurrently 🤹‍♀️
 
 Beginning with Hapistrano 0.3.1.0 it's possible to deploy to several
 machines concurrently. The only things you need to do is to adjust your
@@ -219,12 +219,12 @@ A few things to note here:
 If you don't specify `host` and `targets`, `hap` will assume `localhost` as
 usually, which is mainly useful for testing.
 
-## Docker
+## Docker 🐳
 
 If you would like to use Docker, there is a lightweight image
 available on [Docker Hub](https://hub.docker.com/r/stackbuilders/hapistrano/).
 
-## Nix
+## Nix 🧾
 
 If you want to use Nix for building Hapistrano, the required release.nix and default.nix are available.
 
@@ -243,11 +243,11 @@ nix-build release.nix
 ```
 
 
-## License
+## License ©
 
 MIT, see [the LICENSE file](LICENSE).
 
-## Contributing
+## Contributing 💯
 
 Pull requests for modifications to this program are welcome. Fork and
 open a PR. Feel free to [email me](mailto:justin@stackbuilders.com) if
