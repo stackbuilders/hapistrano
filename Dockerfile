@@ -31,6 +31,10 @@ COPY Setup.hs .
 COPY .git/ .git/
 # Cabal has changed behaviour and it requires all modules listed
 COPY spec/ spec/
+COPY fixtures/ fixtures/
+COPY CHANGELOG.md .
+COPY README.md .
+RUN touch Dockerfile
 
 RUN cabal update
 RUN cabal install --only-dependencies
