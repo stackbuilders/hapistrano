@@ -1,8 +1,9 @@
 ## 0.4.3.0
 ### Added
 * Add support for GHC 9.0
+* Docker image is built on a newer compiler, cabal and alpine version
 ### Removed
-* GHC support for versions older than 8.6
+* Official support for GHC versions older than 8.6
 
 ## 0.4.2.0
 ### Added
