@@ -22,10 +22,6 @@ RUN apk update \
 WORKDIR /hapistrano
 
 COPY hapistrano.cabal .
-
-RUN cabal update
-RUN cabal install --only-dependencies
-
 COPY src/ src/
 COPY app/ app/
 COPY script/ script/
@@ -33,7 +29,11 @@ COPY LICENSE .
 COPY Setup.hs .
 # So Hapistrano is built with version information
 COPY .git/ .git/
+# Cabal has changed behaviour and it requires all modules listed
+COPY spec/ spec/
 
+RUN cabal update
+RUN cabal install --only-dependencies
 RUN cabal configure -f static
 RUN cabal build hap
 
