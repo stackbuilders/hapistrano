@@ -7,12 +7,14 @@ module System.HapistranoSpec
 
 import Control.Monad
 import Control.Monad.Reader
-import Data.Char (isSpace)
 import Data.List (isPrefixOf)
 import Data.Maybe (mapMaybe)
 import Numeric.Natural
 import Path
+#if !MIN_VERSION_base(4,13,0)
 import Path.Internal (Path(..))
+#endif
+
 import Path.IO
 import System.Directory (getCurrentDirectory, listDirectory)
 import qualified System.Hapistrano as Hap

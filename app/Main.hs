@@ -1,13 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE CPP               #-}
 
 module Main (main) where
 
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Monad
+
+#if !MIN_VERSION_base(4,13,0)
 import           Data.Monoid                ((<>))
+#endif
 import           Data.Version               (showVersion)
 import qualified Data.Yaml.Config           as Yaml
 import           Development.GitRev

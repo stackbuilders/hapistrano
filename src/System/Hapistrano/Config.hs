@@ -95,7 +95,7 @@ instance FromJSON Config where
         <*> grabPort m
         <*> grabShell m
         <*> grabSshArgs m)
-    let first Target{..} = host
+    let first Target{} = host
         configHosts = nubBy ((==) `on` first)
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
         source m =
