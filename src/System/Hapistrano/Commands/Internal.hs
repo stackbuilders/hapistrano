@@ -13,11 +13,15 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE CPP                 #-}
 
 module System.Hapistrano.Commands.Internal where
 
 import           Control.Monad.IO.Class
 import           Data.Char               (isSpace)
+#if MIN_VERSION_base(4,15,0)
+import           Data.Kind               (Type)
+#endif
 import           Data.List               (dropWhileEnd)
 import           Data.Maybe              (catMaybes, fromJust, mapMaybe)
 import           Data.Proxy
@@ -31,7 +35,11 @@ import           System.Hapistrano.Types (TargetSystem (..))
 -- | Class for data types that represent shell commands in typed way.
 class Command a where
   -- | Type of result.
+#if MIN_VERSION_base(4,15,0)
+  type Result a :: Type
+#else
   type Result a :: *
+#endif
   -- | How to render the command before feeding it into shell (possibly via
   -- SSH).
   renderCommand :: a -> String
