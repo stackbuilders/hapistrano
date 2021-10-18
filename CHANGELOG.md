@@ -1,3 +1,9 @@
+## 0.4.3.0
+### Added
+* Add support for GHC 9.0
+### Removed
+* GHC support for versions older than 8.6
+
 ## 0.4.2.0
 ### Added
 * Add support for working directory
