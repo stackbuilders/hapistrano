@@ -1,5 +1,5 @@
 # Build Hapistrano
-FROM alpine:3.9 as build-env
+FROM alpine:3.13 as build-env
 
 MAINTAINER Nicolas Vivar <nvivar@stackbuilders.com>
 
@@ -41,7 +41,7 @@ RUN cabal build hap
 RUN upx /hapistrano/dist/build/hap/hap
 
 # Copy Hapistrano to a basic Alpine with SSH
-FROM alpine:3.9
+FROM alpine:3.13
 
 RUN apk update \
  && apk add \
