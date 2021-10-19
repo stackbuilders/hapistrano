@@ -65,7 +65,7 @@ pushRelease Task {..} = do
       cloneToRelease taskDeployPath release
       setReleaseRevision taskDeployPath release gitRepositoryRevision
       return release
-    pushReleaseForRepository LocalDirectory {..} =
+    pushReleaseForRepository LocalDirectory {} =
       newRelease taskReleaseFormat
 
 -- | Same as 'pushRelease' but doesn't perform any version control

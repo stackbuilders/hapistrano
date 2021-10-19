@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP             #-}
 {-# LANGUAGE TemplateHaskell #-}
+
 module System.HapistranoConfigSpec
   ( spec
   ) where
@@ -8,7 +10,11 @@ import           System.Hapistrano.Types  (Shell (..),
                                            Source (..), TargetSystem (..))
 
 import qualified Data.Yaml.Config         as Yaml
+#if MIN_VERSION_base(4,15,0)
+import           Path                     (mkAbsDir)
+#else
 import           Path                     (mkAbsDir, Abs, Dir)
+#endif
 import           Test.Hspec
 
 
