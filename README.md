@@ -98,15 +98,15 @@ The following parameters are *optional*:
   deploy to is a GNU/Linux or other UNIX (g.e. BSD, Mac). This is set to `true`
   by default so unless the target system is not GNU/Linux, this should not be
   necessary. The platform where Hapistrano is running won't affect the
-  available options for commands (g.e. A Mac deploying to a Ubuntu machine,
+  available options for commands (g.e. A Mac deploying to an Ubuntu machine,
   doesn't need this flag)
 * `release_format` - The release timestamp format, the
   '--release-format' argument passed via the CLI takes precedence over this
-  value. If neither CLI or configuration file value is specified, it defaults
+  value. If neither CLI nor configuration file value is specified, it defaults
   to 'short'
 * `keep_releases` - The number of releases to keep, the
   '--keep-releases' argument passed via the CLI takes precedence over this
-  value. If neither CLI or configuration file value is specified, it defaults
+  value. If neither CLI nor configuration file value is specified, it defaults
   to '5'
 * `linked_files:`- Listed files that will be symlinked from the `{deploy_path}/shared` folder
 into each release directory during deployment. Can be used for configuration files
@@ -129,8 +129,8 @@ run_locally:
 
 Note how we are even able to execute a bash script named `deploy.sh`
 above. Be sure to use `set -e` in your bash script to avoid
-headaches. Hapistrano will stop the execution on non zero exit
-codes. Without the usage of `set -e`, there is a possiblity that your
+headaches. Hapistrano will stop the execution on non-zero exit
+codes. Without the usage of `set -e`, there is a possibility that your
 bash script may return a zero exit code even if your intermediate
 command resulted in an error.
 
