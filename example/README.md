@@ -9,7 +9,7 @@ To do this we need to:
     ```bash
     stack install hapistrano
     ```
-4. You must have a ssh key with the name `id_rsa`.If you're not sure this [article][ssh] can be helfpul.
+4. You must have a ssh key with the name `id_rsa`.If you're not sure this [article][ssh] can be helpful.
 5. Go to the `/hapistano/example` directory.
 6. Execute in your terminal the next line. `*`
     ```bash
@@ -17,8 +17,8 @@ To do this we need to:
     $ vagrant up
     $ hap deploy
     ```
-    If everything went fine, this should trigger the deployment procces to the virtual machine.
-7. To check if the project was built you can ssh the vagrant vm, and do the folowing:
+    If everything went fine, this should trigger the deployment process to the virtual machine.
+7. To check if the project was built you can ssh the vagrant vm, and do the following:
     ```bash
     vagrant ssh
     cd /tmp/hap-examle/current/example

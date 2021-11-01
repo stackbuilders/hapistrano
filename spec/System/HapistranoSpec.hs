@@ -252,7 +252,7 @@ spec = do
             Hap.exec $ Hap.Rm sharedDir
             Hap.linkToShared currentSystem rpath deployPath "thing" `shouldReturn`
               ()
-      context "when the file/directory to link exists in the respository" $
+      context "when the file/directory to link exists in the repository" $
         it "should throw an error" $ \(deployPath, repoPath) ->
           runHap
             (do let task = mkTask deployPath repoPath
@@ -260,7 +260,7 @@ spec = do
                 rpath <- Hap.releasePath deployPath release Nothing
                 Hap.linkToShared currentSystem rpath deployPath "foo.txt") `shouldThrow`
           anyException
-      context "when it attemps to link a file" $ do
+      context "when it attempts to link a file" $ do
         context "when the file is not at the root of the shared directory" $
           it "should throw an error" $ \(deployPath, repoPath) ->
             runHap

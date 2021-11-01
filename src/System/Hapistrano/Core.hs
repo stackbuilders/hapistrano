@@ -101,7 +101,7 @@ execWithInheritStdout typedCmd = do
       where
         pc' = SPT.setStdout SPT.inherit $ SPT.setStderr SPT.inherit pc
 
--- | Get program and args to run a command locally or remotelly.
+-- | Get program and args to run a command locally or remotely.
 getProgAndArgs :: String -> Hapistrano (String, [String])
 getProgAndArgs cmd = do
   Config {..} <- ask
