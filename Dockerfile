@@ -43,7 +43,7 @@ RUN cabal build hap
 
 # Compress the resulting binary
 RUN mkdir bin
-RUN cp /hapistrano/dist-newstyle/build/x86_64-linux/ghc-8.8.4/hapistrano-0.4.3.0/x/hap/build/hap/hap bin/
+RUN cp /hapistrano/dist-newstyle/build/x86_64-linux/ghc-8.8.4/hapistrano-0.4.3.1/x/hap/build/hap/hap bin/
 RUN upx /hapistrano/bin/hap
 
 # Copy Hapistrano to a basic Alpine with SSH
