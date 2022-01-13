@@ -30,6 +30,25 @@ import           System.Hapistrano (createHapistranoDeployState)
 import           Control.Monad.Error.Class (throwError, catchError)
 
 ----------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+-- Command line options
+
+-- | Command line options.
+
+data Opts = Opts
+  { optsCommand    :: Command
+  , optsConfigFile :: FilePath
+  }
+
+-- | Command to execute and command-specific options.
+
+data Command
+  = Deploy (Maybe ReleaseFormat) (Maybe Natural) -- ^ Deploy a new release (with timestamp
+    -- format and how many releases to keep)
+  | Rollback Natural -- ^ Rollback to Nth previous release
+  | Maintenance MaintenanceOptions
+>>>>>>> Create maintenance command
 
 parserInfo :: ParserInfo Opts
 parserInfo =
@@ -55,7 +74,10 @@ optionParser = Opts
   ( command "deploy"
     (info deployParser (progDesc "Deploy a new release")) <>
     command "rollback"
-    (info rollbackParser (progDesc "Roll back to Nth previous release")) )
+    (info rollbackParser (progDesc "Roll back to Nth previous release")) <>
+    command "maintenance"
+    (info maintenanceParser (progDesc "Enable/Disable maintenance mode"))
+    )
   <*> strOption
   ( long "config"
   <> short 'c'
@@ -94,6 +116,11 @@ rollbackParser = Rollback
   <> showDefault
   <> help "How many deployments back to go?" )
 
+maintenanceParser :: Parser Command
+maintenanceParser = Maintenance <$> hsubparser (command "enable" (info (pure Enable) (progDesc "Enables maintenance mode")) <>
+                                    command "disable" (info (pure Disable) (progDesc "Disables maintenance mode")))
+
+data MaintenanceOptions = Enable | Disable
 pReleaseFormat :: ReadM ReleaseFormat
 pReleaseFormat = eitherReader $ \s ->
   case s of
@@ -171,6 +198,10 @@ main = do
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
+            Maintenance Enable-> do
+              error "Maintenance mode not available yet"
+            Maintenance _ -> do
+              error "..."
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()
