@@ -1,5 +1,5 @@
 { mkDerivation, aeson, ansi-terminal, async, base, directory
-, filepath, formatting, gitrev, hspec, hspec-discover, mtl
+, filepath, formatting, gitrev, hspec, hspec-discover, lib, mtl
 , optparse-applicative, path, path-io, process, QuickCheck
 , silently, stdenv, stm, temporary, time, transformers
 , typed-process, yaml, git, zlib, zsh
@@ -27,5 +27,5 @@ mkDerivation {
   testToolDepends = [ hspec-discover ];
   homepage = "https://github.com/stackbuilders/hapistrano";
   description = "A deployment library for Haskell applications";
-  license = stdenv.lib.licenses.mit;
+  license = lib.licenses.mit;
 }
