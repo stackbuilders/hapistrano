@@ -108,6 +108,10 @@ The following parameters are *optional*:
   '--keep-releases' argument passed via the CLI takes precedence over this
   value. If neither CLI nor configuration file value is specified, it defaults
   to '5'
+* `keep_one_failed` - A boolean specifying whether to keep all failed releases
+  or just one (the latest failed release), the '--keep-one-failed' flag passed via
+  the CLI takes precedence over this value. If neither CLI nor configuration file value is specified,
+  it defaults to false (i.e. keep all failed releases).
 * `linked_files:`- Listed files that will be symlinked from the `{deploy_path}/shared` folder
 into each release directory during deployment. Can be used for configuration files
 that need to be persisted (e.g. dotenv files).  **NOTE:** The directory structure _must_

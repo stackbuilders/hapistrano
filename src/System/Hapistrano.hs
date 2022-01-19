@@ -133,7 +133,7 @@ dropOldReleases deployPath n = do
     exec (Rm rpath)
   creleases <- completedReleases deployPath
   forM_ (genericDrop n creleases) $ \release -> do
-    cpath <- ctokenPath  deployPath release
+    cpath <- ctokenPath deployPath release
     exec (Rm cpath)
 
 -- | Play the given script switching to directory of given release.
@@ -189,7 +189,7 @@ ensureCacheInPlace repo deployPath = do
     exec (GitClone True (Left repo) cpath)
   exec (Cd cpath (GitFetch "origin")) -- TODO store this in task description?
 
--- | Create a new realese identifier based on current timestamp.
+-- | Create a new release identifier based on current timestamp.
 
 newRelease :: ReleaseFormat -> Hapistrano Release
 newRelease releaseFormat =
