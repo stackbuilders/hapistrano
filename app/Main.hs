@@ -9,9 +9,9 @@ import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Monad
 
-#if !MIN_VERSION_base(4,13,0)
-import           Data.Monoid                ((<>))
-#endif
+
+
+
 import           Data.Version               (showVersion)
 import qualified Data.Yaml.Config           as Yaml
 import           Development.GitRev
@@ -42,7 +42,7 @@ data Opts = Opts
 -- | Command to execute and command-specific options.
 
 data Command
-  = Deploy (Maybe ReleaseFormat) (Maybe Natural) -- ^ Deploy a new release (with timestamp
+  = Deploy (Maybe ReleaseFormat) (Maybe Natural) Bool -- ^ Deploy a new release (with timestamp
     -- format and how many releases to keep)
   | Rollback Natural -- ^ Rollback to Nth previous release
 
@@ -95,6 +95,11 @@ deployParser = Deploy
             <> help "How many releases to keep, default is '5'"
             )
         )
+  <*> switch
+            ( long "keep-one-failed"
+            <> short 'f'
+            <> help "Keep all failed releases or just one -the latest-, default (without using this flag) is to keep all failed releases."
+            )
 
 rollbackParser :: Parser Command
 rollbackParser = Rollback
@@ -136,9 +141,10 @@ main = do
       hap shell sshOpts =  do
         r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
-            Deploy cliReleaseFormat cliKeepReleases -> do
+            Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed -> do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
                   keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
+                  keepOneFailed = cliKeepOneFailed || configKeepOneFailed
               forM_ configRunLocally Hap.playScriptLocally
               release <- if configVcAction
                           then Hap.pushRelease (task releaseFormat)
@@ -187,7 +193,7 @@ main = do
         case configHosts of
           [] -> [hap Bash Nothing] -- localhost, no SSH
           xs ->
-            let runHap (C.Target{..}) =
+            let runHap C.Target{..} =
                   hap targetShell (Just $ SshOptions targetHost targetPort targetSshArgs)
             in runHap <$> xs
   results <- (runConcurrently . traverse Concurrently)

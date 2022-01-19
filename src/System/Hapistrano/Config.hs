@@ -47,7 +47,7 @@ data Config = Config
   , configLinkedDirs       :: ![FilePath]
     -- ^ Collection of directories to link from each release to _shared_
   , configVcAction       :: !Bool
-  -- ^ Perform version control related actions. By default, it's assumed to be True.
+  -- ^ Perform version control related actions. By default, it's assumed to be `True`.
   , configRunLocally     :: !(Maybe [GenericCommand])
   -- ^ Perform a series of commands on the local machine before communication
   -- with target server starts
@@ -55,13 +55,19 @@ data Config = Config
   -- ^ Optional parameter to specify the target system. It's GNU/Linux by
   -- default
   , configReleaseFormat  :: !(Maybe ReleaseFormat)
-  -- ^ The release timestamp format, the '--release-format' argument passed via
+  -- ^ The release timestamp format, the @--release-format@ argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to short
   , configKeepReleases   :: !(Maybe Natural)
-  -- ^ The number of releases to keep, the '--keep-releases' argument passed via
+  -- ^ The number of releases to keep, the @--keep-releases@ argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to 5
+  , configKeepOneFailed :: !Bool
+  -- ^ Specifies whether to keep all failed releases along with the successful releases
+  -- or just the latest failed (at least this one should be kept for debugging purposes).
+  -- The @--keep-one-failed@ argument passed via the CLI takes precedence over this value.
+  -- If neither CLI or configuration file value is specified, it defaults to `False` 
+  -- (i.e. keep all failed releases).
   , configWorkingDir :: !(Maybe (Path Rel Dir))
   } deriving (Eq, Ord, Show)
 
@@ -116,6 +122,7 @@ instance FromJSON Config where
     configTargetSystem <- o .:? "linux" .!= GNULinux
     configReleaseFormat <- o .:? "release_format"
     configKeepReleases <- o .:? "keep_releases"
+    configKeepOneFailed <- o .:? "keep_one_failed" .!= False
     configWorkingDir <- o .:? "working_directory"
     return Config {..}
 
