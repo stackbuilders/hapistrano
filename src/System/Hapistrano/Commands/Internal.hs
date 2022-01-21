@@ -198,6 +198,22 @@ instance Command Touch where
   renderCommand (Touch path) = formatCmd "touch" [Just (fromAbsFile path)]
   parseResult Proxy _ = ()
 
+-- | Basic command that writes to a file some contents.
+-- It uses the @file > contents@ shell syntax and the @contents@ is
+-- represented as a 'String', so it shouldn't be used for
+-- bigger writing operations. Currently used to write @fail@ or @success@
+-- to the @.hapistrano_deploy_state@ file.
+data BasicWrite =
+  BasicWrite 
+  (Path Abs File) -- ^ The absolute path to the file to which you want to write
+  String -- ^ The contents that will be written to the file
+
+instance Command BasicWrite where
+  type Result BasicWrite = ()
+  renderCommand (BasicWrite path contents) =
+     "echo \"" <> contents <> "\"" <> " > " <> fromAbsFile path
+  parseResult Proxy _ = ()
+
 -- | Git checkout.
 data GitCheckout =
   GitCheckout String
