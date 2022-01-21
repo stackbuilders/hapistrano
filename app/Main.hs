@@ -15,7 +15,6 @@ import           Data.Version               (showVersion)
 import qualified Data.Yaml.Config           as Yaml
 import           Development.GitRev
 import           Formatting                 (formatToString, string, (%))
-import           Numeric.Natural
 import           Options.Applicative        hiding (str)
 import           Path
 import           Path.IO
@@ -29,21 +28,6 @@ import           System.Hapistrano.Types
 import           System.IO
 
 ----------------------------------------------------------------------------
--- Command line options
-
--- | Command line options.
-
-data Opts = Opts
-  { optsCommand    :: Command
-  , optsConfigFile :: FilePath
-  }
-
--- | Command to execute and command-specific options.
-
-data Command
-  = Deploy (Maybe ReleaseFormat) (Maybe Natural) Bool -- ^ Deploy a new release (with timestamp
-    -- format and how many releases to keep)
-  | Rollback Natural -- ^ Rollback to Nth previous release
 
 parserInfo :: ParserInfo Opts
 parserInfo =
@@ -137,8 +121,8 @@ main = do
                      , taskReleaseFormat = rf }
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
-      hap shell sshOpts =  do
-        r <- Hap.runHapistrano sshOpts shell printFnc $
+      hap shell sshOpts = do
+        r <- Hap.runHapistrano sshOpts shell printFnc Opts{..} C.Config{..} $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed -> do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
@@ -172,6 +156,7 @@ main = do
               Hap.activateRelease configTargetSystem configDeployPath release
               Hap.dropOldReleases configDeployPath keepReleases
               forM_ configRestartCommand Hap.exec
+              Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand Hap.exec

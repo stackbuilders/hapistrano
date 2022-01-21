@@ -15,11 +15,13 @@
 {-# LANGUAGE TemplateHaskell     #-}
 
 module System.Hapistrano
-  ( pushRelease
+  ( runHapistrano
+  , pushRelease
   , pushReleaseWithoutVc
   , registerReleaseAsComplete
   , activateRelease
   , linkToShared
+  , createHapistranoDeployState
   , rollback
   , dropOldReleases
   , playScript
@@ -34,7 +36,7 @@ where
 
 import           Control.Monad
 import           Control.Monad.Except
-import           Control.Monad.Reader       (local)
+import           Control.Monad.Reader       (local, runReaderT)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (mapMaybe)
 import           Data.Ord                   (Down (..))
@@ -44,8 +46,49 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
+import qualified System.Hapistrano.Config as C
 
 ----------------------------------------------------------------------------
+
+-- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
+runHapistrano ::
+     MonadIO m
+  => Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
+  -> Shell -- ^ Shell to run commands
+  -> (OutputDest -> String -> IO ()) -- ^ How to print messages
+  -> Opts -- ^ CLI options
+  -> C.Config -- ^ Config file options
+  -> Hapistrano a -- ^ The computation to run
+  -> m (Either Int a) -- ^ Status code in 'Left' on failure, result in
+              -- 'Right' on success
+runHapistrano sshOptions shell' printFnc Opts{..} C.Config{..} m =
+  liftIO $ do
+    let config =
+          Config
+            { configSshOptions = sshOptions
+            , configShellOptions = shell'
+            , configPrint = printFnc
+            }
+    r <- runReaderT (runExceptT $ m `catchError` failStateAndThrow) config
+    case r of
+      Left (Failure n msg) -> do
+        forM_ msg (printFnc StderrDest)
+        return (Left n)
+      Right x -> return (Right x)
+    where
+      failStateAndThrow e = do
+        let task rf = Task { taskDeployPath    = configDeployPath
+                     , taskSource        = configSource
+                     , taskReleaseFormat = rf }
+        case optsCommand of
+            Deploy cliReleaseFormat _ _ -> do
+              let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
+              release <- if configVcAction
+                    then pushRelease (task releaseFormat)
+                    else pushReleaseWithoutVc (task releaseFormat)
+              createHapistranoDeployState configDeployPath release Fail >> throwError e
+            _ -> throwError e
+
 -- High-level functionality
 
 -- | Perform basic setup for a project, making sure necessary directories
@@ -101,6 +144,21 @@ activateRelease ts deployPath release = do
       cpath = currentSymlinkPath deployPath
   exec (Ln ts rpath tpath) -- create a symlink for the new candidate
   exec (Mv ts tpath cpath) -- atomically replace the symlink
+
+-- | Creates the file @.hapistrano__state@ containing
+-- @fail@ or @success@ depending on how the deployment ended.
+
+createHapistranoDeployState
+  :: Path Abs Dir -- ^ Deploy path
+  -> Release -- ^ Release being deployed
+  -> DeployState -- ^ Indicates how the deployment went
+  -> Hapistrano ()
+createHapistranoDeployState deployPath release deployState = do
+  parseStatePath <- parseRelFile ".hapistrano_deploy_state"
+  actualReleasePath <- releasePath deployPath release Nothing
+  let stateFilePath = actualReleasePath </> parseStatePath
+  exec (Touch stateFilePath) -- creates '.hapistrano_deploy_state'
+  exec (BasicWrite stateFilePath $ show deployState) -- writes the deploy state to '.hapistrano_deploy_state'
 
 -- | Activates one of already deployed releases.
 

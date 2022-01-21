@@ -14,8 +14,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Hapistrano.Core
-  ( runHapistrano
-  , failWith
+  ( failWith
   , exec
   , execWithInheritStdout
   , scpFile
@@ -32,34 +31,10 @@ import           Path
 import           System.Console.ANSI
 import           System.Exit
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types
+import           System.Hapistrano.Types hiding (Command)
 import           System.Process
 import           System.Process.Typed       (ProcessConfig)
 import qualified System.Process.Typed       as SPT
-
--- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
-runHapistrano ::
-     MonadIO m
-  => Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
-  -> Shell -- ^ Shell to run commands
-  -> (OutputDest -> String -> IO ()) -- ^ How to print messages
-  -> Hapistrano a -- ^ The computation to run
-  -> m (Either Int a) -- ^ Status code in 'Left' on failure, result in
-              -- 'Right' on success
-runHapistrano sshOptions shell' printFnc m =
-  liftIO $ do
-    let config =
-          Config
-            { configSshOptions = sshOptions
-            , configShellOptions = shell'
-            , configPrint = printFnc
-            }
-    r <- runReaderT (runExceptT m) config
-    case r of
-      Left (Failure n msg) -> do
-        forM_ msg (printFnc StderrDest)
-        return (Left n)
-      Right x -> return (Right x)
 
 -- | Fail returning the following status code and message.
 failWith :: Int -> Maybe String -> Hapistrano a
