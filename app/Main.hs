@@ -113,7 +113,7 @@ data Message
 
 main :: IO ()
 main = do
-  Opts {..} <- execParser parserInfo
+  Opts{..} <- execParser parserInfo
   C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
   chan <- newTChanIO
   let task rf = Task { taskDeployPath    = configDeployPath
@@ -122,7 +122,7 @@ main = do
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap shell sshOpts = do
-        r <- Hap.runHapistrano sshOpts shell printFnc Opts{..} C.Config{..} $
+        r <- Hap.runHapistrano sshOpts shell printFnc C.Config{..} $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed -> do
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
@@ -134,32 +134,32 @@ main = do
                           else Hap.pushReleaseWithoutVc (task releaseFormat)
               rpath <- Hap.releasePath configDeployPath release configWorkingDir
               forM_ (toMaybePath configSource) $ \src ->
-                Hap.scpDir src rpath
+                Hap.scpDir src rpath (Just release)
               forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
                 srcPath  <- resolveFile' src
                 destPath <- parseRelFile dest
                 let dpath = rpath </> destPath
-                (Hap.exec . Hap.MkDir . parent) dpath
-                Hap.scpFile srcPath dpath
+                (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
+                Hap.scpFile srcPath dpath (Just release)
               forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
                 srcPath  <- resolveDir' src
                 destPath <- parseRelDir dest
                 let dpath = rpath </> destPath
-                (Hap.exec . Hap.MkDir . parent) dpath
-                Hap.scpDir srcPath dpath
+                (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
+                Hap.scpDir srcPath dpath (Just release)
               forM_ configLinkedFiles
-                (Hap.linkToShared configTargetSystem rpath configDeployPath)
+                $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
               forM_ configLinkedDirs
-                (Hap.linkToShared configTargetSystem rpath configDeployPath)
+                $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
               forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
               Hap.registerReleaseAsComplete configDeployPath release
               Hap.activateRelease configTargetSystem configDeployPath release
               Hap.dropOldReleases configDeployPath keepReleases
-              forM_ configRestartCommand Hap.exec
+              forM_ configRestartCommand (flip Hap.exec $ Just release)
               Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
-              forM_ configRestartCommand Hap.exec
+              forM_ configRestartCommand (flip Hap.exec Nothing)
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()
