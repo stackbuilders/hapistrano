@@ -46,7 +46,7 @@ import Numeric.Natural
 import Path
 
 -- | Hapistrano monad.
-type Hapistrano a = ExceptT Failure (ReaderT Config IO) a
+type Hapistrano a = ExceptT (Failure, Maybe Release) (ReaderT Config IO) a
 
 -- | Failure with status code and a message.
 data Failure =

@@ -56,12 +56,11 @@ runHapistrano ::
   => Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
   -> Shell -- ^ Shell to run commands
   -> (OutputDest -> String -> IO ()) -- ^ How to print messages
-  -> Opts -- ^ CLI options
   -> C.Config -- ^ Config file options
   -> Hapistrano a -- ^ The computation to run
   -> m (Either Int a) -- ^ Status code in 'Left' on failure, result in
               -- 'Right' on success
-runHapistrano sshOptions shell' printFnc Opts{..} C.Config{..} m =
+runHapistrano sshOptions shell' printFnc C.Config{..} m =
   liftIO $ do
     let config =
           Config
@@ -71,23 +70,15 @@ runHapistrano sshOptions shell' printFnc Opts{..} C.Config{..} m =
             }
     r <- runReaderT (runExceptT $ m `catchError` failStateAndThrow) config
     case r of
-      Left (Failure n msg) -> do
+      Left (Failure n msg, _) -> do
         forM_ msg (printFnc StderrDest)
         return (Left n)
       Right x -> return (Right x)
     where
-      failStateAndThrow e = do
-        let task rf = Task { taskDeployPath    = configDeployPath
-                     , taskSource        = configSource
-                     , taskReleaseFormat = rf }
-        case optsCommand of
-            Deploy cliReleaseFormat _ _ -> do
-              let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
-              release <- if configVcAction
-                    then pushRelease (task releaseFormat)
-                    else pushReleaseWithoutVc (task releaseFormat)
-              createHapistranoDeployState configDeployPath release Fail >> throwError e
-            _ -> throwError e
+      failStateAndThrow e@(_, maybeRelease) =
+        case maybeRelease of
+          (Just release) -> createHapistranoDeployState configDeployPath release Fail >> throwError e
+          Nothing -> throwError e
 
 -- High-level functionality
 
@@ -103,7 +94,7 @@ pushRelease Task {..} = do
     -- When the configuration is set for a local directory, it will only create
     -- the release directory without any version control operations.
     pushReleaseForRepository GitRepository {..} = do
-      ensureCacheInPlace gitRepositoryURL taskDeployPath
+      ensureCacheInPlace gitRepositoryURL taskDeployPath Nothing
       release <- newRelease taskReleaseFormat
       cloneToRelease taskDeployPath release
       setReleaseRevision taskDeployPath release gitRepositoryRevision
@@ -128,7 +119,7 @@ registerReleaseAsComplete
   -> Hapistrano ()
 registerReleaseAsComplete deployPath release = do
   cpath <- ctokenPath deployPath release
-  exec (Touch cpath)
+  exec (Touch cpath) (Just release)
 
 -- | Switch the current symlink to point to the specified release. May be
 -- used in deploy or rollback cases.
@@ -142,8 +133,8 @@ activateRelease ts deployPath release = do
   rpath <- releasePath deployPath release Nothing
   let tpath = tempSymlinkPath deployPath
       cpath = currentSymlinkPath deployPath
-  exec (Ln ts rpath tpath) -- create a symlink for the new candidate
-  exec (Mv ts tpath cpath) -- atomically replace the symlink
+  exec (Ln ts rpath tpath) (Just release) -- create a symlink for the new candidate
+  exec (Mv ts tpath cpath) (Just release) -- atomically replace the symlink
 
 -- | Creates the file @.hapistrano__state@ containing
 -- @fail@ or @success@ depending on how the deployment ended.
@@ -157,8 +148,8 @@ createHapistranoDeployState deployPath release deployState = do
   parseStatePath <- parseRelFile ".hapistrano_deploy_state"
   actualReleasePath <- releasePath deployPath release Nothing
   let stateFilePath = actualReleasePath </> parseStatePath
-  exec (Touch stateFilePath) -- creates '.hapistrano_deploy_state'
-  exec (BasicWrite stateFilePath $ show deployState) -- writes the deploy state to '.hapistrano_deploy_state'
+  exec (Touch stateFilePath) (Just release) -- creates '.hapistrano_deploy_state'
+  exec (BasicWrite stateFilePath $ show deployState) (Just release) -- writes the deploy state to '.hapistrano_deploy_state'
 
 -- | Activates one of already deployed releases.
 
@@ -175,7 +166,7 @@ rollback ts deployPath n = do
   -- have this functionality. We then fall back and use collection of “just”
   -- deployed releases.
   case genericDrop n (if null crs then drs else crs) of
-    [] -> failWith 1 (Just "Could not find the requested release to rollback to.")
+    [] -> failWith 1 (Just "Could not find the requested release to rollback to.") Nothing
     (x:_) -> activateRelease ts deployPath x
 
 -- | Remove older releases to avoid filling up the target host filesystem.
@@ -188,11 +179,11 @@ dropOldReleases deployPath n = do
   dreleases <- deployedReleases deployPath
   forM_ (genericDrop n dreleases) $ \release -> do
     rpath <- releasePath deployPath release Nothing
-    exec (Rm rpath)
+    exec (Rm rpath) Nothing
   creleases <- completedReleases deployPath
   forM_ (genericDrop n creleases) $ \release -> do
     cpath <- ctokenPath deployPath release
-    exec (Rm cpath)
+    exec (Rm cpath) Nothing
 
 -- | Play the given script switching to directory of given release.
 
@@ -204,18 +195,18 @@ playScript
   -> Hapistrano ()
 playScript deployDir release mWorkingDir cmds = do
   rpath <- releasePath deployDir release mWorkingDir
-  forM_ cmds (execWithInheritStdout . Cd rpath)
+  forM_ cmds (flip execWithInheritStdout (Just release) . Cd rpath)
 
 -- | Plays the given script on your machine locally.
 
-playScriptLocally :: [GenericCommand] -> Hapistrano ()
+playScriptLocally :: [GenericCommand] ->  Hapistrano ()
 playScriptLocally cmds =
   local
     (\c ->
         c
         { configSshOptions = Nothing
         }) $
-  forM_ cmds execWithInheritStdout
+  forM_ cmds $ flip execWithInheritStdout Nothing
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -226,10 +217,10 @@ setupDirs
   :: Path Abs Dir      -- ^ Deploy path
   -> Hapistrano ()
 setupDirs deployPath = do
-  (exec . MkDir . releasesPath)  deployPath
-  (exec . MkDir . cacheRepoPath) deployPath
-  (exec . MkDir . ctokensPath)   deployPath
-  (exec . MkDir . sharedPath)    deployPath
+  (flip exec Nothing . MkDir . releasesPath)  deployPath
+  (flip exec Nothing . MkDir . cacheRepoPath) deployPath
+  (flip exec Nothing . MkDir . ctokensPath)   deployPath
+  (flip exec Nothing . MkDir . sharedPath)    deployPath
 
 -- | Ensure that the specified repo is cloned and checked out on the given
 -- revision. Idempotent.
@@ -237,15 +228,16 @@ setupDirs deployPath = do
 ensureCacheInPlace
   :: String            -- ^ Repo URL
   -> Path Abs Dir      -- ^ Deploy path
+  -> Maybe Release     -- ^ Release that was being attempted, if it was defined 
   -> Hapistrano ()
-ensureCacheInPlace repo deployPath = do
+ensureCacheInPlace repo deployPath maybeRelease = do
   let cpath = cacheRepoPath deployPath
       refs  = cpath </> $(mkRelDir "refs")
-  exists <- (exec (Ls refs) >> return True)
+  exists <- (exec (Ls refs) Nothing >> return True)
     `catchError` const (return False)
   unless exists $
-    exec (GitClone True (Left repo) cpath)
-  exec (Cd cpath (GitFetch "origin")) -- TODO store this in task description?
+    exec (GitClone True (Left repo) cpath) maybeRelease
+  exec (Cd cpath (GitFetch "origin")) maybeRelease -- TODO store this in task description?
 
 -- | Create a new release identifier based on current timestamp.
 
@@ -262,7 +254,7 @@ cloneToRelease
 cloneToRelease deployPath release = do
   rpath <- releasePath deployPath release Nothing
   let cpath = cacheRepoPath deployPath
-  exec (GitClone False (Right cpath) rpath)
+  exec (GitClone False (Right cpath) rpath) (Just release)
 
 -- | Set the release to the correct revision by checking out a branch or
 -- a commit.
@@ -274,7 +266,7 @@ setReleaseRevision
   -> Hapistrano ()
 setReleaseRevision deployPath release revision = do
   rpath <- releasePath deployPath release Nothing
-  exec (Cd rpath (GitCheckout revision))
+  exec (Cd rpath (GitCheckout revision)) (Just release)
 
 -- | Return a list of all currently deployed releases sorted newest first.
 
@@ -283,7 +275,7 @@ deployedReleases
   -> Hapistrano [Release]
 deployedReleases deployPath = do
   let rpath = releasesPath deployPath
-  xs <- exec (Find 1 rpath :: Find Dir)
+  xs <- exec (Find 1 rpath :: Find Dir) Nothing
   ps <- stripDirs rpath (filter (/= rpath) xs)
   (return . sortOn Down . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelDir <$> ps)
@@ -295,7 +287,7 @@ completedReleases
   -> Hapistrano [Release]
 completedReleases deployPath = do
   let cpath = ctokensPath deployPath
-  xs <- exec (Find 1 cpath :: Find File)
+  xs <- exec (Find 1 cpath :: Find File) Nothing
   ps <- stripDirs cpath xs
   (return . sortOn Down . mapMaybe parseRelease)
     (dropWhileEnd (== '/') . fromRelFile <$> ps)
@@ -326,12 +318,13 @@ linkToShared
   -> Path Abs Dir -- ^ Release path
   -> Path Abs Dir -- ^ Deploy path
   -> FilePath     -- ^ Thing to link in share
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
   -> Hapistrano ()
-linkToShared configTargetSystem rpath configDeployPath thingToLink = do
+linkToShared configTargetSystem rpath configDeployPath thingToLink maybeRelease = do
   destPath <- parseRelFile thingToLink
   let dpath = rpath </> destPath
       sharedPath' = sharedPath configDeployPath </> destPath
-  exec $ Ln configTargetSystem sharedPath' dpath
+  exec (Ln configTargetSystem sharedPath' dpath) maybeRelease
 
 -- | Construct path to a particular 'Release'.
 
@@ -343,7 +336,7 @@ releasePath
 releasePath deployPath release mWorkingDir =
   let rendered = renderRelease release
   in case parseRelDir rendered of
-    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered)
+    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered) (Just release)
     Just rpath ->
       return $ case mWorkingDir of
         Nothing         -> releasesPath deployPath </> rpath
@@ -387,7 +380,7 @@ ctokenPath
 ctokenPath deployPath release = do
   let rendered = renderRelease release
   case parseRelFile rendered of
-    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered)
+    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered) (Just release)
     Just rpath -> return (ctokensPath deployPath </> rpath)
 
 stripDirs :: Path Abs Dir -> [Path Abs t] -> Hapistrano [Path Rel t]

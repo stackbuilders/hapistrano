@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP             #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module System.HapistranoSpec
   ( spec
@@ -11,9 +12,9 @@ import Data.List (isPrefixOf)
 import Data.Maybe (mapMaybe)
 import Numeric.Natural
 import Path
-#if !MIN_VERSION_base(4,13,0)
-import Path.Internal (Path(..))
-#endif
+
+
+
 
 import Path.IO
 import System.Directory (getCurrentDirectory, listDirectory)
@@ -28,6 +29,8 @@ import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
+import Data.Yaml (decodeEither')
+import Data.Either (fromRight)
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -46,7 +49,7 @@ spec = do
     let (Just commandTest) =
           Hap.mkGenericCommand
             "echo \"hapistrano\"; sleep 2; echo \"onartsipah\""
-        commandExecution = Hap.execWithInheritStdout commandTest
+        commandExecution = Hap.execWithInheritStdout commandTest Nothing
         expectedOutput = "hapistrano\nonartsipah"
      in do actualOutput <- capture_ (runHap commandExecution)
            expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
@@ -172,7 +175,7 @@ spec = do
           let rc :: Hap.Readlink Dir
               rc =
                 Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-          Hap.exec rc `shouldReturn` rpath
+          Hap.exec rc (Just release) `shouldReturn` rpath
           doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
     describe "playScriptLocally (successful run)" $
       it "check that local scripts are run and deployment is successful" $ \(deployPath, repoPath) ->
@@ -205,7 +208,7 @@ spec = do
             let rc :: Hap.Readlink Dir
                 rc =
                   Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-            Hap.exec rc `shouldReturn` rpath
+            Hap.exec rc Nothing `shouldReturn` rpath
             doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
       context "with completion tokens" $
         it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
@@ -214,11 +217,11 @@ spec = do
             rs <- replicateM 5 (Hap.pushRelease task)
             forM_ (take 3 rs) (Hap.registerReleaseAsComplete deployPath)
             Hap.rollback currentSystem deployPath 2
-            rpath <- Hap.releasePath deployPath (rs !! 0) Nothing
+            rpath <- Hap.releasePath deployPath (head rs) Nothing
             let rc :: Hap.Readlink Dir
                 rc =
                   Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-            Hap.exec rc `shouldReturn` rpath
+            Hap.exec rc Nothing `shouldReturn` rpath
             doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
     describe "dropOldReleases" $
       it "works" $ \(deployPath, repoPath) ->
@@ -249,8 +252,8 @@ spec = do
                 sharedDir = Hap.sharedPath deployPath
             release <- Hap.pushRelease task
             rpath <- Hap.releasePath deployPath release Nothing
-            Hap.exec $ Hap.Rm sharedDir
-            Hap.linkToShared currentSystem rpath deployPath "thing" `shouldReturn`
+            Hap.exec (Hap.Rm sharedDir) (Just release)
+            Hap.linkToShared currentSystem rpath deployPath "thing" (Just release) `shouldReturn`
               ()
       context "when the file/directory to link exists in the repository" $
         it "should throw an error" $ \(deployPath, repoPath) ->
@@ -258,7 +261,7 @@ spec = do
             (do let task = mkTask deployPath repoPath
                 release <- Hap.pushRelease task
                 rpath <- Hap.releasePath deployPath release Nothing
-                Hap.linkToShared currentSystem rpath deployPath "foo.txt") `shouldThrow`
+                Hap.linkToShared currentSystem rpath deployPath "foo.txt" $ Just release) `shouldThrow`
           anyException
       context "when it attempts to link a file" $ do
         context "when the file is not at the root of the shared directory" $
@@ -270,7 +273,7 @@ spec = do
                   rpath <- Hap.releasePath deployPath release Nothing
                   justExec sharedDir "mkdir foo/"
                   justExec sharedDir "echo 'Bar!' > foo/bar.txt"
-                  Hap.linkToShared currentSystem rpath deployPath "foo/bar.txt") `shouldThrow`
+                  Hap.linkToShared currentSystem rpath deployPath "foo/bar.txt" $ Just release) `shouldThrow`
             anyException
         context "when the file is at the root of the shared directory" $
           it "should link the file successfully" $ \(deployPath, repoPath) ->
@@ -280,7 +283,7 @@ spec = do
               release <- Hap.pushRelease task
               rpath <- Hap.releasePath deployPath release Nothing
               justExec sharedDir "echo 'Bar!' > bar.txt"
-              Hap.linkToShared currentSystem rpath deployPath "bar.txt"
+              Hap.linkToShared currentSystem rpath deployPath "bar.txt" (Just release)
               (liftIO . readFile . fromAbsFile)
                 (rpath </> $(mkRelFile "bar.txt")) `shouldReturn`
                 "Bar!\n"
@@ -295,7 +298,7 @@ spec = do
                   justExec sharedDir "mkdir foo/"
                   justExec sharedDir "echo 'Bar!' > foo/bar.txt"
                   justExec sharedDir "echo 'Baz!' > foo/baz.txt"
-                  Hap.linkToShared currentSystem rpath deployPath "foo/") `shouldThrow`
+                  Hap.linkToShared currentSystem rpath deployPath "foo/" $ Just release) `shouldThrow`
             anyException
         it "should link the file successfully" $ \(deployPath, repoPath) ->
           runHap $ do
@@ -306,7 +309,7 @@ spec = do
             justExec sharedDir "mkdir foo/"
             justExec sharedDir "echo 'Bar!' > foo/bar.txt"
             justExec sharedDir "echo 'Baz!' > foo/baz.txt"
-            Hap.linkToShared currentSystem rpath deployPath "foo"
+            Hap.linkToShared currentSystem rpath deployPath "foo" (Just release)
             files <-
               (liftIO . listDirectory . fromAbsDir)
                 (rpath </> $(mkRelDir "foo"))
@@ -359,8 +362,8 @@ populateTestRepo path =
 justExec :: Path Abs Dir -> String -> Hapistrano ()
 justExec path cmd' =
   case Hap.mkGenericCommand cmd' of
-    Nothing -> Hap.failWith 1 (Just $ "Failed to parse the command: " ++ cmd')
-    Just cmd -> Hap.exec (Hap.Cd path cmd)
+    Nothing -> Hap.failWith 1 (Just $ "Failed to parse the command: " ++ cmd') Nothing
+    Just cmd -> Hap.exec (Hap.Cd path cmd) Nothing
 
 -- | Run 'Hapistrano' monad locally.
 runHap :: Hapistrano a -> IO a
@@ -373,7 +376,8 @@ runHapWithShell shell m = do
         case dest of
           StdoutDest -> putStr str
           StderrDest -> hPutStr stderr str
-  r <- Hap.runHapistrano Nothing shell printFnc m
+  let placeholderConfig = fromRight (error "unintended config while testing") $ decodeEither' "deploy_path: '/placeholder/'\nlocal_directory: '/placeholder/'"
+  r <- Hap.runHapistrano Nothing shell printFnc placeholderConfig m
   case r of
     Left n -> do
       expectationFailure ("Failed with status code: " ++ show n)
