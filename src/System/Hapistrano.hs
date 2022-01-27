@@ -46,7 +46,6 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
-import qualified System.Hapistrano.Config as C
 
 ----------------------------------------------------------------------------
 
@@ -56,11 +55,10 @@ runHapistrano ::
   => Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
   -> Shell -- ^ Shell to run commands
   -> (OutputDest -> String -> IO ()) -- ^ How to print messages
-  -> C.Config -- ^ Config file options
   -> Hapistrano a -- ^ The computation to run
   -> m (Either Int a) -- ^ Status code in 'Left' on failure, result in
               -- 'Right' on success
-runHapistrano sshOptions shell' printFnc C.Config{..} m =
+runHapistrano sshOptions shell' printFnc m =
   liftIO $ do
     let config =
           Config
@@ -68,17 +66,18 @@ runHapistrano sshOptions shell' printFnc C.Config{..} m =
             , configShellOptions = shell'
             , configPrint = printFnc
             }
-    r <- runReaderT (runExceptT $ m `catchError` failStateAndThrow) config
+    r <- runReaderT (runExceptT m) config
+    -- r <- runReaderT (runExceptT $ m `catchError` failStateAndThrow) config
     case r of
       Left (Failure n msg, _) -> do
         forM_ msg (printFnc StderrDest)
         return (Left n)
       Right x -> return (Right x)
-    where
-      failStateAndThrow e@(_, maybeRelease) =
-        case maybeRelease of
-          (Just release) -> createHapistranoDeployState configDeployPath release Fail >> throwError e
-          Nothing -> throwError e
+    -- where
+    --   failStateAndThrow e@(_, maybeRelease) =
+    --     case maybeRelease of
+    --       (Just release) -> createHapistranoDeployState configDeployPath release Fail >> throwError e
+    --       Nothing -> throwError e
 
 -- High-level functionality
 

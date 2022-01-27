@@ -26,6 +26,8 @@ import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
 import           System.Hapistrano.Types
 import           System.IO
+import System.Hapistrano (createHapistranoDeployState)
+import Control.Monad.Error.Class (throwError, catchError)
 
 ----------------------------------------------------------------------------
 
@@ -119,6 +121,10 @@ main = do
   let task rf = Task { taskDeployPath    = configDeployPath
                      , taskSource        = configSource
                      , taskReleaseFormat = rf }
+  let failStateAndThrow e@(_, maybeRelease) =
+        case maybeRelease of
+          (Just release) -> createHapistranoDeployState configDeployPath release Fail >> throwError e
+          Nothing -> throwError e
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap shell sshOpts = do
@@ -160,6 +166,7 @@ main = do
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
+          `catchError` failStateAndThrow
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()
