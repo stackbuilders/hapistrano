@@ -18,7 +18,6 @@ module System.Hapistrano
   ( runHapistrano
   , pushRelease
   , pushReleaseWithoutVc
-  , registerReleaseAsComplete
   , activateRelease
   , linkToShared
   , createHapistranoDeployState
@@ -31,7 +30,7 @@ module System.Hapistrano
   , sharedPath
   , currentSymlinkPath
   , tempSymlinkPath
-  , ctokenPath )
+  , deployState )
 where
 
 import           Control.Monad
@@ -46,6 +45,7 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
+import           Text.Read (readMaybe)
 
 ----------------------------------------------------------------------------
 
@@ -67,17 +67,11 @@ runHapistrano sshOptions shell' printFnc m =
             , configPrint = printFnc
             }
     r <- runReaderT (runExceptT m) config
-    -- r <- runReaderT (runExceptT $ m `catchError` failStateAndThrow) config
     case r of
       Left (Failure n msg, _) -> do
         forM_ msg (printFnc StderrDest)
         return (Left n)
       Right x -> return (Right x)
-    -- where
-    --   failStateAndThrow e@(_, maybeRelease) =
-    --     case maybeRelease of
-    --       (Just release) -> createHapistranoDeployState configDeployPath release Fail >> throwError e
-    --       Nothing -> throwError e
 
 -- High-level functionality
 
@@ -109,17 +103,6 @@ pushReleaseWithoutVc Task {..} = do
   setupDirs taskDeployPath
   newRelease taskReleaseFormat
 
--- | Create a file-token that will tell rollback function that this release
--- should be considered successfully compiled\/completed.
-
-registerReleaseAsComplete
-  :: Path Abs Dir      -- ^ Deploy path
-  -> Release           -- ^ Release identifier to activate
-  -> Hapistrano ()
-registerReleaseAsComplete deployPath release = do
-  cpath <- ctokenPath deployPath release
-  exec (Touch cpath) (Just release)
-
 -- | Switch the current symlink to point to the specified release. May be
 -- used in deploy or rollback cases.
 
@@ -143,12 +126,12 @@ createHapistranoDeployState
   -> Release -- ^ Release being deployed
   -> DeployState -- ^ Indicates how the deployment went
   -> Hapistrano ()
-createHapistranoDeployState deployPath release deployState = do
+createHapistranoDeployState deployPath release state = do
   parseStatePath <- parseRelFile ".hapistrano_deploy_state"
   actualReleasePath <- releasePath deployPath release Nothing
   let stateFilePath = actualReleasePath </> parseStatePath
   exec (Touch stateFilePath) (Just release) -- creates '.hapistrano_deploy_state'
-  exec (BasicWrite stateFilePath $ show deployState) (Just release) -- writes the deploy state to '.hapistrano_deploy_state'
+  exec (BasicWrite stateFilePath $ show state) (Just release) -- writes the deploy state to '.hapistrano_deploy_state'
 
 -- | Activates one of already deployed releases.
 
@@ -158,13 +141,8 @@ rollback
   -> Natural           -- ^ How many releases back to go, 0 re-activates current
   -> Hapistrano ()
 rollback ts deployPath n = do
-  crs <- completedReleases deployPath
-  drs <- deployedReleases  deployPath
-  -- NOTE If we don't have any completed releases, then perhaps the
-  -- application was used with older versions of Hapistrano that did not
-  -- have this functionality. We then fall back and use collection of “just”
-  -- deployed releases.
-  case genericDrop n (if null crs then drs else crs) of
+  releases <- releasesWithState Success deployPath
+  case genericDrop n releases of
     [] -> failWith 1 (Just "Could not find the requested release to rollback to.") Nothing
     (x:_) -> activateRelease ts deployPath x
 
@@ -173,16 +151,19 @@ rollback ts deployPath n = do
 dropOldReleases
   :: Path Abs Dir      -- ^ Deploy path
   -> Natural           -- ^ How many releases to keep
-  -> Hapistrano ()     -- ^ Deleted Releases
-dropOldReleases deployPath n = do
+  -> Bool              -- ^ Whether the @--keep-one-failed@ flag is present or not
+  -> Hapistrano ()
+dropOldReleases deployPath n keepOneFailed = do
+  failedReleases <- releasesWithState Fail deployPath
+  when (keepOneFailed && length failedReleases > 1) $
+    -- Remove every failed release except the most recent one
+    forM_ (tail failedReleases) $ \release -> do
+      rpath <- releasePath deployPath release Nothing
+      exec (Rm rpath) Nothing
   dreleases <- deployedReleases deployPath
   forM_ (genericDrop n dreleases) $ \release -> do
     rpath <- releasePath deployPath release Nothing
     exec (Rm rpath) Nothing
-  creleases <- completedReleases deployPath
-  forM_ (genericDrop n creleases) $ \release -> do
-    cpath <- ctokenPath deployPath release
-    exec (Rm cpath) Nothing
 
 -- | Play the given script switching to directory of given release.
 
@@ -218,7 +199,6 @@ setupDirs
 setupDirs deployPath = do
   (flip exec Nothing . MkDir . releasesPath)  deployPath
   (flip exec Nothing . MkDir . cacheRepoPath) deployPath
-  (flip exec Nothing . MkDir . ctokensPath)   deployPath
   (flip exec Nothing . MkDir . sharedPath)    deployPath
 
 -- | Ensure that the specified repo is cloned and checked out on the given
@@ -281,15 +261,22 @@ deployedReleases deployPath = do
 
 -- | Return a list of successfully completed releases sorted newest first.
 
-completedReleases
-  :: Path Abs Dir      -- ^ Deploy path
+releasesWithState
+  :: DeployState       -- ^ Selector for failed or successful releases
+  -> Path Abs Dir      -- ^ Deploy path
   -> Hapistrano [Release]
-completedReleases deployPath = do
-  let cpath = ctokensPath deployPath
-  xs <- exec (Find 1 cpath :: Find File) Nothing
-  ps <- stripDirs cpath xs
-  (return . sortOn Down . mapMaybe parseRelease)
-    (dropWhileEnd (== '/') . fromRelFile <$> ps)
+releasesWithState selectedState deployPath = do
+  releases <- deployedReleases deployPath
+  filterM (
+    fmap ((\bool -> if selectedState == Success then bool else not bool) . stateToBool)
+     . deployState deployPath Nothing
+    ) releases
+  where
+    stateToBool :: Maybe DeployState -> Bool
+    stateToBool mDeployState =
+      case mDeployState of
+        (Just Fail) -> False
+        _ -> True
 
 ----------------------------------------------------------------------------
 -- Path helpers
@@ -363,24 +350,25 @@ tempSymlinkPath
   -> Path Abs File
 tempSymlinkPath deployPath = deployPath </> $(mkRelFile "current_tmp")
 
--- | Get path to the directory that contains tokens of build completion.
+-- | Checks if a release was deployed properly or not
+-- by looking into the @.hapistrano_deploy_state@ file.
+-- If the file doesn't exist or the contents are anything other than
+-- 'Fail' or 'Success', it returns 'Nothing'.
 
-ctokensPath
-  :: Path Abs Dir      -- ^ Deploy path
-  -> Path Abs Dir
-ctokensPath deployPath = deployPath </> $(mkRelDir "ctokens")
-
--- | Get path to completion token file for particular release.
-
-ctokenPath
-  :: Path Abs Dir      -- ^ Deploy path
-  -> Release           -- ^ 'Release' identifier
-  -> Hapistrano (Path Abs File)
-ctokenPath deployPath release = do
-  let rendered = renderRelease release
-  case parseRelFile rendered of
-    Nothing    -> failWith 1 (Just $ "Could not append path: " ++ rendered) (Just release)
-    Just rpath -> return (ctokensPath deployPath </> rpath)
+deployState
+  :: Path Abs Dir -- ^ Deploy path
+  -> Maybe (Path Rel Dir) -- ^ Working directory
+  -> Release -- ^ 'Release' identifier
+  -> Hapistrano (Maybe DeployState) -- ^ Whether the release was deployed successfully or not
+deployState deployPath mWorkingDir release = do
+  parseStatePath <- parseRelFile ".hapistrano_deploy_state"
+  actualReleasePath <- releasePath deployPath release mWorkingDir
+  let stateFilePath = actualReleasePath </> parseStatePath
+  doesExist <- exec (CheckExists stateFilePath) (Just release)
+  if doesExist then do
+    deployStateContents <- exec (Cat stateFilePath) (Just release)
+    return $ readMaybe deployStateContents
+  else return Nothing
 
 stripDirs :: Path Abs Dir -> [Path Abs t] -> Hapistrano [Path Rel t]
 stripDirs path =

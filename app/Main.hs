@@ -26,8 +26,8 @@ import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
 import           System.Hapistrano.Types
 import           System.IO
-import System.Hapistrano (createHapistranoDeployState)
-import Control.Monad.Error.Class (throwError, catchError)
+import           System.Hapistrano (createHapistranoDeployState)
+import           Control.Monad.Error.Class (throwError, catchError)
 
 ----------------------------------------------------------------------------
 
@@ -121,52 +121,57 @@ main = do
   let task rf = Task { taskDeployPath    = configDeployPath
                      , taskSource        = configSource
                      , taskReleaseFormat = rf }
-  let failStateAndThrow e@(_, maybeRelease) =
-        case maybeRelease of
-          (Just release) -> createHapistranoDeployState configDeployPath release Fail >> throwError e
-          Nothing -> throwError e
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap shell sshOpts = do
-        r <- Hap.runHapistrano sshOpts shell printFnc C.Config{..} $
+        r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
-            Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed -> do
+            Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
                   keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
                   keepOneFailed = cliKeepOneFailed || configKeepOneFailed
-              forM_ configRunLocally Hap.playScriptLocally
-              release <- if configVcAction
-                          then Hap.pushRelease (task releaseFormat)
-                          else Hap.pushReleaseWithoutVc (task releaseFormat)
-              rpath <- Hap.releasePath configDeployPath release configWorkingDir
-              forM_ (toMaybePath configSource) $ \src ->
-                Hap.scpDir src rpath (Just release)
-              forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
-                srcPath  <- resolveFile' src
-                destPath <- parseRelFile dest
-                let dpath = rpath </> destPath
-                (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
-                Hap.scpFile srcPath dpath (Just release)
-              forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
-                srcPath  <- resolveDir' src
-                destPath <- parseRelDir dest
-                let dpath = rpath </> destPath
-                (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
-                Hap.scpDir srcPath dpath (Just release)
-              forM_ configLinkedFiles
-                $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
-              forM_ configLinkedDirs
-                $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
-              forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
-              Hap.registerReleaseAsComplete configDeployPath release
-              Hap.activateRelease configTargetSystem configDeployPath release
-              Hap.dropOldReleases configDeployPath keepReleases
-              forM_ configRestartCommand (flip Hap.exec $ Just release)
-              Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
+                  -- We define the handler for when an exception happens inside a deployment
+                  failStateAndThrow e@(_, maybeRelease) = do
+                    case maybeRelease of
+                      (Just release) -> do
+                        createHapistranoDeployState configDeployPath release Fail
+                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+                        throwError e
+                      Nothing -> do
+                        throwError e
+              in do
+                forM_ configRunLocally Hap.playScriptLocally
+                release <- if configVcAction
+                            then Hap.pushRelease (task releaseFormat)
+                            else Hap.pushReleaseWithoutVc (task releaseFormat)
+                rpath <- Hap.releasePath configDeployPath release configWorkingDir
+                forM_ (toMaybePath configSource) $ \src ->
+                  Hap.scpDir src rpath (Just release)
+                forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
+                  srcPath  <- resolveFile' src
+                  destPath <- parseRelFile dest
+                  let dpath = rpath </> destPath
+                  (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
+                  Hap.scpFile srcPath dpath (Just release)
+                forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
+                  srcPath  <- resolveDir' src
+                  destPath <- parseRelDir dest
+                  let dpath = rpath </> destPath
+                  (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
+                  Hap.scpDir srcPath dpath (Just release)
+                forM_ configLinkedFiles
+                  $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
+                forM_ configLinkedDirs
+                  $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
+                forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
+                Hap.activateRelease configTargetSystem configDeployPath release
+                -- Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
+                forM_ configRestartCommand (flip Hap.exec $ Just release)
+                Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
+              `catchError` failStateAndThrow
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
-          `catchError` failStateAndThrow
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()
