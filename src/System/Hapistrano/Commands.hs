@@ -26,6 +26,8 @@ module System.Hapistrano.Commands
   , Readlink(..)
   , Find(..)
   , Touch(..)
+  , Cat(..)
+  , CheckExists(..)
   , BasicWrite(..)
   , GitCheckout(..)
   , GitClone(..)
