@@ -45,6 +45,7 @@ import           Path
 import           System.Hapistrano.Commands
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
+import           System.Hapistrano.Config (deployStateFilename)
 import           Text.Read (readMaybe)
 
 ----------------------------------------------------------------------------
@@ -127,7 +128,7 @@ createHapistranoDeployState
   -> DeployState -- ^ Indicates how the deployment went
   -> Hapistrano ()
 createHapistranoDeployState deployPath release state = do
-  parseStatePath <- parseRelFile ".hapistrano_deploy_state"
+  parseStatePath <- parseRelFile deployStateFilename 
   actualReleasePath <- releasePath deployPath release Nothing
   let stateFilePath = actualReleasePath </> parseStatePath
   exec (Touch stateFilePath) (Just release) -- creates '.hapistrano_deploy_state'
@@ -361,7 +362,7 @@ deployState
   -> Release -- ^ 'Release' identifier
   -> Hapistrano (Maybe DeployState) -- ^ Whether the release was deployed successfully or not
 deployState deployPath mWorkingDir release = do
-  parseStatePath <- parseRelFile ".hapistrano_deploy_state"
+  parseStatePath <- parseRelFile deployStateFilename
   actualReleasePath <- releasePath deployPath release mWorkingDir
   let stateFilePath = actualReleasePath </> parseStatePath
   doesExist <- exec (CheckExists stateFilePath) (Just release)

@@ -157,11 +157,11 @@ spec = do
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
     describe "createHapistranoDeployState" $ do
-      it "creates the .hapistrano_deploy_state file correctly" $ \(deployPath, repoPath) ->
+      it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do
           let task = mkTask deployPath repoPath
           release <- Hap.pushRelease task
-          parseStatePath <- parseRelFile ".hapistrano_deploy_state"
+          parseStatePath <- parseRelFile deployStateFilename
           actualReleasePath <- releasePath deployPath release Nothing
           let stateFilePath = actualReleasePath </> parseStatePath
           Hap.createHapistranoDeployState deployPath release Success
@@ -194,7 +194,7 @@ spec = do
               task = mkTask deployPath repoPath
           Hap.playScriptLocally localCommands
           release <- Hap.pushRelease task
-          parseStatePath <- parseRelFile ".hapistrano_deploy_state"
+          parseStatePath <- parseRelFile deployStateFilename
           actualReleasePath <- releasePath deployPath release Nothing
           let stateFilePath = actualReleasePath </> parseStatePath
           Hap.createHapistranoDeployState deployPath release Success
