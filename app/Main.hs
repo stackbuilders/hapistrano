@@ -82,7 +82,7 @@ deployParser = Deploy
         )
   <*> switch
             ( long "keep-one-failed"
-            <> short 'f'
+            <> short 'o'
             <> help "Keep all failed releases or just one -the latest-, default (without using this flag) is to keep all failed releases."
             )
 
