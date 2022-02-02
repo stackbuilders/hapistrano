@@ -165,7 +165,6 @@ main = do
                   $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
                 forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
                 Hap.activateRelease configTargetSystem configDeployPath release
-                -- Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
                 forM_ configRestartCommand (flip Hap.exec $ Just release)
                 Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
               `catchError` failStateAndThrow
