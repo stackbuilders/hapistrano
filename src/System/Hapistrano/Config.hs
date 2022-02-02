@@ -7,7 +7,8 @@
 module System.Hapistrano.Config
   ( Config (..)
   , CopyThing (..)
-  , Target (..))
+  , Target (..)
+  , deployStateFilename)
 where
 
 import           Control.Applicative        ((<|>))
@@ -141,3 +142,6 @@ mkCmd raw =
   case mkGenericCommand raw of
     Nothing  -> fail "invalid restart command"
     Just cmd -> return cmd
+
+deployStateFilename :: String 
+deployStateFilename = ".hapistrano_deploy_state"
