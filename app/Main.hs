@@ -199,7 +199,7 @@ main = do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
             Maintenance Enable-> do
-              error "Maintenance mode not available yet"
+              _
             Maintenance _ -> do
               error "..."
         atomically (writeTChan chan FinishMsg)

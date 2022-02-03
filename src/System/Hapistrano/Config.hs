@@ -11,6 +11,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -79,9 +80,9 @@ data Config = Config
   -- (i.e. keep all failed releases).
   , configWorkingDir :: !(Maybe (Path Rel Dir))
 
-  , configMaintenanceFilePath :: !(Path Abs  Dir)
+  , configMaintenanceFilePath :: !(Path Rel Dir)
   --
-  , configMaintenanceFileName :: !(String)
+  , configMaintenanceFileName :: !(FilePath)
   -- TODO: Change FileName type
   } deriving (Eq, Ord, Show)
 
@@ -140,8 +141,8 @@ instance FromJSON Config where
     configKeepReleases <- o .:? "keep_releases"
     configKeepOneFailed <- o .:? "keep_one_failed" .!= False
     configWorkingDir <- o .:? "working_directory"
-    configMaintenanceFilePath <- o .:? "maintenance_directory" .!= configDeployPath <> undefined
-    configMaintenanceFileName <- o .:? "maintenance_filename" .!= ("maintenance.html"::String)
+    configMaintenanceFilePath <- o .:? "maintenance_directory" .!= $(mkRelDir "maintenance")
+    configMaintenanceFileName <- o .:? "maintenance_filename" .!= "maintenance.html"
     return Config {..}
 
 instance FromJSON CopyThing where
