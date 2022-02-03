@@ -274,10 +274,8 @@ releasesWithState selectedState deployPath = do
     ) releases
   where
     stateToBool :: Maybe DeployState -> Bool
-    stateToBool mDeployState =
-      case mDeployState of
-        (Just Fail) -> False
-        _ -> True
+    stateToBool (Just Fail) = False
+    stateToBool _ = True
 
 ----------------------------------------------------------------------------
 -- Path helpers
