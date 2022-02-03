@@ -143,9 +143,14 @@ data TargetSystem
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
 -- | State of the deployment after running @hap deploy@.
+-- __note:__ the 'Unknown' value is not intended to be
+-- written to the @.hapistrano_deploy_state@ file; instead,
+-- it's intended to represent whenever Hapistrano couldn't
+-- get the information on the deployment state (e.g. the file is not present).
 data DeployState
   = Fail
   | Success
+  | Unknown
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
 -- Command line options

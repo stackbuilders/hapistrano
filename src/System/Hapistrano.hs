@@ -37,7 +37,7 @@ import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader       (local, runReaderT)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
-import           Data.Maybe                 (mapMaybe)
+import           Data.Maybe                 (mapMaybe, fromMaybe)
 import           Data.Ord                   (Down (..))
 import           Data.Time
 import           Numeric.Natural
@@ -273,8 +273,8 @@ releasesWithState selectedState deployPath = do
      . deployState deployPath Nothing
     ) releases
   where
-    stateToBool :: Maybe DeployState -> Bool
-    stateToBool (Just Fail) = False
+    stateToBool :: DeployState -> Bool
+    stateToBool Fail = False
     stateToBool _ = True
 
 ----------------------------------------------------------------------------
@@ -358,7 +358,7 @@ deployState
   :: Path Abs Dir -- ^ Deploy path
   -> Maybe (Path Rel Dir) -- ^ Working directory
   -> Release -- ^ 'Release' identifier
-  -> Hapistrano (Maybe DeployState) -- ^ Whether the release was deployed successfully or not
+  -> Hapistrano DeployState -- ^ Whether the release was deployed successfully or not
 deployState deployPath mWorkingDir release = do
   parseStatePath <- parseRelFile deployStateFilename
   actualReleasePath <- releasePath deployPath release mWorkingDir
@@ -366,8 +366,8 @@ deployState deployPath mWorkingDir release = do
   doesExist <- exec (CheckExists stateFilePath) (Just release)
   if doesExist then do
     deployStateContents <- exec (Cat stateFilePath) (Just release)
-    return $ readMaybe deployStateContents
-  else return Nothing
+    return $ (fromMaybe Unknown . readMaybe) deployStateContents
+  else return Unknown 
 
 stripDirs :: Path Abs Dir -> [Path Abs t] -> Hapistrano [Path Rel t]
 stripDirs path =
