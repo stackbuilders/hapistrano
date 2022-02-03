@@ -30,6 +30,7 @@ import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck hiding (Success)
 import System.Hapistrano (releasePath)
+import System.Hapistrano.Config (deployStateFilename)
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -173,7 +174,7 @@ spec = do
           release <- Hap.pushRelease task
           Hap.createHapistranoDeployState deployPath release Success
           Hap.deployState deployPath Nothing release `shouldReturn`
-            Just Success
+            Success
 
     describe "activateRelease" $
       it "creates the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
