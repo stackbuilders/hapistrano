@@ -1,3 +1,14 @@
+-- |
+-- Module      :  System.Config
+-- Copyright   :  © 2015-Present Stack Builders
+-- License     :  MIT
+--
+-- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- Definitions for types and functions related to the configuration
+-- of the Hapistrano tool.
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -78,6 +89,8 @@ data Config = Config
 data CopyThing = CopyThing FilePath FilePath
   deriving (Eq, Ord, Show)
 
+-- | Datatype that holds information about the target host.
+
 data Target =
   Target
     { targetHost    :: String
@@ -142,6 +155,9 @@ mkCmd raw =
   case mkGenericCommand raw of
     Nothing  -> fail "invalid restart command"
     Just cmd -> return cmd
+
+-- | Constant with the name of the file used to store 
+-- the deployment state information.
 
 deployStateFilename :: String 
 deployStateFilename = ".hapistrano_deploy_state"
