@@ -198,6 +198,9 @@ instance Command Touch where
   renderCommand (Touch path) = formatCmd "touch" [Just (fromAbsFile path)]
   parseResult Proxy _ = ()
 
+-- | Command that checks for the existance of a particular
+-- file in the host.
+
 newtype CheckExists =
   CheckExists
   (Path Abs File) -- ^ The absolute path to the file you want to check for existence
@@ -207,6 +210,9 @@ instance Command CheckExists where
   renderCommand (CheckExists path) = 
     "([ -r " <> fromAbsFile path <> " ] && echo True) || echo False"
   parseResult Proxy = read
+
+-- | Command used to read the contents of a particular
+-- file in the host.
 
 newtype Cat =
   Cat
