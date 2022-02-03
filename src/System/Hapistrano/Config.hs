@@ -77,16 +77,12 @@ data Config = Config
   -- The @--keep-one-failed@ argument passed via the CLI takes precedence over this value.
   -- If neither CLI or configuration file value is specified, it defaults to `False`
   -- (i.e. keep all failed releases).
-<<<<<<< HEAD
-  , configWorkingDir     :: !(Maybe (Path Rel Dir))
-=======
   , configWorkingDir :: !(Maybe (Path Rel Dir))
 
   , configMaintenanceFilePath :: !(Path Abs  Dir)
   --
   , configMaintenanceFileName :: !(String)
   -- TODO: Change FileName type
->>>>>>> dfe8d67 (Read filepath and filename)
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
