@@ -50,7 +50,7 @@ jobs:
       - name: Compile project
         run: cabal build --enable-tests
       - run: cabal test --enable-tests
-      - run: cabal haddock | grep "100%" | wc -l | grep -G "[45]" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+      - run: cabal haddock | grep "100%" | wc -l | grep -E "[4-9]|[1-9][0-9]+" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
       - run: cabal sdist
       - if: matrix.ghc == '8.8.4'
         name: Login to Docker Hub
