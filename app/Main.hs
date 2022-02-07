@@ -81,10 +81,9 @@ deployParser = Deploy
             )
         )
   <*> switch
-            ( long "keep-one-failed"
-            <> short 'o'
+        ( long "keep-one-failed"
             <> help "Keep all failed releases or just one -the latest-, default (without using this flag) is to keep all failed releases."
-            )
+        )
 
 rollbackParser :: Parser Command
 rollbackParser = Rollback

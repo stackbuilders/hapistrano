@@ -166,7 +166,8 @@ data Opts = Opts
 
 data Command
   = Deploy (Maybe ReleaseFormat) (Maybe Natural) Bool -- ^ Deploy a new release (with timestamp
-    -- format and how many releases to keep)
+    -- format, how many releases to keep, and whether the failed releases except the latest one
+    -- get deleted or not)
   | Rollback Natural -- ^ Rollback to Nth previous release
 
 
