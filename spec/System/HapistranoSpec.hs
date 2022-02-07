@@ -223,7 +223,7 @@ spec = do
                 Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
           Hap.exec rc Nothing `shouldReturn` rpath
           Path.IO.doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
-    describe "dropOldReleases" $
+    describe "dropOldReleases" $ do
       it "works" $ \(deployPath, repoPath) ->
         runHap $ do
           rs <-
@@ -232,12 +232,28 @@ spec = do
               Hap.createHapistranoDeployState deployPath r Success
               return r
           Hap.dropOldReleases deployPath 5 False
-        -- two oldest releases should not survive:
+          -- two oldest releases should not survive:
           forM_ (take 2 rs) $ \r ->
             (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` False
-        -- 5 most recent releases should stay alive:
+          -- 5 most recent releases should stay alive:
           forM_ (drop 2 rs) $ \r ->
             (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
+      context "when the --keep-one-failed flag is active" $
+        it "should delete failed releases other than the most recent" $ \(deployPath, repoPath) ->
+          let successfulRelease = mkReleaseWithState deployPath repoPath Success 
+              failedRelease = mkReleaseWithState deployPath repoPath Fail in
+          runHap $ do
+            rs <- sequence [successfulRelease, successfulRelease, failedRelease, failedRelease, failedRelease]
+            Hap.dropOldReleases deployPath 5 True
+            -- The two successful releases should survive
+            forM_ (take 2 rs) $ \r ->
+              (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
+            -- The latest failed release should survive:
+            forM_ (drop 4 rs) $ \r ->
+              (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
+            -- The two older failed releases should not survive:
+            forM_ (take 2 . drop 2 $ rs) $ \r ->
+              (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` False
     describe "linkToShared" $ do
       context "when the deploy_path/shared directory doesn't exist" $
         it "should create the link anyway" $ \(deployPath, repoPath) ->
@@ -394,6 +410,14 @@ mkTaskWithCustomRevision deployPath repoPath revision =
           }
     , taskReleaseFormat = ReleaseLong
     }
+
+-- | Creates a release tagged with 'Success' or 'Fail'
+
+mkReleaseWithState :: Path Abs Dir -> Path Abs Dir -> DeployState -> Hapistrano Release
+mkReleaseWithState deployPath repoPath state = do
+  r <- Hap.pushRelease (mkTask deployPath repoPath)
+  Hap.createHapistranoDeployState deployPath r state
+  return r
 
 currentSystem :: TargetSystem
 currentSystem =
