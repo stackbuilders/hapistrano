@@ -166,6 +166,7 @@ main = do
                 Hap.activateRelease configTargetSystem configDeployPath release
                 forM_ configRestartCommand (flip Hap.exec $ Just release)
                 Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
+                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
               `catchError` failStateAndThrow
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
