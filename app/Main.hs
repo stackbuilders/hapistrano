@@ -8,7 +8,6 @@ module Main (main) where
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Monad
-
 #if !MIN_VERSION_base(4,13,0)
 import           Data.Monoid                ((<>))
 #endif
@@ -16,7 +15,6 @@ import           Data.Version               (showVersion)
 import qualified Data.Yaml.Config           as Yaml
 import           Development.GitRev
 import           Formatting                 (formatToString, string, (%))
-import           Numeric.Natural
 import           Options.Applicative        hiding (str)
 import           Path
 import           Path.IO
@@ -28,23 +26,10 @@ import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
 import           System.Hapistrano.Types
 import           System.IO
+import           System.Hapistrano (createHapistranoDeployState)
+import           Control.Monad.Error.Class (throwError, catchError)
 
 ----------------------------------------------------------------------------
--- Command line options
-
--- | Command line options.
-
-data Opts = Opts
-  { optsCommand    :: Command
-  , optsConfigFile :: FilePath
-  }
-
--- | Command to execute and command-specific options.
-
-data Command
-  = Deploy (Maybe ReleaseFormat) (Maybe Natural) -- ^ Deploy a new release (with timestamp
-    -- format and how many releases to keep)
-  | Rollback Natural -- ^ Rollback to Nth previous release
 
 parserInfo :: ParserInfo Opts
 parserInfo =
@@ -95,6 +80,10 @@ deployParser = Deploy
             <> help "How many releases to keep, default is '5'"
             )
         )
+  <*> switch
+        ( long "keep-one-failed"
+            <> help "Keep all failed releases or just one -the latest-, default (without using this flag) is to keep all failed releases."
+        )
 
 rollbackParser :: Parser Command
 rollbackParser = Rollback
@@ -125,7 +114,7 @@ data Message
 
 main :: IO ()
 main = do
-  Opts {..} <- execParser parserInfo
+  Opts{..} <- execParser parserInfo
   C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
   chan <- newTChanIO
   let task rf = Task { taskDeployPath    = configDeployPath
@@ -133,43 +122,55 @@ main = do
                      , taskReleaseFormat = rf }
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
-      hap shell sshOpts =  do
+      hap shell sshOpts = do
         r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
-            Deploy cliReleaseFormat cliKeepReleases -> do
+            Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
               let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
                   keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
-              forM_ configRunLocally Hap.playScriptLocally
-              release <- if configVcAction
-                          then Hap.pushRelease (task releaseFormat)
-                          else Hap.pushReleaseWithoutVc (task releaseFormat)
-              rpath <- Hap.releasePath configDeployPath release configWorkingDir
-              forM_ (toMaybePath configSource) $ \src ->
-                Hap.scpDir src rpath
-              forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
-                srcPath  <- resolveFile' src
-                destPath <- parseRelFile dest
-                let dpath = rpath </> destPath
-                (Hap.exec . Hap.MkDir . parent) dpath
-                Hap.scpFile srcPath dpath
-              forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
-                srcPath  <- resolveDir' src
-                destPath <- parseRelDir dest
-                let dpath = rpath </> destPath
-                (Hap.exec . Hap.MkDir . parent) dpath
-                Hap.scpDir srcPath dpath
-              forM_ configLinkedFiles
-                (Hap.linkToShared configTargetSystem rpath configDeployPath)
-              forM_ configLinkedDirs
-                (Hap.linkToShared configTargetSystem rpath configDeployPath)
-              forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
-              Hap.registerReleaseAsComplete configDeployPath release
-              Hap.activateRelease configTargetSystem configDeployPath release
-              Hap.dropOldReleases configDeployPath keepReleases
-              forM_ configRestartCommand Hap.exec
+                  keepOneFailed = cliKeepOneFailed || configKeepOneFailed
+                  -- We define the handler for when an exception happens inside a deployment
+                  failStateAndThrow e@(_, maybeRelease) = do
+                    case maybeRelease of
+                      (Just release) -> do
+                        createHapistranoDeployState configDeployPath release Fail
+                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+                        throwError e
+                      Nothing -> do
+                        throwError e
+              in do
+                forM_ configRunLocally Hap.playScriptLocally
+                release <- if configVcAction
+                            then Hap.pushRelease (task releaseFormat)
+                            else Hap.pushReleaseWithoutVc (task releaseFormat)
+                rpath <- Hap.releasePath configDeployPath release configWorkingDir
+                forM_ (toMaybePath configSource) $ \src ->
+                  Hap.scpDir src rpath (Just release)
+                forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
+                  srcPath  <- resolveFile' src
+                  destPath <- parseRelFile dest
+                  let dpath = rpath </> destPath
+                  (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
+                  Hap.scpFile srcPath dpath (Just release)
+                forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
+                  srcPath  <- resolveDir' src
+                  destPath <- parseRelDir dest
+                  let dpath = rpath </> destPath
+                  (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
+                  Hap.scpDir srcPath dpath (Just release)
+                forM_ configLinkedFiles
+                  $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
+                forM_ configLinkedDirs
+                  $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
+                forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
+                Hap.activateRelease configTargetSystem configDeployPath release
+                forM_ configRestartCommand (flip Hap.exec $ Just release)
+                Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
+                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+              `catchError` failStateAndThrow
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
-              forM_ configRestartCommand Hap.exec
+              forM_ configRestartCommand (flip Hap.exec Nothing)
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()
@@ -187,7 +188,7 @@ main = do
         case configHosts of
           [] -> [hap Bash Nothing] -- localhost, no SSH
           xs ->
-            let runHap (C.Target{..}) =
+            let runHap C.Target{..} =
                   hap targetShell (Just $ SshOptions targetHost targetPort targetSshArgs)
             in runHap <$> xs
   results <- (runConcurrently . traverse Concurrently)

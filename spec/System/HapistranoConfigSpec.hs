@@ -62,5 +62,6 @@ defaultConfiguration =
     , configTargetSystem = GNULinux
     , configReleaseFormat = Nothing
     , configKeepReleases = Nothing
+    , configKeepOneFailed = False
     , configWorkingDir = Nothing
     }

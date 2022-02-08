@@ -3,7 +3,7 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
+-- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -14,8 +14,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Hapistrano.Core
-  ( runHapistrano
-  , failWith
+  ( failWith
   , exec
   , execWithInheritStdout
   , scpFile
@@ -32,38 +31,14 @@ import           Path
 import           System.Console.ANSI
 import           System.Exit
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types
+import           System.Hapistrano.Types hiding (Command)
 import           System.Process
 import           System.Process.Typed       (ProcessConfig)
 import qualified System.Process.Typed       as SPT
 
--- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
-runHapistrano ::
-     MonadIO m
-  => Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
-  -> Shell -- ^ Shell to run commands
-  -> (OutputDest -> String -> IO ()) -- ^ How to print messages
-  -> Hapistrano a -- ^ The computation to run
-  -> m (Either Int a) -- ^ Status code in 'Left' on failure, result in
-              -- 'Right' on success
-runHapistrano sshOptions shell' printFnc m =
-  liftIO $ do
-    let config =
-          Config
-            { configSshOptions = sshOptions
-            , configShellOptions = shell'
-            , configPrint = printFnc
-            }
-    r <- runReaderT (runExceptT m) config
-    case r of
-      Left (Failure n msg) -> do
-        forM_ msg (printFnc StderrDest)
-        return (Left n)
-      Right x -> return (Right x)
-
 -- | Fail returning the following status code and message.
-failWith :: Int -> Maybe String -> Hapistrano a
-failWith n msg = throwError (Failure n msg)
+failWith :: Int -> Maybe String -> Maybe Release -> Hapistrano a
+failWith n msg maybeRelease = throwError (Failure n msg, maybeRelease)
 
 -- | Run the given sequence of command. Whether to use SSH or not is
 -- determined from settings contained in the 'Hapistrano' monad
@@ -74,20 +49,25 @@ failWith n msg = throwError (Failure n msg)
 -- parse the result.
 exec ::
      forall a. Command a
-  => a
+  => a -- ^ Command being executed
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
   -> Hapistrano (Result a)
-exec typedCmd = do
+exec typedCmd maybeRelease = do
   let cmd = renderCommand typedCmd
   (prog, args) <- getProgAndArgs cmd
   parseResult (Proxy :: Proxy a) <$>
-    exec' cmd (readProcessWithExitCode prog args "")
+    exec' cmd (readProcessWithExitCode prog args "") maybeRelease
 
 -- | Same as 'exec' but it streams to stdout only for _GenericCommand_s
-execWithInheritStdout :: Command a => a -> Hapistrano ()
-execWithInheritStdout typedCmd = do
+execWithInheritStdout ::
+     Command a 
+  => a -- ^ Command being executed
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Hapistrano ()
+execWithInheritStdout typedCmd maybeRelease = do
   let cmd = renderCommand typedCmd
   (prog, args) <- getProgAndArgs cmd
-  void $ exec' cmd (readProcessWithExitCode' (SPT.proc prog args))
+  void $ exec' cmd (readProcessWithExitCode' (SPT.proc prog args)) maybeRelease
     where
     -- | Prepares a process, reads @stdout@ and @stderr@ and returns exit code
     -- NOTE: @strdout@ and @stderr@ are empty string because we're writing
@@ -120,6 +100,7 @@ getProgAndArgs cmd = do
 scpFile ::
      Path Abs File -- ^ Location of the file to copy
   -> Path Abs File -- ^ Where to put the file on target machine
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
   -> Hapistrano ()
 scpFile src dest = scp' (fromAbsFile src) (fromAbsFile dest) ["-q"]
 
@@ -127,11 +108,12 @@ scpFile src dest = scp' (fromAbsFile src) (fromAbsFile dest) ["-q"]
 scpDir ::
      Path Abs Dir -- ^ Location of the directory to copy
   -> Path Abs Dir -- ^ Where to put the dir on target machine
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
   -> Hapistrano ()
 scpDir src dest = scp' (fromAbsDir src) (fromAbsDir dest) ["-qr"]
 
-scp' :: FilePath -> FilePath -> [String] -> Hapistrano ()
-scp' src dest extraArgs = do
+scp' :: FilePath -> FilePath -> [String] -> Maybe Release -> Hapistrano ()
+scp' src dest extraArgs maybeRelease = do
   Config {..} <- ask
   let prog = "scp"
       portArg =
@@ -144,7 +126,7 @@ scp' src dest extraArgs = do
           Just x  -> x ++ ":"
       args = extraArgs ++ portArg ++ [src, hostPrefix ++ dest]
   void
-    (exec' (prog ++ " " ++ unwords args) (readProcessWithExitCode prog args ""))
+    (exec' (prog ++ " " ++ unwords args) (readProcessWithExitCode prog args "") maybeRelease)
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -152,8 +134,9 @@ scp' src dest extraArgs = do
 exec' ::
      String -- ^ How to show the command in print-outs
   -> IO (ExitCode, String, String) -- ^ Handler to get (ExitCode, Output, Error) it can change accordingly to @stdout@ and @stderr@ of child process
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
   -> Hapistrano String -- ^ Raw stdout output of that program
-exec' cmd readProcessOutput = do
+exec' cmd readProcessOutput maybeRelease = do
   Config {..} <- ask
   time <- liftIO getZonedTime
   let timeStampFormat = "%T,  %F (%Z)"
@@ -171,7 +154,7 @@ exec' cmd readProcessOutput = do
   unless (null stderr') . liftIO $ configPrint StderrDest stderr'
   case exitCode' of
     ExitSuccess   -> return stdout'
-    ExitFailure n -> failWith n Nothing
+    ExitFailure n -> failWith n Nothing maybeRelease
 
 -- | Put something “inside” a line, sort-of beautifully.
 putLine :: String -> String

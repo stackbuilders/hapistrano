@@ -3,7 +3,7 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
+-- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -22,7 +22,10 @@ module System.Hapistrano.Types
   , OutputDest(..)
   , Release
   , TargetSystem(..)
+  , DeployState(..)
   , Shell(..)
+  , Opts(..)
+  , Command(..)
   -- * Types helpers
   , mkRelease
   , releaseTime
@@ -43,7 +46,7 @@ import Numeric.Natural
 import Path
 
 -- | Hapistrano monad.
-type Hapistrano a = ExceptT Failure (ReaderT Config IO) a
+type Hapistrano a = ExceptT (Failure, Maybe Release) (ReaderT Config IO) a
 
 -- | Failure with status code and a message.
 data Failure =
@@ -133,11 +136,40 @@ data Release =
   Release ReleaseFormat UTCTime
   deriving (Eq, Show, Ord)
 
--- | Target's system where application will be deployed
+-- | Target's system where application will be deployed.
 data TargetSystem
   = GNULinux
   | BSD
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
+
+-- | State of the deployment after running @hap deploy@.
+-- __note:__ the 'Unknown' value is not intended to be
+-- written to the @.hapistrano_deploy_state@ file; instead,
+-- it's intended to represent whenever Hapistrano couldn't
+-- get the information on the deployment state (e.g. the file is not present).
+data DeployState
+  = Fail
+  | Success
+  | Unknown
+  deriving (Eq, Show, Read, Ord, Bounded, Enum)
+
+-- Command line options
+
+-- | Command line options.
+
+data Opts = Opts
+  { optsCommand    :: Command
+  , optsConfigFile :: FilePath
+  }
+
+-- | Command to execute and command-specific options.
+
+data Command
+  = Deploy (Maybe ReleaseFormat) (Maybe Natural) Bool -- ^ Deploy a new release (with timestamp
+    -- format, how many releases to keep, and whether the failed releases except the latest one
+    -- get deleted or not)
+  | Rollback Natural -- ^ Rollback to Nth previous release
+
 
 -- | Create a 'Release' indentifier.
 mkRelease :: ReleaseFormat -> UTCTime -> Release

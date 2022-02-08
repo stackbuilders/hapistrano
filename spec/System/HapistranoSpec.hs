@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP             #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module System.HapistranoSpec
   ( spec
@@ -11,9 +12,9 @@ import Data.List (isPrefixOf)
 import Data.Maybe (mapMaybe)
 import Numeric.Natural
 import Path
-#if !MIN_VERSION_base(4,13,0)
-import Path.Internal (Path(..))
-#endif
+
+
+
 
 import Path.IO
 import System.Directory (getCurrentDirectory, listDirectory)
@@ -27,7 +28,9 @@ import System.Info (os)
 import Test.Hspec hiding (shouldBe, shouldReturn)
 import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck
+import Test.QuickCheck hiding (Success)
+import System.Hapistrano (releasePath)
+import System.Hapistrano.Config (deployStateFilename)
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -46,7 +49,7 @@ spec = do
     let (Just commandTest) =
           Hap.mkGenericCommand
             "echo \"hapistrano\"; sleep 2; echo \"onartsipah\""
-        commandExecution = Hap.execWithInheritStdout commandTest
+        commandExecution = Hap.execWithInheritStdout commandTest Nothing
         expectedOutput = "hapistrano\nonartsipah"
      in do actualOutput <- capture_ (runHap commandExecution)
            expectedOutput `Hspec.shouldSatisfy` (`isPrefixOf` actualOutput)
@@ -154,14 +157,25 @@ spec = do
             ("test `git rev-parse --abbrev-ref HEAD` = " ++ testBranchName)
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
-    describe "registerReleaseAsComplete" $
-      it "creates the token all right" $ \(deployPath, repoPath) ->
+    describe "createHapistranoDeployState" $ do
+      it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do
           let task = mkTask deployPath repoPath
           release <- Hap.pushRelease task
-          Hap.registerReleaseAsComplete deployPath release
-          (Hap.ctokenPath deployPath release >>= doesFileExist) `shouldReturn`
+          parseStatePath <- parseRelFile deployStateFilename
+          actualReleasePath <- releasePath deployPath release Nothing
+          let stateFilePath = actualReleasePath </> parseStatePath
+          Hap.createHapistranoDeployState deployPath release Success
+          Path.IO.doesFileExist stateFilePath `shouldReturn`
             True
+      it "when created in a successful deploy, the contents are \"Success\"" $ \(deployPath, repoPath) ->
+        runHap $ do
+          let task = mkTask deployPath repoPath
+          release <- Hap.pushRelease task
+          Hap.createHapistranoDeployState deployPath release Success
+          Hap.deployState deployPath Nothing release `shouldReturn`
+            Success
+
     describe "activateRelease" $
       it "creates the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
         runHap $ do
@@ -172,8 +186,8 @@ spec = do
           let rc :: Hap.Readlink Dir
               rc =
                 Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-          Hap.exec rc `shouldReturn` rpath
-          doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+          Hap.exec rc (Just release) `shouldReturn` rpath
+          Path.IO.doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
     describe "playScriptLocally (successful run)" $
       it "check that local scripts are run and deployment is successful" $ \(deployPath, repoPath) ->
         runHap $ do
@@ -181,8 +195,11 @@ spec = do
               task = mkTask deployPath repoPath
           Hap.playScriptLocally localCommands
           release <- Hap.pushRelease task
-          Hap.registerReleaseAsComplete deployPath release
-          (Hap.ctokenPath deployPath release >>= doesFileExist) `shouldReturn`
+          parseStatePath <- parseRelFile deployStateFilename
+          actualReleasePath <- releasePath deployPath release Nothing
+          let stateFilePath = actualReleasePath </> parseStatePath
+          Hap.createHapistranoDeployState deployPath release Success
+          Path.IO.doesFileExist stateFilePath `shouldReturn`
             True
     describe "playScriptLocally (error exit)" $
       it "check that deployment isn't done" $ \(deployPath, repoPath) ->
@@ -192,55 +209,51 @@ spec = do
                task = mkTask deployPath repoPath
            Hap.playScriptLocally localCommands
            release <- Hap.pushRelease task
-           Hap.registerReleaseAsComplete deployPath release) `shouldThrow`
+           Hap.createHapistranoDeployState deployPath release Success) `shouldThrow`
         anyException
     describe "rollback" $ do
-      context "without completion tokens" $
-        it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
-          runHap $ do
-            let task = mkTask deployPath repoPath
-            rs <- replicateM 5 (Hap.pushRelease task)
-            Hap.rollback currentSystem deployPath 2
-            rpath <- Hap.releasePath deployPath (rs !! 2) Nothing
-            let rc :: Hap.Readlink Dir
-                rc =
-                  Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-            Hap.exec rc `shouldReturn` rpath
-            doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
-      context "with completion tokens" $
-        it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
-          runHap $ do
-            let task = mkTask deployPath repoPath
-            rs <- replicateM 5 (Hap.pushRelease task)
-            forM_ (take 3 rs) (Hap.registerReleaseAsComplete deployPath)
-            Hap.rollback currentSystem deployPath 2
-            rpath <- Hap.releasePath deployPath (rs !! 0) Nothing
-            let rc :: Hap.Readlink Dir
-                rc =
-                  Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-            Hap.exec rc `shouldReturn` rpath
-            doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
-    describe "dropOldReleases" $
+      it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
+        runHap $ do
+          let task = mkTask deployPath repoPath
+          rs <- replicateM 5 (Hap.pushRelease task)
+          Hap.rollback currentSystem deployPath 2
+          rpath <- Hap.releasePath deployPath (rs !! 2) Nothing
+          let rc :: Hap.Readlink Dir
+              rc =
+                Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
+          Hap.exec rc Nothing `shouldReturn` rpath
+          Path.IO.doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+    describe "dropOldReleases" $ do
       it "works" $ \(deployPath, repoPath) ->
         runHap $ do
           rs <-
             replicateM 7 $ do
               r <- Hap.pushRelease (mkTask deployPath repoPath)
-              Hap.registerReleaseAsComplete deployPath r
+              Hap.createHapistranoDeployState deployPath r Success
               return r
-          Hap.dropOldReleases deployPath 5
-        -- two oldest releases should not survive:
+          Hap.dropOldReleases deployPath 5 False
+          -- two oldest releases should not survive:
           forM_ (take 2 rs) $ \r ->
             (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` False
-        -- 5 most recent releases should stay alive:
+          -- 5 most recent releases should stay alive:
           forM_ (drop 2 rs) $ \r ->
             (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
-        -- two oldest completion tokens should not survive:
-          forM_ (take 2 rs) $ \r ->
-            (Hap.ctokenPath deployPath r >>= doesFileExist) `shouldReturn` False
-        -- 5 most recent completion tokens should stay alive:
-          forM_ (drop 2 rs) $ \r ->
-            (Hap.ctokenPath deployPath r >>= doesFileExist) `shouldReturn` True
+      context "when the --keep-one-failed flag is active" $
+        it "should delete failed releases other than the most recent" $ \(deployPath, repoPath) ->
+          let successfulRelease = mkReleaseWithState deployPath repoPath Success 
+              failedRelease = mkReleaseWithState deployPath repoPath Fail in
+          runHap $ do
+            rs <- sequence [successfulRelease, successfulRelease, failedRelease, failedRelease, failedRelease]
+            Hap.dropOldReleases deployPath 5 True
+            -- The two successful releases should survive
+            forM_ (take 2 rs) $ \r ->
+              (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
+            -- The latest failed release should survive:
+            forM_ (drop 4 rs) $ \r ->
+              (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
+            -- The two older failed releases should not survive:
+            forM_ (take 2 . drop 2 $ rs) $ \r ->
+              (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` False
     describe "linkToShared" $ do
       context "when the deploy_path/shared directory doesn't exist" $
         it "should create the link anyway" $ \(deployPath, repoPath) ->
@@ -249,8 +262,8 @@ spec = do
                 sharedDir = Hap.sharedPath deployPath
             release <- Hap.pushRelease task
             rpath <- Hap.releasePath deployPath release Nothing
-            Hap.exec $ Hap.Rm sharedDir
-            Hap.linkToShared currentSystem rpath deployPath "thing" `shouldReturn`
+            Hap.exec (Hap.Rm sharedDir) (Just release)
+            Hap.linkToShared currentSystem rpath deployPath "thing" (Just release) `shouldReturn`
               ()
       context "when the file/directory to link exists in the repository" $
         it "should throw an error" $ \(deployPath, repoPath) ->
@@ -258,7 +271,7 @@ spec = do
             (do let task = mkTask deployPath repoPath
                 release <- Hap.pushRelease task
                 rpath <- Hap.releasePath deployPath release Nothing
-                Hap.linkToShared currentSystem rpath deployPath "foo.txt") `shouldThrow`
+                Hap.linkToShared currentSystem rpath deployPath "foo.txt" $ Just release) `shouldThrow`
           anyException
       context "when it attempts to link a file" $ do
         context "when the file is not at the root of the shared directory" $
@@ -270,7 +283,7 @@ spec = do
                   rpath <- Hap.releasePath deployPath release Nothing
                   justExec sharedDir "mkdir foo/"
                   justExec sharedDir "echo 'Bar!' > foo/bar.txt"
-                  Hap.linkToShared currentSystem rpath deployPath "foo/bar.txt") `shouldThrow`
+                  Hap.linkToShared currentSystem rpath deployPath "foo/bar.txt" $ Just release) `shouldThrow`
             anyException
         context "when the file is at the root of the shared directory" $
           it "should link the file successfully" $ \(deployPath, repoPath) ->
@@ -280,7 +293,7 @@ spec = do
               release <- Hap.pushRelease task
               rpath <- Hap.releasePath deployPath release Nothing
               justExec sharedDir "echo 'Bar!' > bar.txt"
-              Hap.linkToShared currentSystem rpath deployPath "bar.txt"
+              Hap.linkToShared currentSystem rpath deployPath "bar.txt" (Just release)
               (liftIO . readFile . fromAbsFile)
                 (rpath </> $(mkRelFile "bar.txt")) `shouldReturn`
                 "Bar!\n"
@@ -295,7 +308,7 @@ spec = do
                   justExec sharedDir "mkdir foo/"
                   justExec sharedDir "echo 'Bar!' > foo/bar.txt"
                   justExec sharedDir "echo 'Baz!' > foo/baz.txt"
-                  Hap.linkToShared currentSystem rpath deployPath "foo/") `shouldThrow`
+                  Hap.linkToShared currentSystem rpath deployPath "foo/" $ Just release) `shouldThrow`
             anyException
         it "should link the file successfully" $ \(deployPath, repoPath) ->
           runHap $ do
@@ -306,7 +319,7 @@ spec = do
             justExec sharedDir "mkdir foo/"
             justExec sharedDir "echo 'Bar!' > foo/bar.txt"
             justExec sharedDir "echo 'Baz!' > foo/baz.txt"
-            Hap.linkToShared currentSystem rpath deployPath "foo"
+            Hap.linkToShared currentSystem rpath deployPath "foo" (Just release)
             files <-
               (liftIO . listDirectory . fromAbsDir)
                 (rpath </> $(mkRelDir "foo"))
@@ -359,8 +372,8 @@ populateTestRepo path =
 justExec :: Path Abs Dir -> String -> Hapistrano ()
 justExec path cmd' =
   case Hap.mkGenericCommand cmd' of
-    Nothing -> Hap.failWith 1 (Just $ "Failed to parse the command: " ++ cmd')
-    Just cmd -> Hap.exec (Hap.Cd path cmd)
+    Nothing -> Hap.failWith 1 (Just $ "Failed to parse the command: " ++ cmd') Nothing
+    Just cmd -> Hap.exec (Hap.Cd path cmd) Nothing
 
 -- | Run 'Hapistrano' monad locally.
 runHap :: Hapistrano a -> IO a
@@ -397,6 +410,14 @@ mkTaskWithCustomRevision deployPath repoPath revision =
           }
     , taskReleaseFormat = ReleaseLong
     }
+
+-- | Creates a release tagged with 'Success' or 'Fail'
+
+mkReleaseWithState :: Path Abs Dir -> Path Abs Dir -> DeployState -> Hapistrano Release
+mkReleaseWithState deployPath repoPath state = do
+  r <- Hap.pushRelease (mkTask deployPath repoPath)
+  Hap.createHapistranoDeployState deployPath r state
+  return r
 
 currentSystem :: TargetSystem
 currentSystem =

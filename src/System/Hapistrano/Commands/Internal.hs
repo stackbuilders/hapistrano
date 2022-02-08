@@ -3,7 +3,7 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
+-- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -67,7 +67,7 @@ instance Command cmd => Command (Cd cmd) where
   parseResult Proxy = parseResult (Proxy :: Proxy cmd)
 
 -- | Create a directory. Does not fail if the directory already exists.
-data MkDir =
+newtype MkDir =
   MkDir (Path Abs Dir)
 
 instance Command MkDir where
@@ -151,7 +151,7 @@ instance Command (Readlink Dir) where
 
 -- | @ls@, so far used only to check existence of directories, so it's not
 -- very functional right now.
-data Ls =
+newtype Ls =
   Ls (Path Abs Dir)
 
 instance Command Ls where
@@ -190,7 +190,7 @@ instance Command (Find File) where
   parseResult Proxy = mapMaybe (parseAbsFile . trim) . lines
 
 -- | @touch@.
-data Touch =
+newtype Touch =
   Touch (Path Abs File)
 
 instance Command Touch where
@@ -198,8 +198,49 @@ instance Command Touch where
   renderCommand (Touch path) = formatCmd "touch" [Just (fromAbsFile path)]
   parseResult Proxy _ = ()
 
+-- | Command that checks for the existance of a particular
+-- file in the host.
+
+newtype CheckExists =
+  CheckExists
+  (Path Abs File) -- ^ The absolute path to the file you want to check for existence
+
+instance Command CheckExists where
+  type Result CheckExists = Bool
+  renderCommand (CheckExists path) = 
+    "([ -r " <> fromAbsFile path <> " ] && echo True) || echo False"
+  parseResult Proxy = read
+
+-- | Command used to read the contents of a particular
+-- file in the host.
+
+newtype Cat =
+  Cat
+  (Path Abs File) -- ^ The absolute path to the file you want to read
+
+instance Command Cat where
+  type Result Cat = String
+  renderCommand (Cat path) = formatCmd "cat" [Just (fromAbsFile path)]
+  parseResult Proxy = id 
+
+-- | Basic command that writes to a file some contents.
+-- It uses the @file > contents@ shell syntax and the @contents@ is
+-- represented as a 'String', so it shouldn't be used for
+-- bigger writing operations. Currently used to write @fail@ or @success@
+-- to the @.hapistrano_deploy_state@ file.
+data BasicWrite =
+  BasicWrite 
+  (Path Abs File) -- ^ The absolute path to the file to which you want to write
+  String -- ^ The contents that will be written to the file
+
+instance Command BasicWrite where
+  type Result BasicWrite = ()
+  renderCommand (BasicWrite path contents) =
+     "echo \"" <> contents <> "\"" <> " > " <> fromAbsFile path
+  parseResult Proxy _ = ()
+
 -- | Git checkout.
-data GitCheckout =
+newtype GitCheckout =
   GitCheckout String
 
 instance Command GitCheckout where
@@ -230,7 +271,7 @@ instance Command GitClone where
   parseResult Proxy _ = ()
 
 -- | Git fetch (simplified).
-data GitFetch =
+newtype GitFetch =
   GitFetch String
 
 instance Command GitFetch where
@@ -242,7 +283,7 @@ instance Command GitFetch where
   parseResult Proxy _ = ()
 
 -- | Git reset.
-data GitReset =
+newtype GitReset =
   GitReset String
 
 instance Command GitReset where
@@ -252,7 +293,7 @@ instance Command GitReset where
   parseResult Proxy _ = ()
 
 -- | Weakly-typed generic command, avoid using it directly.
-data GenericCommand =
+newtype GenericCommand =
   GenericCommand String
   deriving (Show, Eq, Ord)
 
