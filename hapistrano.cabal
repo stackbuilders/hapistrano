@@ -21,7 +21,7 @@ description:
 license:             MIT
 license-file:        LICENSE
 author:              Justin Leitgeb
-maintainer:          jpaucar@stackbuilders.com
+maintainer:          cmotoche@stackbuilders.com
 copyright:           2015-Present Stack Builders Inc.
 category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
