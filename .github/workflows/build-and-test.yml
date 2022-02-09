@@ -50,7 +50,10 @@ jobs:
       - name: Compile project
         run: cabal build --enable-tests
       - run: cabal test --enable-tests
-      - run: cabal haddock | grep "100%" | wc -l | grep -E "[4-9]|[1-9][0-9]+" # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+      - run: |
+          # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
+          cabal haddock | grep "100%" | wc -l | grep -E "[4-9]|[1-9][0-9]+" ||
+          (echo "Haddock failed with exit code 1. Have you checked that the minimum of 4 modules with 100% documentation is fulfilled?" && false)
       - run: cabal sdist
       - if: matrix.ghc == '8.8.4'
         name: Login to Docker Hub
