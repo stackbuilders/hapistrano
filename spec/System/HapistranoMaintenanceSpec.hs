@@ -1,15 +1,17 @@
+module System.HapistranoMaintenanceSpec (
+  spec
+) where
+
 import Test.Hspec
 import System.Directory
-module System.HapistranoMaintenanceSpec (
-
-) where
+import System.Hapistrano.Maintenance
 
 spec :: Spec
 spec =
   around withSandbox $ do
     describe "writeMaintenanceFile" $
       context "when the file doesn't exist" $
-        it "creates the maintenance file in the given path" $
+        it "creates the maintenance file in the given path" $ \(deployPath, repoPath) -> do
           runHap $ do
             writeMaintenanceFile $(mkRelDir "maintenance") "maintenance.html"
-            doesFileExist "/maintenance/maintenance.html"
+            doesFileExist (deployPath <> "/maintenance/maintenance.html")
