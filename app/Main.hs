@@ -30,25 +30,6 @@ import           System.Hapistrano (createHapistranoDeployState)
 import           Control.Monad.Error.Class (throwError, catchError)
 
 ----------------------------------------------------------------------------
-<<<<<<< HEAD
-=======
--- Command line options
-
--- | Command line options.
-
-data Opts = Opts
-  { optsCommand    :: Command
-  , optsConfigFile :: FilePath
-  }
-
--- | Command to execute and command-specific options.
-
-data Command
-  = Deploy (Maybe ReleaseFormat) (Maybe Natural) -- ^ Deploy a new release (with timestamp
-    -- format and how many releases to keep)
-  | Rollback Natural -- ^ Rollback to Nth previous release
-  | Maintenance MaintenanceOptions
->>>>>>> Create maintenance command
 
 parserInfo :: ParserInfo Opts
 parserInfo =
@@ -120,7 +101,6 @@ maintenanceParser :: Parser Command
 maintenanceParser = Maintenance <$> hsubparser (command "enable" (info (pure Enable) (progDesc "Enables maintenance mode")) <>
                                     command "disable" (info (pure Disable) (progDesc "Disables maintenance mode")))
 
-data MaintenanceOptions = Enable | Disable
 pReleaseFormat :: ReadM ReleaseFormat
 pReleaseFormat = eitherReader $ \s ->
   case s of
@@ -199,7 +179,7 @@ main = do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
             Maintenance Enable-> do
-              _
+              undefined
             Maintenance _ -> do
               error "..."
         atomically (writeTChan chan FinishMsg)
