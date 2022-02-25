@@ -17,7 +17,7 @@ spec =
       context "when the file doesn't exist" $
         it "creates the maintenance file in the given path" $ \(deployPath, _) -> do
           result <- runHap $ do
-            writeMaintenanceFile $(mkRelDir "maintenance") "maintenance.html"
+            writeMaintenanceFile deployPath $(mkRelDir "maintenance") "maintenance.html"
             liftIO $ doesFileExist ((fromAbsDir deployPath) <> "/maintenance/maintenance.html")
           result `shouldBe` True
 -- Move this to utils and import it here
