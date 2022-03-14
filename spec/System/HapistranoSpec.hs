@@ -31,6 +31,10 @@ import Test.Hspec.QuickCheck
 import Test.QuickCheck hiding (Success)
 import System.Hapistrano (releasePath)
 import System.Hapistrano.Config (deployStateFilename)
+import System.Directory
+import System.Hapistrano.Maintenance
+import Path
+import Control.Monad.IO.Class
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -105,6 +109,14 @@ spec = do
         it "returns the default value" $
         fromMaybeKeepReleases Nothing Nothing `Hspec.shouldBe` 5
   around withSandbox $ do
+    describe "writeMaintenanceFile" $
+      context "when the file doesn't exist" $
+        it "creates the maintenance file in the given path" $ \(deployPath, _) -> do
+          result <- runHap $ do
+            writeMaintenanceFile deployPath $(mkRelDir "maintenance") "maintenance.html"
+            liftIO $ System.Directory.doesFileExist ((fromAbsDir deployPath) <> "/maintenance/maintenance.html")
+          result `shouldBe` True
+
     describe "releasePath" $ do
       context "when the configWorkingDir is Nothing" $
         it "should return the release path" $ \(deployPath, repoPath) -> do

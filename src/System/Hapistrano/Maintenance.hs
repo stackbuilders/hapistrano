@@ -16,6 +16,6 @@ writeMaintenanceFile deployPath relDir fileName =
   in do
     exec(MkDir foo) Nothing
     exec(Touch root) Nothing
-    exec (BasicWrite root "<html><body>Maintenance</body></html>") Nothing
+    exec (BasicWrite root "<!DOCTYPE html><html><head><title>Maintenance</title><style type=\"text/css\">body {width: 400px;margin: 100px auto;font: 300 120% \"OpenSans\", \"Helvetica Neue\", \"Helvetica\", Arial, Verdana, sans-serif;}h1 {font-weight: 300;}</style></head><body><h1>Maintenance</h1><p>The system is down for maintenance</p><p>It'll be back shortly</p></body></html>") Nothing
 
   
