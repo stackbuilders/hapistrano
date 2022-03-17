@@ -116,7 +116,14 @@ spec = do
             writeMaintenanceFile deployPath $(mkRelDir "maintenance") "maintenance.html"
             liftIO $ System.Directory.doesFileExist ((fromAbsDir deployPath) <> "/maintenance/maintenance.html")
           result `shouldBe` True
-
+    describe "deleteMaintenanceFile" $
+      context "when the file exists" $
+        it "removes the maintenance file from the given path" $ \(deployPath, _) -> do
+          result <- runHap $ do
+            writeMaintenanceFile deployPath $(mkRelDir "maintenance") "maintenance.html"
+            deleteMaintenanceFile deployPath $(mkRelDir "maintenance") "maintenance.html"
+            liftIO $ System.Directory.doesFileExist ((fromAbsDir deployPath) <> "/maintenance/maintenance.html")
+          result `shouldBe` False
     describe "releasePath" $ do
       context "when the configWorkingDir is Nothing" $
         it "should return the release path" $ \(deployPath, repoPath) -> do
