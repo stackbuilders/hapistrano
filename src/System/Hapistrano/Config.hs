@@ -82,7 +82,7 @@ data Config = Config
 
   , configMaintenanceFilePath :: !(Path Rel Dir)
   --
-  , configMaintenanceFileName :: !(FilePath)
+  , configMaintenanceFileName :: !(Path Rel File)
   -- TODO: Change FileName type
   } deriving (Eq, Ord, Show)
 
@@ -142,7 +142,7 @@ instance FromJSON Config where
     configKeepOneFailed <- o .:? "keep_one_failed" .!= False
     configWorkingDir <- o .:? "working_directory"
     configMaintenanceFilePath <- o .:? "maintenance_directory" .!= $(mkRelDir "maintenance")
-    configMaintenanceFileName <- o .:? "maintenance_filename" .!= "maintenance.html"
+    configMaintenanceFileName <- o .:? "maintenance_filename" .!= $(mkRelFile "maintenance.html")
     return Config {..}
 
 instance FromJSON CopyThing where

@@ -24,6 +24,7 @@ import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
+import qualified System.Hapistrano.Maintenance as Hap
 import           System.Hapistrano.Types
 import           System.IO
 import           System.Hapistrano (createHapistranoDeployState)
@@ -141,7 +142,7 @@ main = do
                     case maybeRelease of
                       (Just release) -> do
                         createHapistranoDeployState configDeployPath release Fail
-                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
                         throwError e
                       Nothing -> do
                         throwError e
@@ -173,15 +174,15 @@ main = do
                 Hap.activateRelease configTargetSystem configDeployPath release
                 forM_ configRestartCommand (flip Hap.exec $ Just release)
                 Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
-                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
               `catchError` failStateAndThrow
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
             Maintenance Enable-> do
-              undefined
+              Hap.writeMaintenanceFile configDeployPath configMaintenanceFilePath configMaintenanceFileName
             Maintenance _ -> do
-              error "..."
+              Hap.deleteMaintenanceFile configDeployPath configMaintenanceFilePath configMaintenanceFileName
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()

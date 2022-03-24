@@ -11,9 +11,9 @@ import           System.Hapistrano.Types  (Shell (..),
 
 import qualified Data.Yaml.Config         as Yaml
 #if MIN_VERSION_base(4,15,0)
-import           Path                     (mkAbsDir, mkRelDir)
+import           Path                     (mkAbsDir, mkRelDir, mkRelFile)
 #else
-import           Path                     (mkAbsDir, mkRelDir, Abs, Rel, Dir)
+import           Path                     (mkAbsDir, mkRelDir, mkRelFile, Abs, Rel, Dir, File)
 #endif
 import           Test.Hspec
 
@@ -65,5 +65,5 @@ defaultConfiguration =
     , configKeepOneFailed = False
     , configWorkingDir = Nothing
     , configMaintenanceFilePath = $(mkRelDir "maintenance")
-    , configMaintenanceFileName = "maintenance.html"
+    , configMaintenanceFileName = $(mkRelFile "maintenance.html")
     }
