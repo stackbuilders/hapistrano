@@ -180,9 +180,9 @@ main = do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
             Maintenance Enable-> do
-              Hap.writeMaintenanceFile configDeployPath configMaintenanceFilePath configMaintenanceFileName
+              Hap.writeMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
             Maintenance _ -> do
-              Hap.deleteMaintenanceFile configDeployPath configMaintenanceFilePath configMaintenanceFileName
+              Hap.deleteMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()

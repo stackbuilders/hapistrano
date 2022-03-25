@@ -79,11 +79,8 @@ data Config = Config
   -- If neither CLI or configuration file value is specified, it defaults to `False`
   -- (i.e. keep all failed releases).
   , configWorkingDir :: !(Maybe (Path Rel Dir))
-
-  , configMaintenanceFilePath :: !(Path Rel Dir)
-  --
+  , configMaintenanceDirectory :: !(Path Rel Dir)
   , configMaintenanceFileName :: !(Path Rel File)
-  -- TODO: Change FileName type
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -141,7 +138,7 @@ instance FromJSON Config where
     configKeepReleases <- o .:? "keep_releases"
     configKeepOneFailed <- o .:? "keep_one_failed" .!= False
     configWorkingDir <- o .:? "working_directory"
-    configMaintenanceFilePath <- o .:? "maintenance_directory" .!= $(mkRelDir "maintenance")
+    configMaintenanceDirectory <- o .:? "maintenance_directory" .!= $(mkRelDir "maintenance")
     configMaintenanceFileName <- o .:? "maintenance_filename" .!= $(mkRelFile "maintenance.html")
     return Config {..}
 

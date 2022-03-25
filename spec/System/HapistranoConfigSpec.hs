@@ -64,6 +64,6 @@ defaultConfiguration =
     , configKeepReleases = Nothing
     , configKeepOneFailed = False
     , configWorkingDir = Nothing
-    , configMaintenanceFilePath = $(mkRelDir "maintenance")
+    , configMaintenanceDirectory = $(mkRelDir "maintenance")
     , configMaintenanceFileName = $(mkRelFile "maintenance.html")
     }
