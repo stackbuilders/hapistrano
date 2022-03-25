@@ -102,7 +102,6 @@ test-suite test
   other-modules:       System.HapistranoSpec
                      , System.HapistranoConfigSpec
                      , System.HapistranoPropsSpec
-                     , System.Utils
   build-depends:       base               >= 4.9 && < 5.0
                      , directory          >= 1.2.5 && < 1.4
                      , filepath           >= 1.2 && < 1.5
