@@ -6,9 +6,12 @@ cabal-dev
 *.chs.h
 *.dyn_o
 *.dyn_hi
+.cabal-sandbox/
 .hpc
 .hsenv
-.cabal-sandbox/
+.tool-versions
+cabal.project.freeze
+cabal.project.local
 cabal.sandbox.config
 *.prof
 *.aux

@@ -1,4 +1,4 @@
-[![Build and Test](https://github.com/stackbuilders/hapistrano/actions/workflows/build-and-test.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build-and-test.yml)
+[![CI](https://github.com/stackbuilders/hapistrano/actions/workflows/ci.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/ci.yml)
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 [![Docker Hub](https://img.shields.io/docker/build/stackbuilders/hapistrano.svg?style=flat)](https://hub.docker.com/r/stackbuilders/hapistrano)
 
