@@ -1,1 +1,10 @@
+*.nix
+.github/
+.tool-versions
 Dockerfile
+cabal.project.*
+dist-newstyle/
+example/
+fixtures/
+script/
+stack.yaml*
