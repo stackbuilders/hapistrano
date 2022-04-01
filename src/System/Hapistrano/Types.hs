@@ -152,9 +152,11 @@ data DeployState
   | Success
   | Unknown
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
--- Maintenance options
+Suggested change
+
+-- | Maintenance options
+
 data MaintenanceOptions = Enable | Disable
--- Command line options
 
 -- | Command line options.
 

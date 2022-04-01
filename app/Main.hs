@@ -99,8 +99,12 @@ rollbackParser = Rollback
   <> help "How many deployments back to go?" )
 
 maintenanceParser :: Parser Command
-maintenanceParser = Maintenance <$> hsubparser (command "enable" (info (pure Enable) (progDesc "Enables maintenance mode")) <>
-                                    command "disable" (info (pure Disable) (progDesc "Disables maintenance mode")))
+maintenanceParser =
+  Maintenance
+    <$> hsubparser
+      ( command "enable" (info (pure Enable) (progDesc "Enables maintenance mode"))
+          <> command "disable" (info (pure Disable) (progDesc "Disables maintenance mode"))
+      )
 
 pReleaseFormat :: ReadM ReleaseFormat
 pReleaseFormat = eitherReader $ \s ->
