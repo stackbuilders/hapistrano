@@ -1,3 +1,12 @@
+## 0.5.0.0
+### Added
+* Ability to keep all failed releases or just one ([issue #154](https://github.com/stackbuilders/hapistrano/issues/154))
+  * Config Option: `keep_one_failed`
+  * CLI Option: `--keep-one-failed`
+
+### Modified
+* Some types and functions were modified to support the new features (e.g. `Hapistrano`, `runHapistrano`, etc.)
+
 ## 0.4.3.1
 ### Added
 * Add support for aeson 2.0
