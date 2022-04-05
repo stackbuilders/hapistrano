@@ -152,7 +152,6 @@ data DeployState
   | Success
   | Unknown
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
-Suggested change
 
 -- | Maintenance options
 
