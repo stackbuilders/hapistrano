@@ -3,7 +3,6 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -31,10 +30,8 @@ import           Data.Yaml
 import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types    (Shell(..),
-                                             ReleaseFormat (..),
-                                             Source(..),
-                                             TargetSystem (..))
+import           System.Hapistrano.Types    (ReleaseFormat (..), Shell (..),
+                                             Source (..), TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
 
@@ -54,9 +51,9 @@ data Config = Config
     -- ^ Collection of files to copy over to target machine before building
   , configCopyDirs       :: ![CopyThing]
     -- ^ Collection of directories to copy over to target machine before building
-  , configLinkedFiles      :: ![FilePath]
+  , configLinkedFiles    :: ![FilePath]
     -- ^ Collection of files to link from each release to _shared_
-  , configLinkedDirs       :: ![FilePath]
+  , configLinkedDirs     :: ![FilePath]
     -- ^ Collection of directories to link from each release to _shared_
   , configVcAction       :: !Bool
   -- ^ Perform version control related actions. By default, it's assumed to be `True`.
@@ -74,13 +71,13 @@ data Config = Config
   -- ^ The number of releases to keep, the @--keep-releases@ argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to 5
-  , configKeepOneFailed :: !Bool
+  , configKeepOneFailed  :: !Bool
   -- ^ Specifies whether to keep all failed releases along with the successful releases
   -- or just the latest failed (at least this one should be kept for debugging purposes).
   -- The @--keep-one-failed@ argument passed via the CLI takes precedence over this value.
-  -- If neither CLI or configuration file value is specified, it defaults to `False` 
+  -- If neither CLI or configuration file value is specified, it defaults to `False`
   -- (i.e. keep all failed releases).
-  , configWorkingDir :: !(Maybe (Path Rel Dir))
+  , configWorkingDir     :: !(Maybe (Path Rel Dir))
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -156,8 +153,8 @@ mkCmd raw =
     Nothing  -> fail "invalid restart command"
     Just cmd -> return cmd
 
--- | Constant with the name of the file used to store 
+-- | Constant with the name of the file used to store
 -- the deployment state information.
 
-deployStateFilename :: String 
+deployStateFilename :: String
 deployStateFilename = ".hapistrano_deploy_state"

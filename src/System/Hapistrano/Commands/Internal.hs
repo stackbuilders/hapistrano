@@ -3,7 +3,6 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --

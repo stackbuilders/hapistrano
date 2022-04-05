@@ -3,7 +3,6 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -31,7 +30,7 @@ import           Path
 import           System.Console.ANSI
 import           System.Exit
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types hiding (Command)
+import           System.Hapistrano.Types    hiding (Command)
 import           System.Process
 import           System.Process.Typed       (ProcessConfig)
 import qualified System.Process.Typed       as SPT
@@ -50,7 +49,7 @@ failWith n msg maybeRelease = throwError (Failure n msg, maybeRelease)
 exec ::
      forall a. Command a
   => a -- ^ Command being executed
-  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined
   -> Hapistrano (Result a)
 exec typedCmd maybeRelease = do
   let cmd = renderCommand typedCmd
@@ -60,9 +59,9 @@ exec typedCmd maybeRelease = do
 
 -- | Same as 'exec' but it streams to stdout only for _GenericCommand_s
 execWithInheritStdout ::
-     Command a 
+     Command a
   => a -- ^ Command being executed
-  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined
   -> Hapistrano ()
 execWithInheritStdout typedCmd maybeRelease = do
   let cmd = renderCommand typedCmd
@@ -100,7 +99,7 @@ getProgAndArgs cmd = do
 scpFile ::
      Path Abs File -- ^ Location of the file to copy
   -> Path Abs File -- ^ Where to put the file on target machine
-  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined
   -> Hapistrano ()
 scpFile src dest = scp' (fromAbsFile src) (fromAbsFile dest) ["-q"]
 
@@ -108,7 +107,7 @@ scpFile src dest = scp' (fromAbsFile src) (fromAbsFile dest) ["-q"]
 scpDir ::
      Path Abs Dir -- ^ Location of the directory to copy
   -> Path Abs Dir -- ^ Where to put the dir on target machine
-  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined
   -> Hapistrano ()
 scpDir src dest = scp' (fromAbsDir src) (fromAbsDir dest) ["-qr"]
 
@@ -134,7 +133,7 @@ scp' src dest extraArgs maybeRelease = do
 exec' ::
      String -- ^ How to show the command in print-outs
   -> IO (ExitCode, String, String) -- ^ Handler to get (ExitCode, Output, Error) it can change accordingly to @stdout@ and @stderr@ of child process
-  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined
   -> Hapistrano String -- ^ Raw stdout output of that program
 exec' cmd readProcessOutput maybeRelease = do
   Config {..} <- ask

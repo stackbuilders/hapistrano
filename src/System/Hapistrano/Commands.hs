@@ -3,16 +3,15 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
 -- Collection of type safe shell commands that can be fed into
 -- 'System.Hapistrano.Core.runCommand'.
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE GADTs               #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module System.Hapistrano.Commands
   ( Command(..)
@@ -39,4 +38,4 @@ module System.Hapistrano.Commands
   , readScript
   ) where
 
-import System.Hapistrano.Commands.Internal
+import           System.Hapistrano.Commands.Internal
