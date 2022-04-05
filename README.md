@@ -2,7 +2,7 @@
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 [![Docker Hub](https://img.shields.io/docker/build/stackbuilders/hapistrano.svg?style=flat)](https://hub.docker.com/r/stackbuilders/hapistrano)
 
-# Table of Contents
+# Table of Contents - Hapistrano
 
  * [Hapistrano](#hapistrano)
  * [Purpose](#purpose)
