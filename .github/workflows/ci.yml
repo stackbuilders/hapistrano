@@ -21,15 +21,15 @@ jobs:
           # - macos-latest
           - ubuntu-latest
         ghc:
-          - 9.0
-          - 8.10
+          - "9.0"
+          - "8.10"
 
     steps:
       - uses: actions/checkout@v3
       - uses: haskell/actions/setup@v1
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: 3.6
+          cabal-version: "3.6"
       - run: |
           if [ "$RUNNER_OS" == "Linux" ]
           then
