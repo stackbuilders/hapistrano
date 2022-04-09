@@ -17,22 +17,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os:
+          - macos-latest
+          - ubuntu-latest
         ghc:
-          - "9.0.1"
-          - "8.10.4"
-          - "8.8.4"
-          - "8.6.5"
-        include:
-          - os: macos-latest
-            ghc: "9.0.1"
+          - "9.0"
+          - "8.10"
 
     steps:
       - uses: actions/checkout@v3
       - uses: haskell/actions/setup@v1
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: "3.4"
+          cabal-version: "3.6"
       - run: |
           if [ "$RUNNER_OS" == "Linux" ]
           then
@@ -47,8 +44,8 @@ jobs:
       - run: cabal freeze
       - uses: actions/cache@v3
         with:
-          key: v1-${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
-          restore-keys: v1-${{ runner.os }}-${{ matrix.ghc }}-
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('*.cabal', 'cabal.project.freeze') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
           path: |
             ~/.cabal/packages
             ~/.cabal/store
