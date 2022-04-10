@@ -37,7 +37,7 @@ jobs:
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - run: docker run hapistrano --version
+      - run: docker run stackbuilders/hapistrano --version
       - uses: docker/build-push-action@v2
         with:
           context: .
