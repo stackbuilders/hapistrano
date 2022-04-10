@@ -9,7 +9,7 @@ name: CI
 on: push
 
 concurrency:
-  group: ${{ github.ref }}-ci
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

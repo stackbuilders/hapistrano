@@ -8,11 +8,11 @@ on: push
   #
 
 concurrency:
-  group: ${{ github.ref }}-docker
+  group: docker-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -32,18 +32,18 @@ jobs:
       - uses: docker/build-push-action@v2
         with:
           context: .
-          load: true
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       - run: docker run hapistrano --version
       - uses: docker/build-push-action@v2
         with:
           context: .
-          push: true
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true
       - run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
