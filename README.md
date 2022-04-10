@@ -1,6 +1,6 @@
 [![CI](https://github.com/stackbuilders/hapistrano/actions/workflows/ci.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/ci.yml)
+[![Docker](https://github.com/stackbuilders/hapistrano/actions/workflows/docker.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/docker.yml)
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
-[![Docker Hub](https://img.shields.io/docker/build/stackbuilders/hapistrano.svg?style=flat)](https://hub.docker.com/r/stackbuilders/hapistrano)
 
 # Table of Contents
 
@@ -225,8 +225,10 @@ usually, which is mainly useful for testing.
 
 ## Docker
 
-If you would like to use Docker, there is a lightweight image
-available on [Docker Hub](https://hub.docker.com/r/stackbuilders/hapistrano/).
+Docker images hosted on [Docker
+Hub](https://hub.docker.com/r/stackbuilders/hapistrano) are **no longer up to
+date**, newer versions are published to [GitHub's Docker
+Registry](https://github.com/stackbuilders/hapistrano/pkgs/container/hapistrano).
 
 ## Nix
 
