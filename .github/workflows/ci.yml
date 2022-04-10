@@ -1,9 +1,8 @@
----
 # The present workflow was made based on the following references:
 # - https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
-# - https://github.com/docker/build-push-action/blob/master/docs/advanced/cache.md
 # - https://github.com/haskell/time/blob/master/.github/workflows/ci.yml
 # - https://github.com/stackbuilders/stache/blob/master/.github/workflows/ci.yaml
+---
 name: CI
 
 on: push
