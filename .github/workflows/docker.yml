@@ -41,7 +41,7 @@ jobs:
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
   publish:
-    # if: contains(github.ref, 'refs/tags/v')
+    if: contains(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     needs: [build]
     permissions:
