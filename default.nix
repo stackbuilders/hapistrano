@@ -6,7 +6,7 @@
 }:
 mkDerivation {
   pname = "hapistrano";
-  version = "0.4.3.1";
+  version = "0.5.0.0";
   src = ./.;
   isLibrary = true;
   isExecutable = true;

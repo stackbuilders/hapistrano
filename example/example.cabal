@@ -5,7 +5,7 @@ description:
   This is an example project that has been created in order to test
   the deployment process using the working_dir feature of hapistrano.
 author:         Justin Leitgeb
-maintainer:     cmotoche@stackbuilders.com
+maintainer:     hackage@stackbuilders.com
 copyright:      2015-Present Stack Builders Inc.
 license:        MIT
 license-file:   ../LICENSE

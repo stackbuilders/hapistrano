@@ -2,9 +2,9 @@
 [![Docker](https://github.com/stackbuilders/hapistrano/actions/workflows/docker.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/docker.yml)
 [![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
 
-# Table of Contents
+# Hapistrano
 
- * [Hapistrano](#hapistrano)
+ * [Description](#description)
  * [Purpose](#purpose)
  * [How it Works](#how-it-works)
  * [Usage](#usage)
@@ -13,11 +13,12 @@
  * [Deploying to multiple machines concurrently](#deploying-to-multiple-machines-concurrently)
  * [Docker](#docker)
  * [Nix](#nix)
+ * [Notes](#notes)
  * [License](#license)
  * [Contributing](#contributing)
 
 
-# Hapistrano
+# Description
 
 Hapistrano is a deployment library for Haskell applications similar to
 Ruby's [Capistrano](http://capistranorb.com/).
@@ -247,6 +248,10 @@ For just building Hapistrano, you just:
 ```bash
 nix-build release.nix
 ```
+
+## Notes
+
+* Hapistrano is not supported on Windows. Please check: [Issue #96](https://github.com/stackbuilders/hapistrano/issues/96).
 
 
 ## License

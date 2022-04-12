@@ -3,13 +3,12 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Cristhian Motoche <cmotoche@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
 -- Type definitions for the Hapistrano tool.
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 
 module System.Hapistrano.Types
   ( Hapistrano
@@ -36,14 +35,14 @@ module System.Hapistrano.Types
   , toMaybePath
   ) where
 
-import Control.Applicative
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Aeson
-import Data.Maybe
-import Data.Time
-import Numeric.Natural
-import Path
+import           Control.Applicative
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.Aeson
+import           Data.Maybe
+import           Data.Time
+import           Numeric.Natural
+import           Path
 
 -- | Hapistrano monad.
 type Hapistrano a = ExceptT (Failure, Maybe Release) (ReaderT Config IO) a
@@ -55,11 +54,11 @@ data Failure =
 -- | Hapistrano configuration options.
 data Config =
   Config
-    { configSshOptions :: !(Maybe SshOptions)
+    { configSshOptions   :: !(Maybe SshOptions)
     -- ^ 'Nothing' if we are running locally, or SSH options to use.
     , configShellOptions :: !Shell
     -- ^ One of the supported 'Shell's
-    , configPrint :: !(OutputDest -> String -> IO ())
+    , configPrint        :: !(OutputDest -> String -> IO ())
     -- ^ How to print messages
     }
 
@@ -67,7 +66,7 @@ data Config =
 -- like GitHub or a local directory.
 data Source
   = GitRepository
-      { gitRepositoryURL :: String
+      { gitRepositoryURL      :: String
       -- ^ The URL of remote Git repository to deploy
       , gitRepositoryRevision :: String
       -- ^ The SHA1 or branch to release
@@ -81,9 +80,9 @@ data Source
 -- | The records describes deployment task.
 data Task =
   Task
-    { taskDeployPath :: Path Abs Dir
+    { taskDeployPath    :: Path Abs Dir
     -- ^ The root of the deploy target on the remote host
-    , taskSource :: Source
+    , taskSource        :: Source
     -- ^ The 'Source' to deploy
     , taskReleaseFormat :: ReleaseFormat
     -- ^ The 'ReleaseFormat' to use
@@ -186,7 +185,7 @@ renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
     fmt =
       case rfmt of
         ReleaseShort -> releaseFormatShort
-        ReleaseLong -> releaseFormatLong
+        ReleaseLong  -> releaseFormatLong
 
 ----------------------------------------------------------------------------
 -- Types helpers

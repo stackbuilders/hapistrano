@@ -3,7 +3,6 @@
 -- Copyright   :  © 2015-Present Stack Builders
 -- License     :  MIT
 --
--- Maintainer  :  Juan Paucar <jpaucar@stackbuilders.com>
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -37,16 +36,16 @@ import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader       (local, runReaderT)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
-import           Data.Maybe                 (mapMaybe, fromMaybe)
+import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
 import           Data.Time
 import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
+import           System.Hapistrano.Config   (deployStateFilename)
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
-import           System.Hapistrano.Config (deployStateFilename)
-import           Text.Read (readMaybe)
+import           Text.Read                  (readMaybe)
 
 ----------------------------------------------------------------------------
 
@@ -128,7 +127,7 @@ createHapistranoDeployState
   -> DeployState -- ^ Indicates how the deployment went
   -> Hapistrano ()
 createHapistranoDeployState deployPath release state = do
-  parseStatePath <- parseRelFile deployStateFilename 
+  parseStatePath <- parseRelFile deployStateFilename
   actualReleasePath <- releasePath deployPath release Nothing
   let stateFilePath = actualReleasePath </> parseStatePath
   exec (Touch stateFilePath) (Just release) -- creates '.hapistrano_deploy_state'
@@ -208,7 +207,7 @@ setupDirs deployPath = do
 ensureCacheInPlace
   :: String            -- ^ Repo URL
   -> Path Abs Dir      -- ^ Deploy path
-  -> Maybe Release     -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release     -- ^ Release that was being attempted, if it was defined
   -> Hapistrano ()
 ensureCacheInPlace repo deployPath maybeRelease = do
   let cpath = cacheRepoPath deployPath
@@ -275,7 +274,7 @@ releasesWithState selectedState deployPath = do
   where
     stateToBool :: DeployState -> Bool
     stateToBool Fail = False
-    stateToBool _ = True
+    stateToBool _    = True
 
 ----------------------------------------------------------------------------
 -- Path helpers
@@ -303,7 +302,7 @@ linkToShared
   -> Path Abs Dir -- ^ Release path
   -> Path Abs Dir -- ^ Deploy path
   -> FilePath     -- ^ Thing to link in share
-  -> Maybe Release -- ^ Release that was being attempted, if it was defined 
+  -> Maybe Release -- ^ Release that was being attempted, if it was defined
   -> Hapistrano ()
 linkToShared configTargetSystem rpath configDeployPath thingToLink maybeRelease = do
   destPath <- parseRelFile thingToLink
@@ -367,7 +366,7 @@ deployState deployPath mWorkingDir release = do
   if doesExist then do
     deployStateContents <- exec (Cat stateFilePath) (Just release)
     return $ (fromMaybe Unknown . readMaybe) deployStateContents
-  else return Unknown 
+  else return Unknown
 
 stripDirs :: Path Abs Dir -> [Path Abs t] -> Hapistrano [Path Rel t]
 stripDirs path =
