@@ -1,4 +1,4 @@
-## 0.5.0.0
+## 0.4.4.0
 ### Added
 * Ability to keep all failed releases or just one ([issue #154](https://github.com/stackbuilders/hapistrano/issues/154))
   * Config Option: `keep_one_failed`
