@@ -151,6 +151,8 @@ Rollback is also trivial:
 $ hap rollback # to rollback to previous successful deploy
 $ hap rollback -n 2 # go two deploys back in time, etc.
 ```
+* `maintenance_directory:`- The name of the directory on which the maintenance file will be placed. `{deploy_path}/{maintenance_directory}`. The default directory name is `maintenance`
+* `maintenance_filename:`- The name of the file that is going to be created in the maintenance_directory. It has to have the `.html` extension to be seen in the browser. `{deploy_path}/{maintenance_directory}/{maintenance_filename}`. The default filename is `maintenance.html`
 
 ### Environment Variables
 
