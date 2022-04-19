@@ -25,6 +25,7 @@ module System.Hapistrano.Types
   , Shell(..)
   , Opts(..)
   , Command(..)
+  , MaintenanceOptions(..)
   -- * Types helpers
   , mkRelease
   , releaseTime
@@ -152,7 +153,9 @@ data DeployState
   | Unknown
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
--- Command line options
+-- | Maintenance options
+
+data MaintenanceOptions = Enable | Disable
 
 -- | Command line options.
 
@@ -168,7 +171,7 @@ data Command
     -- format, how many releases to keep, and whether the failed releases except the latest one
     -- get deleted or not)
   | Rollback Natural -- ^ Rollback to Nth previous release
-
+  | Maintenance MaintenanceOptions
 
 -- | Create a 'Release' indentifier.
 mkRelease :: ReleaseFormat -> UTCTime -> Release

@@ -21,3 +21,4 @@ dist-newstyle
 result
 nix/
 shell.nix
+.ghc.environment.*

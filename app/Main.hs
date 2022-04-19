@@ -24,6 +24,7 @@ import qualified System.Hapistrano          as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Config   as C
 import qualified System.Hapistrano.Core     as Hap
+import qualified System.Hapistrano.Maintenance as Hap
 import           System.Hapistrano.Types
 import           System.IO
 import           System.Hapistrano (createHapistranoDeployState)
@@ -55,7 +56,10 @@ optionParser = Opts
   ( command "deploy"
     (info deployParser (progDesc "Deploy a new release")) <>
     command "rollback"
-    (info rollbackParser (progDesc "Roll back to Nth previous release")) )
+    (info rollbackParser (progDesc "Roll back to Nth previous release")) <>
+    command "maintenance"
+    (info maintenanceParser (progDesc "Enable/Disable maintenance mode"))
+    )
   <*> strOption
   ( long "config"
   <> short 'c'
@@ -93,6 +97,14 @@ rollbackParser = Rollback
   <> value 1
   <> showDefault
   <> help "How many deployments back to go?" )
+
+maintenanceParser :: Parser Command
+maintenanceParser =
+  Maintenance
+    <$> hsubparser
+      ( command "enable" (info (pure Enable) (progDesc "Enables maintenance mode"))
+          <> command "disable" (info (pure Disable) (progDesc "Disables maintenance mode"))
+      )
 
 pReleaseFormat :: ReadM ReleaseFormat
 pReleaseFormat = eitherReader $ \s ->
@@ -134,7 +146,7 @@ main = do
                     case maybeRelease of
                       (Just release) -> do
                         createHapistranoDeployState configDeployPath release Fail
-                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
                         throwError e
                       Nothing -> do
                         throwError e
@@ -166,11 +178,15 @@ main = do
                 Hap.activateRelease configTargetSystem configDeployPath release
                 forM_ configRestartCommand (flip Hap.exec $ Just release)
                 Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
-                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed 
+                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
               `catchError` failStateAndThrow
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
+            Maintenance Enable-> do
+              Hap.writeMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
+            Maintenance _ -> do
+              Hap.deleteMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()

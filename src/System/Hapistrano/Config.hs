@@ -11,6 +11,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -77,7 +78,9 @@ data Config = Config
   -- The @--keep-one-failed@ argument passed via the CLI takes precedence over this value.
   -- If neither CLI or configuration file value is specified, it defaults to `False`
   -- (i.e. keep all failed releases).
-  , configWorkingDir     :: !(Maybe (Path Rel Dir))
+  , configWorkingDir :: !(Maybe (Path Rel Dir))
+  , configMaintenanceDirectory :: !(Path Rel Dir)
+  , configMaintenanceFileName :: !(Path Rel File)
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -135,6 +138,8 @@ instance FromJSON Config where
     configKeepReleases <- o .:? "keep_releases"
     configKeepOneFailed <- o .:? "keep_one_failed" .!= False
     configWorkingDir <- o .:? "working_directory"
+    configMaintenanceDirectory <- o .:? "maintenance_directory" .!= $(mkRelDir "maintenance")
+    configMaintenanceFileName <- o .:? "maintenance_filename" .!= $(mkRelFile "maintenance.html")
     return Config {..}
 
 instance FromJSON CopyThing where

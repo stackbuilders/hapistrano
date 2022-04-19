@@ -151,6 +151,8 @@ Rollback is also trivial:
 $ hap rollback # to rollback to previous successful deploy
 $ hap rollback -n 2 # go two deploys back in time, etc.
 ```
+* `maintenance_directory:`- The name of the directory on which the maintenance file will be placed. `{deploy_path}/{maintenance_directory}`. The default directory name is `maintenance`
+* `maintenance_filename:`- The name of the file that is going to be created in the maintenance_directory. It has to have the `.html` extension to be seen in the browser. `{deploy_path}/{maintenance_directory}/{maintenance_filename}`. The default filename is `maintenance.html`
 
 ### Environment Variables
 
@@ -248,11 +250,25 @@ For just building Hapistrano, you just:
 ```bash
 nix-build release.nix
 ```
+## Enable/disable maintenance mode
+
+Present a maintenance page to visitors. Disables your application's web interface by writing a {maintenance_filename} file to each web server. The servers must be configured to detect the presence of this file, and if it is present, always display it instead of performing the request.
+
+The maintenance page will just say the site is down for maintenance, and will be back shortly.
+
+To enable maintenance mode run:
+```bash
+hapistrano maintenance enable
+```
+Disabling maintenance mode will remove the file from the {maintenance_directory} it can be done with the following command:
+
+```bash
+hapistrano maintenance disable
+```
 
 ## Notes
 
 * Hapistrano is not supported on Windows. Please check: [Issue #96](https://github.com/stackbuilders/hapistrano/issues/96).
-
 
 ## License
 
