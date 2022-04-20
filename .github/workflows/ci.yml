@@ -40,6 +40,7 @@ jobs:
           cabal-version: "3.6"
         id: setup-haskell
       - run: cabal configure --enable-tests
+      - run: cat cabal.project
       - run: cabal freeze
       - uses: actions/cache@v3
         with:
