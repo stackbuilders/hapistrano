@@ -40,7 +40,6 @@ jobs:
           cabal-version: "3.6"
         id: setup-haskell
       - run: cabal configure --enable-tests
-      - run: cat cabal.project
       - run: cabal freeze
       - uses: actions/cache@v3
         with:
@@ -51,5 +50,4 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
       - run: cabal build
       - run: cabal test
-      - run: cabal haddock
-      - run: cabal sdist
+      - run: ./script/haddock
