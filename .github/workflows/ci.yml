@@ -2,6 +2,7 @@
 # - https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
 # - https://github.com/haskell/time/blob/master/.github/workflows/ci.yml
 # - https://github.com/stackbuilders/stache/blob/master/.github/workflows/ci.yaml
+# - https://markkarpov.com/post/github-actions-for-haskell-ci.html
 ---
 name: CI
 
@@ -29,30 +30,27 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: "3.6"
-      - run: |
-          if [ "$RUNNER_OS" == "Linux" ]
-          then
-            sudo apt-get update
-            sudo apt-get install zsh
-          else
-            brew update
-            brew install zsh
-          fi
+      - if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install zsh
+      - if: ${{ runner.os == 'macOS' }}
+        run: |
+          brew update
+          brew install zsh
       - run: cabal update
       - run: cabal configure --enable-tests
       - run: cabal freeze
       - uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('*.cabal', 'cabal.project.freeze') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('*.cabal', 'cabal.project' ,'cabal.project.freeze') }}
           path: |
             ~/.cabal/packages
             ~/.cabal/store
             dist-newstyle
-      - run: cabal build --only-dependencies
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
       - run: cabal build
       - run: cabal test
-      - run: |
-          # Fixes issue with different haddock coverage with different ghc versions https://github.com/haskell/haddock/issues/123
-          cabal haddock | grep "100%" | wc -l | grep -E "[4-9]|[1-9][0-9]+" ||
-          (echo "Haddock failed with exit code 1. Have you checked that the minimum of 4 modules with 100% documentation is fulfilled?" && false)
+      - run: cabal haddock
+      - run: cabal sdist
