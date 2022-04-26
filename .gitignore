@@ -7,6 +7,7 @@ cabal-dev
 *.dyn_o
 *.dyn_hi
 .cabal-sandbox/
+.envrc
 .hpc
 .hsenv
 .tool-versions

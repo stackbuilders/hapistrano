@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+min_count=4
+count=$(cabal haddock | grep "100%" | wc -l)
+
+if [ "$count" -le "$min_count" ];
+then
+  echo "Haddock failed with exit code 1. Have you checked that the minimum of ${min_count} modules with 100% documentation is fulfilled?"
+  exit 1
+fi
