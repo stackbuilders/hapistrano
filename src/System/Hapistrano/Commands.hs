@@ -30,6 +30,7 @@ module System.Hapistrano.Commands
   , BasicWrite(..)
   , GitCheckout(..)
   , GitClone(..)
+  , GitSetOrigin(..)
   , GitFetch(..)
   , GitReset(..)
   , GenericCommand

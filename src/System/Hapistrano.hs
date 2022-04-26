@@ -216,6 +216,7 @@ ensureCacheInPlace repo deployPath maybeRelease = do
     `catchError` const (return False)
   unless exists $
     exec (GitClone True (Left repo) cpath) maybeRelease
+  exec (Cd cpath (GitSetOrigin repo)) maybeRelease
   exec (Cd cpath (GitFetch "origin")) maybeRelease -- TODO store this in task description?
 
 -- | Create a new release identifier based on current timestamp.
