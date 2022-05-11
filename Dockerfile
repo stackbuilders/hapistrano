@@ -1,25 +1,11 @@
-FROM alpine:3.15 AS build
-RUN apk update && \
-    apk add \
-      alpine-sdk \
-      bash \
-      ca-certificates \
-      cabal \
-      ghc \
-      ghc-dev \
-      git \
-      gmp-dev \
-      gnupg \
-      libffi-dev \
-      linux-headers \
-      zlib-dev
+FROM utdemir/ghc-musl:v24-ghc902 AS build
 WORKDIR /usr/src/app
 COPY hapistrano.cabal .
 RUN cabal update && \
-    cabal configure -f static && \
-    cabal build --only-dependencies
+    cabal build --only-dependencies --enable-static
 COPY . .
-RUN cabal install
+RUN cabal build --enable-executable-static && \
+    cp $(cabal exec which hap) hap
 
 FROM alpine:3.15
 MAINTAINER Nicolas Vivar <nvivar@stackbuilders.com>
@@ -29,5 +15,6 @@ RUN apk update && \
       git \
       openssh-client
 RUN mkdir ~/.ssh
-COPY --from=build /root/.cabal/bin/hap /usr/local/bin/hap
+COPY --from=build /usr/src/app/hap /usr/local/bin/hap
 ENTRYPOINT ["/usr/local/bin/hap"]
+CMD ["--help"]
