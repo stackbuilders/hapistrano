@@ -70,20 +70,20 @@ jobs:
           path: artifact
           name: hapistrano-${{ github.sha }}
 
-  release:
-    needs: build
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifact from GitHub
-      - uses: actions/download-artifact@v2
-        with:
-          name: hapistrano-${{ github.sha }}
-          path: artifact
+  # release:
+  #   needs: build
+  #   if: github.event_name == 'release'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download artifact from GitHub
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: hapistrano-${{ github.sha }}
+  #         path: artifact
 
-      - name: Upload package to Hackage
-      - run: |
-        cabal upload --publish \
-          --username '${{ secrets.HACKAGE_USERNAME }}' \
-          --password '${{ secrets.HACKAGE_PASSWORD }}' \
-          artifact/ubuntu-latest/9.0/hapistrano-${{ github.event.release.tag_name }}.tar.gz
+  #     - name: Upload package to Hackage
+  #     - run: |
+  #       cabal upload --publish \
+  #         --username '${{ secrets.HACKAGE_USERNAME }}' \
+  #         --password '${{ secrets.HACKAGE_PASSWORD }}' \
+  #         artifact/ubuntu-latest/9.0/hapistrano-${{ github.event.release.tag_name }}.tar.gz
