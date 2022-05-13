@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload package to Hackage
         run: |
-        cabal upload --publish \
-          --username '${{ secrets.HACKAGE_USERNAME }}' \
-          --password '${{ secrets.HACKAGE_PASSWORD }}' \
-          artifact/ubuntu-latest/9.0/hapistrano-${{ github.event.release.tag_name }}.tar.gz
+          cabal upload --publish \
+            --username '${{ secrets.HACKAGE_USERNAME }}' \
+            --password '${{ secrets.HACKAGE_PASSWORD }}' \
+            artifact/ubuntu-latest/9.0/hapistrano-${{ github.event.release.tag_name }}.tar.gz
