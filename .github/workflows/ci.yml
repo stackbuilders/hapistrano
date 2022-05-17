@@ -53,37 +53,17 @@ jobs:
       - run: cabal test
       - run: ./script/haddock
 
-      - name: Create folder for artifacts
-        id: artifact
-        run: |
-          mkdir artifact
-          mkdir artifact/${{ matrix.os }}
-          mkdir artifact/${{ matrix.os }}/${{ matrix.ghc }}
-          echo ::set-output name=directory::'artifact/${{ matrix.os }}/${{ matrix.ghc }}'
-
-      - name: Generate package ready for Hackage distribution
-        run: cabal sdist --output-dir ${{ steps.artifact.outputs.directory }}
-
-      - name: Upload the artifact to GitHub
-        uses: actions/upload-artifact@v2
-        with:
-          path: artifact
-          name: hapistrano-${{ github.sha }}
-
   release:
     needs: build
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact from GitHub
-        uses: actions/download-artifact@v2
-        with:
-          name: hapistrano-${{ github.sha }}
-          path: artifact
+      - name: Generate package ready for Hackage distribution
+        run: cabal sdist
 
       - name: Upload package to Hackage
         run: |
           cabal upload --publish \
             --username '${{ secrets.HACKAGE_USERNAME }}' \
             --password '${{ secrets.HACKAGE_PASSWORD }}' \
-            artifact/ubuntu-latest/9.0/hapistrano-${{ github.event.release.tag_name }}.tar.gz
+            dist-newstyle/sdist/hapistrano-${{ github.event.release.tag_name }}.tar.gz
