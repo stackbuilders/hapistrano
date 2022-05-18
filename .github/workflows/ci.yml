@@ -66,4 +66,4 @@ jobs:
           cabal upload --publish \
             --username '${{ secrets.HACKAGE_USERNAME }}' \
             --password '${{ secrets.HACKAGE_PASSWORD }}' \
-            dist-newstyle/sdist/hapistrano-${{ github.event.release.tag_name }}.tar.gz
+            dist-newstyle/sdist/hapistrano-*.tar.gz
