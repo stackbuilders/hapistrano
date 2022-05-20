@@ -1,3 +1,10 @@
+## 0.4.5.0
+### Added
+* New commands that let you enable/disable a maintenance mode
+* New configuration variables:
+  *  `maintenance_directory:`- The name of the directory on which the maintenance file will be placed. `{deploy_path}/{maintenance_directory}`. The default directory name is `maintenance`
+  * `maintenance_filename:`- The name of the file that is going to be created in the maintenance_directory. It has to have the `.html` extension to be seen in the browser. `{deploy_path}/{maintenance_directory}/{maintenance_filename}`. The default filename is `maintenance.html`
+
 ## 0.4.4.0
 ### Added
 * Ability to keep all failed releases or just one ([issue #154](https://github.com/stackbuilders/hapistrano/issues/154))
