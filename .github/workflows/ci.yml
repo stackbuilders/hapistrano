@@ -3,6 +3,8 @@
 # - https://github.com/haskell/time/blob/master/.github/workflows/ci.yml
 # - https://github.com/stackbuilders/stache/blob/master/.github/workflows/ci.yaml
 # - https://markkarpov.com/post/github-actions-for-haskell-ci.html
+# - https://github.com/tfausak/strive/blob/main/.github/workflows/ci.yaml
+# - https://hackage.haskell.org/upload
 ---
 name: CI
 
@@ -51,3 +53,28 @@ jobs:
       - run: cabal build
       - run: cabal test
       - run: ./script/haddock
+
+  release:
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate package ready for Hackage distribution
+        run: cabal sdist
+
+      - name: Upload package to Hackage
+        run: |
+          cabal upload --publish \
+            --username '${{ secrets.HACKAGE_USERNAME }}' \
+            --password '${{ secrets.HACKAGE_PASSWORD }}' \
+            dist-newstyle/sdist/hapistrano-*.tar.gz
+
+      - name: Generate Haddock docs for Hackage distribution
+        run: cabal v2-haddock --haddock-for-hackage --enable-doc
+
+      - name: Upload Haddock docs to Hackage
+        run: |
+          cabal upload -d --publish \
+            --username '${{ secrets.HACKAGE_USERNAME }}' \
+            --password '${{ secrets.HACKAGE_PASSWORD }}' \
+            dist-newstyle/hapistrano-*-docs.tar.gz
