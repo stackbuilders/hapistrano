@@ -276,9 +276,8 @@ MIT, see [the LICENSE file](LICENSE).
 
 ## Contributing
 
-Pull requests for modifications to this program are welcome. Fork and
-open a PR. Feel free to [email me](mailto:justin@stackbuilders.com) if
-you have questions about what may be accepted before working on a PR.
+Do you want to contribute to this project? Please take a look at our [contributing guideline](/docs/CONTRIBUTING.md) to know how you can help us build it.
 
-If you're looking for a place to start, you may want to check the
-[open issue](https://github.com/stackbuilders/hapistrano/issues).
+---
+<img src="https://www.stackbuilders.com/media/images/Sb-supports.original.png" alt="Stack Builders" width="50%"></img>  
+[Check out our libraries](https://github.com/stackbuilders/) | [Join our team](https://www.stackbuilders.com/join-us/)
