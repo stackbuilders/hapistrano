@@ -1,15 +1,18 @@
 ---
-name: Docker
+name: Release
 
-on:
-  workflow_call:
-    inputs:
-      push:
-        type: boolean
-        required: true
+on: push
+  # release:
+  #   types: [published]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  foo:
+  ghcr:
+    # TODO: remove if
+    if: false
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -26,7 +29,6 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: ${{ runner.os }}-buildx-
       - name: Login to ghcr.io
-        if: ${{ inputs.push }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -38,19 +40,39 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v2
         with:
           context: .
-          load: ${{ !inputs.push }}
-          push: ${{ inputs.push }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-      - name: Smoke test
-        if: ${{ !inputs.push }}
-        run: docker run ${{ github.repository }} --version
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  hackage:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # TODO: add missing name
+      # - run: cabal sdist
+      # - name: Upload package to Hackage
+      #   run: |
+      #     cabal upload --publish \
+      #       --username "${{ secrets.HACKAGE_USERNAME }}" \
+      #       --password "${{ secrets.HACKAGE_PASSWORD }}" \
+      #       dist-newstyle/sdist/hapistrano-*.tar.gz
+      - run: cabal update
+      - run: cabal v2-haddock --haddock-for-hackage --enable-doc
+      - name: Upload Haddock docs to Hackage
+        run: |
+          cabal upload --publish \
+            --username "${{ secrets.HACKAGE_USERNAME }}" \
+            --password "${{ secrets.HACKAGE_PASSWORD }}" \
+            --documentation \
+            dist-newstyle/sdist/hapistrano-*-docs.tar.gz
