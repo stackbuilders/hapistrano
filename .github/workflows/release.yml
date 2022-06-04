@@ -21,11 +21,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: haskell/actions/setup@v2
+      - name: Install Haskell tooling
+        uses: haskell/actions/setup@v2
         with:
           ghc-version: "8.10"
           cabal-version: "3.6"
-      - run: cabal freeze
+      - name: Freeze dependencies
+        run: cabal freeze
       - uses: actions/cache@v3
         with:
           path: |
@@ -34,15 +36,16 @@ jobs:
             dist-newstyle
           key: ${{ runner.os }}-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: ${{ runner.os }}-
-      # - run: cabal sdist
-      # - name: Upload package to Hackage
-      #   run: |
-      #     cabal upload --publish \
-      #       --username "${{ secrets.HACKAGE_USERNAME }}" \
-      #       --password "${{ secrets.HACKAGE_PASSWORD }}" \
-      #       dist-newstyle/sdist/hapistrano-*.tar.gz
-      - run: cabal update
-      - run: cabal v2-haddock --haddock-for-hackage --enable-doc
+      - name: Generate a source distribution file
+        run: cabal sdist
+      - name: Upload package to Hackage
+        run: |
+          cabal upload --publish \
+            --username "${{ secrets.HACKAGE_USERNAME }}" \
+            --password "${{ secrets.HACKAGE_PASSWORD }}" \
+            dist-newstyle/sdist/hapistrano-*.tar.gz
+      - name: Build Haddock documentation
+        run: cabal v2-haddock --haddock-for-hackage --enable-doc
       - name: Upload Haddock docs to Hackage
         run: |
           cabal upload --publish \
