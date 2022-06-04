@@ -53,4 +53,4 @@ jobs:
             --username "${{ secrets.HACKAGE_USERNAME }}" \
             --password "${{ secrets.HACKAGE_PASSWORD }}" \
             --documentation \
-            dist-newstyle/sdist/hapistrano-*-docs.tar.gz
+            dist-newstyle/hapistrano-*-docs.tar.gz
