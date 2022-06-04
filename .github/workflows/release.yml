@@ -44,9 +44,10 @@ jobs:
           cabal upload --publish \
             --username "${{ secrets.HACKAGE_USERNAME }}" \
             --password "${{ secrets.HACKAGE_PASSWORD }}" \
-            dist-newstyle/sdist/hapistrano-*.tar.gz || echo "Already exists"
+            dist-newstyle/sdist/hapistrano-*.tar.gz \
+            || echo "Already exists"
       - name: Build Haddock documentation
-        run: cabal v2-haddock --haddock-for-hackage --enable-doc
+        run: cabal v2-haddock --haddock-for-hackage --enable-documentation
       - name: Upload Haddock docs to Hackage
         run: |
           cabal upload --publish \
