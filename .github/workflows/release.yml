@@ -11,17 +11,20 @@ concurrency:
 
 jobs:
   ghcr:
+    if: false
     uses: ./.github/workflows/docker.yml
     with:
       push: true
 
   hackage:
-    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      # TODO: add missing name
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: "8.10"
+          cabal-version: "3.6"
       # - run: cabal sdist
       # - name: Upload package to Hackage
       #   run: |
