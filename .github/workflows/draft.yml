@@ -30,7 +30,7 @@ jobs:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: ${{ runner.os }}-buildx-
-      - name: Build and push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -41,12 +41,12 @@ jobs:
       - name: Copy static binary
         run: |
           docker run \
-            -v $PWD/bin:/root/bin \
             --entrypoint cp \
+            --volume $PWD/bin:/root/bin \
             ${{ github.repository }} \
             /usr/local/bin/hap \
             /root/bin/hap-${{ github.ref_name }}-linux-x86_64-bin
-      - name: Create GH release
+      - name: Create draft release
         uses: softprops/action-gh-release@v1
         with:
           files: |
