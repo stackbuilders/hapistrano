@@ -18,6 +18,7 @@ jobs:
 
   hackage:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v3
