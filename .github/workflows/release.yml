@@ -1,3 +1,6 @@
+# The present workflow was made based on the following references:
+# - https://github.com/tfausak/strive/blob/main/.github/workflows/ci.yaml
+# - https://hackage.haskell.org/upload
 ---
 name: Release
 

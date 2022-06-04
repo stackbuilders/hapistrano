@@ -3,8 +3,6 @@
 # - https://github.com/haskell/time/blob/master/.github/workflows/ci.yml
 # - https://github.com/stackbuilders/stache/blob/master/.github/workflows/ci.yaml
 # - https://markkarpov.com/post/github-actions-for-haskell-ci.html
-# - https://github.com/tfausak/strive/blob/main/.github/workflows/ci.yaml
-# - https://hackage.haskell.org/upload
 ---
 name: Build
 
@@ -16,7 +14,6 @@ concurrency:
 
 jobs:
   haskell:
-    if: false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

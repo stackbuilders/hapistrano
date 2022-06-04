@@ -1,6 +1,6 @@
-[![CI](https://github.com/stackbuilders/hapistrano/actions/workflows/ci.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/ci.yml)
-[![Docker](https://github.com/stackbuilders/hapistrano/actions/workflows/docker.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/docker.yml)
-[![Hackage version](https://img.shields.io/hackage/v/hapistrano.svg)](http://hackage.haskell.org/package/hapistrano)
+[![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
+[![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
+[![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
 
 # Hapistrano
 
