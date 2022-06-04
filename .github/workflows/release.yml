@@ -18,7 +18,6 @@ jobs:
 
   hackage:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -29,7 +28,8 @@ jobs:
           cabal-version: "3.6"
       - name: Freeze dependencies
         run: cabal freeze
-      - uses: actions/cache@v3
+      - name: Cache dependencies
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cabal/package
@@ -44,7 +44,7 @@ jobs:
           cabal upload --publish \
             --username "${{ secrets.HACKAGE_USERNAME }}" \
             --password "${{ secrets.HACKAGE_PASSWORD }}" \
-            dist-newstyle/sdist/hapistrano-*.tar.gz
+            dist-newstyle/sdist/hapistrano-*.tar.gz || echo "Already exists"
       - name: Build Haddock documentation
         run: cabal v2-haddock --haddock-for-hackage --enable-doc
       - name: Upload Haddock docs to Hackage
