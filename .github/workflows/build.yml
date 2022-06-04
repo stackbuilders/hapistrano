@@ -16,7 +16,6 @@ concurrency:
 
 jobs:
   haskell:
-    if: false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -28,32 +27,42 @@ jobs:
           - "8.10"
 
     steps:
-      - uses: actions/checkout@v3
-      - if: ${{ runner.os == 'Linux' }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies (Linux)
+        if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
           sudo apt-get install zsh
-      - if: ${{ runner.os == 'macOS' }}
+      - name: Install dependencies (macOS)
+        if: ${{ runner.os == 'macOS' }}
         run: |
           brew update
           brew install zsh
-      - uses: haskell/actions/setup@v2
-        id: setup-haskell
+      - name: Install Haskell tooling
+        uses: haskell/actions/setup@v2
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: "3.6"
-      - run: cabal configure --enable-tests
-      - run: cabal freeze
-      - uses: actions/cache@v3
+      - name: Configure project
+        run: cabal configure --enable-tests
+      - name: Freeze dependencies
+        run: cabal freeze
+      - name: Cache dependencies
+        uses: actions/cache@v3
         with:
           path: |
-            ${{ steps.setup-haskell.outputs.cabal-store }}
+            ~/.cabal/package
+            ~/.cabal/store
             dist-newstyle
           key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
-      - run: cabal build
-      - run: cabal test
-      - run: ./script/haddock
+      - name: Build project
+        run: cabal build
+      - name: Run tests
+        run: cabal test
+      - name: Check documentation
+        run: ./script/haddock
 
   docker:
     uses: ./.github/workflows/docker.yml

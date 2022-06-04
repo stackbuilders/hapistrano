@@ -1,9 +1,10 @@
 ---
 name: Release
 
-on: push
-  # release:
-  #   types: [published]
+on:
+  release:
+    types:
+      - published
 
 concurrency:
   group: release-${{ github.ref }}
@@ -11,7 +12,6 @@ concurrency:
 
 jobs:
   ghcr:
-    if: false
     uses: ./.github/workflows/docker.yml
     with:
       push: true
