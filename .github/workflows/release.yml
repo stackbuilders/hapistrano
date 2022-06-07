@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ghcr:
-    uses: ./.github/workflows/docker.yml
+    uses: ./.github/workflows/reusable/docker.yml
     with:
       push: true
 
