@@ -63,7 +63,7 @@ jobs:
         run: ./script/haddock
 
   docker:
-    uses: ./.github/workflows/reusable/docker.yml
+    uses: ./.github/workflows/reusable-docker.yml
     with:
       packages_permission: none
       push: false
