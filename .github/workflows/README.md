@@ -14,11 +14,11 @@
 ## Events
 
 ```mermaid
-flowchart LR
-  start--on push -->build
-  build-->end
-  start-- tag created -->draft
-  draft-->end
-  start-->release published -->release
-  release-->end
+graph LR
+    event[GH Event]-->|on push|Build
+    event-->|tag created|Draft
+    Draft-->|create draft release|End
+    event-->|release published|Release
+    Release-->|upload artifacts to Hackage/GHCR|End
+    Build-->End
 ```
