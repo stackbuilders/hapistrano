@@ -65,5 +65,4 @@ jobs:
   docker:
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      packages_permission: none
       push: false

@@ -17,7 +17,6 @@ jobs:
   ghcr:
     uses: ./.github/workflows/reusable-docker.yml
     with:
-      packages_permission: write
       push: true
 
   hackage:

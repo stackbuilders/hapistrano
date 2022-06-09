@@ -4,9 +4,6 @@ name: Docker
 on:
   workflow_call:
     inputs:
-      packages_permission:
-        type: string
-        required: true
       push:
         type: boolean
         required: true
@@ -15,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: ${{ inputs.packages_permission }}
+      packages: write
 
     steps:
       - name: Checkout
