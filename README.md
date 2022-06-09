@@ -233,6 +233,10 @@ Hub](https://hub.docker.com/r/stackbuilders/hapistrano) are **no longer up to
 date**, newer versions are published to [GitHub's Docker
 Registry](https://github.com/stackbuilders/hapistrano/pkgs/container/hapistrano).
 
+## GH Actions
+
+Check the documentation [here](.github/workflows/README.md)
+
 ## Nix
 
 If you want to use Nix for building Hapistrano, the required release.nix and default.nix are available.
