@@ -5,10 +5,10 @@
 ---
 name: Draft
 
-on:
-  create:
-    tags:
-      - v*
+on: push
+#  create:
+#    tags:
+#      - v*
 
 concurrency:
   group: draft-${{ github.ref }}
