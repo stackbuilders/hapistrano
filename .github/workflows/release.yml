@@ -1,0 +1,60 @@
+# The present workflow was made based on the following references:
+# - https://github.com/tfausak/strive/blob/main/.github/workflows/ci.yaml
+# - https://hackage.haskell.org/upload
+---
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ghcr:
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      push: true
+
+  hackage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Haskell tooling
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version: "8.10"
+          cabal-version: "3.6"
+      - name: Freeze dependencies
+        run: cabal freeze
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/package
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: ${{ runner.os }}-
+      - name: Generate a source distribution file
+        run: cabal sdist
+      - name: Upload package to Hackage
+        run: |
+          cabal upload --publish \
+            --username "${{ secrets.HACKAGE_USERNAME }}" \
+            --password "${{ secrets.HACKAGE_PASSWORD }}" \
+            dist-newstyle/sdist/hapistrano-*.tar.gz || \
+            echo "Already exists"
+      - name: Build Haddock documentation
+        run: cabal v2-haddock --haddock-for-hackage --enable-documentation
+      - name: Upload Haddock docs to Hackage
+        run: |
+          cabal upload --publish \
+            --username "${{ secrets.HACKAGE_USERNAME }}" \
+            --password "${{ secrets.HACKAGE_PASSWORD }}" \
+            --documentation \
+            dist-newstyle/hapistrano-*-docs.tar.gz

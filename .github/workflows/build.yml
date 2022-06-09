@@ -1,0 +1,68 @@
+# The present workflow was made based on the following references:
+# - https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
+# - https://github.com/haskell/time/blob/master/.github/workflows/ci.yml
+# - https://github.com/stackbuilders/stache/blob/master/.github/workflows/ci.yaml
+# - https://markkarpov.com/post/github-actions-for-haskell-ci.html
+---
+name: Build
+
+on: push
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  haskell:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+        ghc:
+          - "9.0"
+          - "8.10"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install zsh
+      - name: Install dependencies (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          brew update
+          brew install zsh
+      - name: Install Haskell tooling
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: "3.6"
+      - name: Configure project
+        run: cabal configure --enable-tests
+      - name: Freeze dependencies
+        run: cabal freeze
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/package
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
+      - name: Build project
+        run: cabal build
+      - name: Run tests
+        run: cabal test
+      - name: Check documentation
+        run: ./script/haddock
+
+  docker:
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      push: false
