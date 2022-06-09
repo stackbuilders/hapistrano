@@ -14,10 +14,17 @@
 ## Events
 
 ```mermaid
-sequenceDiagram
-  participant Build
-  participant Draft
-  participant Release
-  Build->>Draft: Tag created
-  Draft->>Release: Publish release
+flowchart LR
+  start[Start]
+  build[Build]
+  draft[Draft]
+  release[Release]
+  end[End]
+
+  start -- on push --> build
+  build --> end
+  start -- tag created --> draft
+  draft --> end
+  start --> release published --> release
+  release --> end
 ```
