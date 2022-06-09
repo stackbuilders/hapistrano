@@ -49,7 +49,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
       - name: Smoke test
         if: ${{ !inputs.push }}
-        run: docker run ${{ steps.meta.outputs.tags }} --version
+        run: docker run ghcr.io/${{ github.repository }} --version
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
