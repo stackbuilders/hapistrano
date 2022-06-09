@@ -15,16 +15,10 @@
 
 ```mermaid
 flowchart LR
-  start[Start]
-  build[Build]
-  draft[Draft]
-  release[Release]
-  end[End]
-
-  start -- on push --> build
-  build --> end
-  start -- tag created --> draft
-  draft --> end
-  start --> release published --> release
-  release --> end
+  start--on push -->build
+  build-->end
+  start-- tag created -->draft
+  draft-->end
+  start-->release published -->release
+  release-->end
 ```
