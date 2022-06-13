@@ -176,6 +176,16 @@ spec = do
             ("test `git rev-parse --abbrev-ref HEAD` = " ++ testBranchName)
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
+      it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
+        runHap $ do
+          let task1 = mkTask deployPath repoPath
+          let task2 = mkTask deployPath repoPath
+          release1 <- Hap.pushRelease task1
+          release2 <- Hap.pushRelease task2
+          
+        -- let's check that the dir exists and contains the right files
+          (liftIO . readFile . fromAbsFile) (deployPath </> $(mkRelFile "foo.txt")) `shouldReturn`
+            "Foo!\n"
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do
