@@ -178,14 +178,17 @@ spec = do
           justExec rpath "git diff --exit-code"
       it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
         runHap $ do
+          -- Task 1: Replace hardcoded `repoPathTwo` directory with `withSystemTempDir`
           let task1 = mkTask deployPath repoPath
-          let task2 = mkTask deployPath repoPath
-          release1 <- Hap.pushRelease task1
-          release2 <- Hap.pushRelease task2
-          
-        -- let's check that the dir exists and contains the right files
-          (liftIO . readFile . fromAbsFile) (deployPath </> $(mkRelFile "foo.txt")) `shouldReturn`
-            "Foo!\n"
+              task2 = mkTask deployPath repoPathTwo
+              repoPathTwo = $(mkAbsDir "/tmp") </> $(mkRelDir "temp-dir")
+              repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
+          liftIO $ populateTestRepo repoPathTwo
+          void $ Hap.pushRelease task1
+          void $ Hap.pushRelease task2
+
+          -- Task 2: Check the config file contains the second repo path
+          (liftIO . readFile . fromAbsFile) repoConfigFile `shouldReturn` "Foo!\n"
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do
@@ -269,7 +272,7 @@ spec = do
             (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
       context "when the --keep-one-failed flag is active" $
         it "should delete failed releases other than the most recent" $ \(deployPath, repoPath) ->
-          let successfulRelease = mkReleaseWithState deployPath repoPath Success 
+          let successfulRelease = mkReleaseWithState deployPath repoPath Success
               failedRelease = mkReleaseWithState deployPath repoPath Fail in
           runHap $ do
             rs <- sequence [successfulRelease, successfulRelease, failedRelease, failedRelease, failedRelease]
