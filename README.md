@@ -228,10 +228,15 @@ usually, which is mainly useful for testing.
 
 ## Docker
 
-Docker images hosted on [Docker
-Hub](https://hub.docker.com/r/stackbuilders/hapistrano) are **no longer up to
-date**, newer versions are published to [GitHub's Docker
-Registry](https://github.com/stackbuilders/hapistrano/pkgs/container/hapistrano).
+Starting with version `0.4.4.0` all new Docker images would be published to
+[GitHub's Container Registry][ghcr], while the old versions remain available on
+[Docker Hub][dockerhub]. To download the `latest` version available, change the
+image reference as follows:
+
+```diff
+- stackbuilders/hapistrano:latest
++ ghcr.io/stackbuilders/hapistrano:latest
+```
 
 ## GH Actions
 
