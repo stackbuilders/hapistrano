@@ -4,11 +4,10 @@
 ---
 name: Release
 
-# on:
-#   release:
-#     types:
-#       - published
-on: push
+on:
+  release:
+    types:
+      - published
 
 concurrency:
   group: release-${{ github.ref }}
@@ -16,13 +15,12 @@ concurrency:
 
 jobs:
   ghcr:
-    if: false
     uses: ./.github/workflows/reusable-docker.yml
     with:
       push: true
 
   hackage:
-    uses: stackbuilders/reusable-workflows/.github/workflows/cabal-upload.yml@17f71df4db43ce774a5876156da00447b154f62d
+    uses: stackbuilders/reusable-workflows/.github/workflows/cabal-upload.yml@main
     secrets:
       HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
       HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}

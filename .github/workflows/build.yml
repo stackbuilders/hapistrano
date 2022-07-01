@@ -13,7 +13,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  if: false
   haskell:
     runs-on: ${{ matrix.os }}
     strategy:
