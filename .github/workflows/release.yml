@@ -20,7 +20,7 @@ jobs:
       push: true
 
   hackage:
-    uses: stackbuilders/reusable-workflows/.github/workflows/cabal-upload.yml@main
+    uses: stackbuilders/reusable-workflows/.github/workflows/cabal-upload.yml@v0.1.0
     secrets:
       HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
       HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
