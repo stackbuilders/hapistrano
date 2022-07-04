@@ -25,7 +25,7 @@ import System.Hapistrano.Types
 import System.IO
 import System.IO.Silently (capture_)
 import System.Info (os)
-import Test.Hspec hiding (shouldBe, shouldReturn)
+import Test.Hspec hiding (shouldBe, shouldContain, shouldReturn)
 import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck hiding (Success)
@@ -178,17 +178,17 @@ spec = do
           justExec rpath "git diff --exit-code"
       it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
         runHap $ do
-          -- Task 1: Replace hardcoded `repoPathTwo` directory with `withSystemTempDir`
-          let task1 = mkTask deployPath repoPath
-              task2 = mkTask deployPath repoPathTwo
-              repoPathTwo = $(mkAbsDir "/tmp") </> $(mkRelDir "temp-dir")
-              repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
-          liftIO $ populateTestRepo repoPathTwo
-          void $ Hap.pushRelease task1
-          void $ Hap.pushRelease task2
+          let tempDirPrefix = "hap-test-repotwo"
+          withSystemTempDir tempDirPrefix $ \repoPathTwo -> do
+            let task1 = mkTask deployPath repoPath
+                task2 = mkTask deployPath repoPathTwo
+                repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
+            liftIO $ populateTestRepo repoPathTwo
+            void $ Hap.pushRelease task1
+            void $ Hap.pushRelease task2
 
-          -- Task 2: Check the config file contains the second repo path
-          (liftIO . readFile . fromAbsFile) repoConfigFile `shouldReturn` "Foo!\n"
+            repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile 
+            repoFile `shouldContain` tempDirPrefix
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do
@@ -364,6 +364,10 @@ infix 1 `shouldBe`, `shouldReturn`
 -- | Lifted 'Hspec.shouldBe'.
 shouldBe :: (MonadIO m, Show a, Eq a) => a -> a -> m ()
 shouldBe x y = liftIO (x `Hspec.shouldBe` y)
+
+-- | Lifted 'Hspec.shouldContain'.
+shouldContain :: (MonadIO m, Show a, Eq a) => [a] -> [a] -> m ()
+shouldContain x y = liftIO (x `Hspec.shouldContain` y)
 
 -- | Lifted 'Hspec.shouldReturn'.
 shouldReturn :: (MonadIO m, Show a, Eq a) => m a -> a -> m ()
