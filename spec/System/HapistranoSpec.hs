@@ -17,7 +17,8 @@ import Path
 
 
 import Path.IO
-import System.Directory (getCurrentDirectory, listDirectory)
+import System.Directory
+    ( doesFileExist, getCurrentDirectory, listDirectory )
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core as Hap
@@ -31,10 +32,7 @@ import Test.Hspec.QuickCheck
 import Test.QuickCheck hiding (Success)
 import System.Hapistrano (releasePath)
 import System.Hapistrano.Config (deployStateFilename)
-import System.Directory
 import System.Hapistrano.Maintenance
-import Path
-import Control.Monad.IO.Class
 
 testBranchName :: String
 testBranchName = "another_branch"
