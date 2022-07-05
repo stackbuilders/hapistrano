@@ -53,7 +53,7 @@ typically looks like this:
 
 ```yaml
 deploy_path: '/var/projects/my-project'
-host: myserver.com
+host: user@myserver.com
 port: 2222
 # To perform version control operations
 repo: 'https://github.com/stackbuilders/hapistrano.git'
@@ -83,7 +83,8 @@ The following parameters are required:
 The following parameters are *optional*:
 
 * `host` — the target host, if missing, `localhost` will be assumed (which
-  is useful for testing and playing with `hap` locally).
+  is useful for testing and playing with `hap` locally). You can specify the
+  user that is going to connect to the server here. Example: `user@server.com`.
 * `port` — SSH port number to use. If missing, 22 will be used.
 * `shell` — Shell to use. Currently supported: `zsh` ans `bash`. If missing, `Bash` will be used.
 * `ssh_args` — Optional ssh arguments. Only `-p` is passed via the `port` variable.
@@ -283,5 +284,5 @@ MIT, see [the LICENSE file](LICENSE).
 Do you want to contribute to this project? Please take a look at our [contributing guideline](/docs/CONTRIBUTING.md) to know how you can help us build it.
 
 ---
-<img src="https://www.stackbuilders.com/media/images/Sb-supports.original.png" alt="Stack Builders" width="50%"></img>  
+<img src="https://www.stackbuilders.com/media/images/Sb-supports.original.png" alt="Stack Builders" width="50%"></img>
 [Check out our libraries](https://github.com/stackbuilders/) | [Join our team](https://www.stackbuilders.com/join-us/)
