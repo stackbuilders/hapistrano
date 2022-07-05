@@ -281,6 +281,18 @@ instance Command GitFetch where
       [Just "fetch", Just remote, Just "+refs/heads/\\*:refs/heads/\\*"]
   parseResult Proxy _ = ()
 
+-- | Git set origin
+newtype GitSetOrigin =
+  GitSetOrigin String
+
+instance Command GitSetOrigin where
+  type Result GitSetOrigin = ()
+  renderCommand (GitSetOrigin remote) =
+    formatCmd
+      "git"
+      [Just "remote", Just "set-url", Just "origin", Just remote]
+  parseResult Proxy _ = ()
+
 -- | Git reset.
 newtype GitReset =
   GitReset String

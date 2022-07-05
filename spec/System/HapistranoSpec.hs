@@ -17,7 +17,8 @@ import Path
 
 
 import Path.IO
-import System.Directory (getCurrentDirectory, listDirectory)
+import System.Directory
+    ( doesFileExist, getCurrentDirectory, listDirectory )
 import qualified System.Hapistrano as Hap
 import qualified System.Hapistrano.Commands as Hap
 import qualified System.Hapistrano.Core as Hap
@@ -25,16 +26,13 @@ import System.Hapistrano.Types
 import System.IO
 import System.IO.Silently (capture_)
 import System.Info (os)
-import Test.Hspec hiding (shouldBe, shouldReturn)
+import Test.Hspec hiding (shouldBe, shouldContain, shouldReturn)
 import qualified Test.Hspec as Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck hiding (Success)
 import System.Hapistrano (releasePath)
 import System.Hapistrano.Config (deployStateFilename)
-import System.Directory
 import System.Hapistrano.Maintenance
-import Path
-import Control.Monad.IO.Class
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -176,6 +174,19 @@ spec = do
             ("test `git rev-parse --abbrev-ref HEAD` = " ++ testBranchName)
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
+      it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
+        runHap $ do
+          let tempDirPrefix = "hap-test-repotwo"
+          withSystemTempDir tempDirPrefix $ \repoPathTwo -> do
+            let task1 = mkTask deployPath repoPath
+                task2 = mkTask deployPath repoPathTwo
+                repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
+            liftIO $ populateTestRepo repoPathTwo
+            void $ Hap.pushRelease task1
+            void $ Hap.pushRelease task2
+
+            repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile 
+            repoFile `shouldContain` tempDirPrefix
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do
@@ -259,7 +270,7 @@ spec = do
             (Hap.releasePath deployPath r Nothing >>= doesDirExist) `shouldReturn` True
       context "when the --keep-one-failed flag is active" $
         it "should delete failed releases other than the most recent" $ \(deployPath, repoPath) ->
-          let successfulRelease = mkReleaseWithState deployPath repoPath Success 
+          let successfulRelease = mkReleaseWithState deployPath repoPath Success
               failedRelease = mkReleaseWithState deployPath repoPath Fail in
           runHap $ do
             rs <- sequence [successfulRelease, successfulRelease, failedRelease, failedRelease, failedRelease]
@@ -351,6 +362,10 @@ infix 1 `shouldBe`, `shouldReturn`
 -- | Lifted 'Hspec.shouldBe'.
 shouldBe :: (MonadIO m, Show a, Eq a) => a -> a -> m ()
 shouldBe x y = liftIO (x `Hspec.shouldBe` y)
+
+-- | Lifted 'Hspec.shouldContain'.
+shouldContain :: (MonadIO m, Show a, Eq a) => [a] -> [a] -> m ()
+shouldContain x y = liftIO (x `Hspec.shouldContain` y)
 
 -- | Lifted 'Hspec.shouldReturn'.
 shouldReturn :: (MonadIO m, Show a, Eq a) => m a -> a -> m ()
