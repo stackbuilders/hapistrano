@@ -1,3 +1,7 @@
+## 0.4.6.0
+### Modified
+* It sets the origin repository (`git remote set-url origin <repo>`) on every pushed release.
+
 ## 0.4.5.0
 ### Added
 * New commands that let you enable/disable a maintenance mode
