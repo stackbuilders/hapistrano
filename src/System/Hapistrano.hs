@@ -66,7 +66,7 @@ runHapistrano sshOptions shell' printFnc m =
             , configShellOptions = shell'
             , configPrint = printFnc
             }
-    r <- runReaderT (runExceptT m) config
+    r <- unHapistrano m config
     case r of
       Left (Failure n msg, _) -> do
         forM_ msg (printFnc StderrDest)

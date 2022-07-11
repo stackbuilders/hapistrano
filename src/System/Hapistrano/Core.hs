@@ -54,7 +54,7 @@ runHapistrano sshOptions shell' printFnc m =
             }
     r <- unHapistrano m config
     case r of
-      Left (Failure n msg) -> do
+      Left (Failure n msg, _) -> do
         forM_ msg (printFnc StderrDest)
         return (Left n)
       Right x -> return (Right x)

@@ -49,8 +49,19 @@ import           Numeric.Natural
 import           Path
 
 -- | Hapistrano monad.
-newtype Hapistrano a = Hapistrano {unHapistrano :: Config -> IO (Either Failure a)}
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadReader Config, MonadError Failure) via (ExceptT Failure (ReaderT Config IO))
+newtype Hapistrano a =
+  Hapistrano { unHapistrano :: Config -> IO (Either (Failure, Maybe Release) a) }
+    deriving
+      ( Functor
+      , Applicative
+      , Monad
+      , MonadIO
+      , MonadThrow
+      , MonadCatch
+      , MonadMask
+      , MonadReader Config
+      , MonadError (Failure, Maybe Release)
+      ) via (ExceptT (Failure, Maybe Release) (ReaderT Config IO))
 
 -- | Failure with status code and a message.
 data Failure =
