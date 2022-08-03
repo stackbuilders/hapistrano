@@ -21,6 +21,7 @@ module System.Hapistrano.Core
 where
 
 import           Control.Concurrent.STM     (atomically)
+import           Control.Exception          (throw)
 import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader
@@ -37,7 +38,7 @@ import qualified System.Process.Typed       as SPT
 
 -- | Fail returning the following status code and message.
 failWith :: Int -> Maybe String -> Maybe Release -> Hapistrano a
-failWith n msg maybeRelease = throwError (Failure n msg, maybeRelease)
+failWith n msg maybeRelease = throw $ HapistranoException (Failure n msg, maybeRelease)
 
 -- | Run the given sequence of command. Whether to use SSH or not is
 -- determined from settings contained in the 'Hapistrano' monad

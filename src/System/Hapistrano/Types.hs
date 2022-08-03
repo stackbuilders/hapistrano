@@ -13,6 +13,7 @@
 
 module System.Hapistrano.Types
   ( Hapistrano(..)
+  , HapistranoException(..)
   , Failure(..)
   , Config(..)
   , Source(..)
@@ -50,22 +51,26 @@ import           Path
 
 -- | Hapistrano monad.
 newtype Hapistrano a =
-  Hapistrano { unHapistrano :: Config -> IO (Either (Failure, Maybe Release) a) }
+  Hapistrano { unHapistrano :: Config -> IO a }
     deriving
       ( Functor
       , Applicative
       , Monad
       , MonadIO
       , MonadThrow
-      , MonadCatch
-      , MonadMask
       , MonadReader Config
-      , MonadError (Failure, Maybe Release)
-      ) via (ExceptT (Failure, Maybe Release) (ReaderT Config IO))
+      ) via (ReaderT Config IO)
+
+-- | Hapistrano exception
+newtype HapistranoException = HapistranoException (Failure, Maybe Release)
+  deriving (Show)
+
+instance Exception HapistranoException
 
 -- | Failure with status code and a message.
 data Failure =
   Failure Int (Maybe String)
+  deriving Show
 
 -- | Hapistrano configuration options.
 data Config =

@@ -12,6 +12,7 @@
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module System.Hapistrano
   ( runHapistrano
@@ -32,6 +33,7 @@ module System.Hapistrano
   , deployState )
 where
 
+import           Control.Exception          (catch, try)
 import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader       (local, runReaderT)
@@ -66,9 +68,9 @@ runHapistrano sshOptions shell' printFnc m =
             , configShellOptions = shell'
             , configPrint = printFnc
             }
-    r <- unHapistrano m config
+    r <- try @HapistranoException $ unHapistrano m config
     case r of
-      Left (Failure n msg, _) -> do
+      Left (HapistranoException (Failure n msg, _)) -> do
         forM_ msg (printFnc StderrDest)
         return (Left n)
       Right x -> return (Right x)
@@ -212,8 +214,8 @@ ensureCacheInPlace
 ensureCacheInPlace repo deployPath maybeRelease = do
   let cpath = cacheRepoPath deployPath
       refs  = cpath </> $(mkRelDir "refs")
-  exists <- (exec (Ls refs) Nothing >> return True)
-    `catchError` const (return False)
+  exists <- liftIO $ (exec (Ls refs) Nothing >> return True)
+    `catch` const (return False)
   unless exists $
     exec (GitClone True (Left repo) cpath) maybeRelease
   exec (Cd cpath (GitSetOrigin repo)) maybeRelease
