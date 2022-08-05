@@ -40,7 +40,6 @@ module System.Hapistrano.Types
 
 import           Control.Applicative
 import           Control.Monad.Catch
-import           Control.Monad.Error.Class
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Aeson
@@ -58,6 +57,7 @@ newtype Hapistrano a =
       , Monad
       , MonadIO
       , MonadThrow
+      , MonadCatch
       , MonadReader Config
       ) via (ReaderT Config IO)
 

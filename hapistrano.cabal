@@ -78,6 +78,7 @@ executable hap
   build-depends:       aeson              >= 2.0 && < 3.0
                      , async              >= 2.0.1.6 && < 2.4
                      , base               >= 4.9 && < 5.0
+                     , exceptions
                      , formatting         >= 6.2 && < 8.0
                      , gitrev             >= 1.2 && < 1.4
                      , hapistrano

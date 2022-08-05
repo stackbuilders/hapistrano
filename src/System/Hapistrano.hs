@@ -33,10 +33,11 @@ module System.Hapistrano
   , deployState )
 where
 
-import           Control.Exception          (catch, try)
+import           Control.Exception          (try)
 import           Control.Monad
+import           Control.Monad.Catch        (catch)
 import           Control.Monad.Except
-import           Control.Monad.Reader       (local, runReaderT)
+import           Control.Monad.Reader       (local)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
@@ -214,8 +215,8 @@ ensureCacheInPlace
 ensureCacheInPlace repo deployPath maybeRelease = do
   let cpath = cacheRepoPath deployPath
       refs  = cpath </> $(mkRelDir "refs")
-  exists <- liftIO $ (exec (Ls refs) Nothing >> return True)
-    `catch` const (return False)
+  exists <- (exec (Ls refs) Nothing >> return True)
+    `catch` (\(_ :: HapistranoException)  -> return False)
   unless exists $
     exec (GitClone True (Left repo) cpath) maybeRelease
   exec (Cd cpath (GitSetOrigin repo)) maybeRelease
