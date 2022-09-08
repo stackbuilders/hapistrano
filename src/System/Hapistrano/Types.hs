@@ -7,11 +7,13 @@
 -- Portability :  portable
 --
 -- Type definitions for the Hapistrano tool.
+{-# LANGUAGE DerivingVia       #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module System.Hapistrano.Types
-  ( Hapistrano
+  ( Hapistrano(..)
+  , HapistranoException(..)
   , Failure(..)
   , Config(..)
   , Source(..)
@@ -37,6 +39,7 @@ module System.Hapistrano.Types
   ) where
 
 import           Control.Applicative
+import           Control.Monad.Catch
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Aeson
@@ -46,11 +49,28 @@ import           Numeric.Natural
 import           Path
 
 -- | Hapistrano monad.
-type Hapistrano a = ExceptT (Failure, Maybe Release) (ReaderT Config IO) a
+newtype Hapistrano a =
+  Hapistrano { unHapistrano :: Config -> IO a }
+    deriving
+      ( Functor
+      , Applicative
+      , Monad
+      , MonadIO
+      , MonadThrow
+      , MonadCatch
+      , MonadReader Config
+      ) via (ReaderT Config IO)
+
+-- | Hapistrano exception
+newtype HapistranoException = HapistranoException (Failure, Maybe Release)
+  deriving (Show)
+
+instance Exception HapistranoException
 
 -- | Failure with status code and a message.
 data Failure =
   Failure Int (Maybe String)
+  deriving Show
 
 -- | Hapistrano configuration options.
 data Config =

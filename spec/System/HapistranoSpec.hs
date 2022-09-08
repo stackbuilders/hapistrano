@@ -1,38 +1,40 @@
-{-# LANGUAGE CPP             #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module System.HapistranoSpec
   ( spec
   ) where
 
-import Control.Monad
-import Control.Monad.Reader
-import Data.List (isPrefixOf)
-import Data.Maybe (mapMaybe)
-import Numeric.Natural
-import Path
+import           Control.Monad
+import           Control.Monad.Reader
+import           Data.List                     (isPrefixOf)
+import           Data.Maybe                    (mapMaybe)
+import           Numeric.Natural
+import           Path
 
 
 
 
-import Path.IO
-import System.Directory
-    ( doesFileExist, getCurrentDirectory, listDirectory )
-import qualified System.Hapistrano as Hap
-import qualified System.Hapistrano.Commands as Hap
-import qualified System.Hapistrano.Core as Hap
-import System.Hapistrano.Types
-import System.IO
-import System.IO.Silently (capture_)
-import System.Info (os)
-import Test.Hspec hiding (shouldBe, shouldContain, shouldReturn)
-import qualified Test.Hspec as Hspec
-import Test.Hspec.QuickCheck
-import Test.QuickCheck hiding (Success)
-import System.Hapistrano (releasePath)
-import System.Hapistrano.Config (deployStateFilename)
-import System.Hapistrano.Maintenance
+import           Path.IO
+import           System.Directory              (doesFileExist,
+                                                getCurrentDirectory,
+                                                listDirectory)
+import           System.Hapistrano             (releasePath)
+import qualified System.Hapistrano             as Hap
+import qualified System.Hapistrano.Commands    as Hap
+import           System.Hapistrano.Config      (deployStateFilename)
+import qualified System.Hapistrano.Core        as Hap
+import           System.Hapistrano.Maintenance
+import           System.Hapistrano.Types
+import           System.Info                   (os)
+import           System.IO
+import           System.IO.Silently            (capture_)
+import           Test.Hspec                    hiding (shouldBe, shouldContain,
+                                                shouldReturn)
+import qualified Test.Hspec                    as Hspec
+import           Test.Hspec.QuickCheck
+import           Test.QuickCheck               hiding (Success)
 
 testBranchName :: String
 testBranchName = "another_branch"
@@ -175,9 +177,8 @@ spec = do
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
       it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
-        runHap $ do
-          let tempDirPrefix = "hap-test-repotwo"
-          withSystemTempDir tempDirPrefix $ \repoPathTwo -> do
+         withSystemTempDir "hap-test-repotwo" $ \repoPathTwo -> do
+          runHap $ do
             let task1 = mkTask deployPath repoPath
                 task2 = mkTask deployPath repoPathTwo
                 repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
@@ -185,8 +186,9 @@ spec = do
             void $ Hap.pushRelease task1
             void $ Hap.pushRelease task2
 
-            repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile 
-            repoFile `shouldContain` tempDirPrefix
+            repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile
+            repoFile `shouldContain` "hap-test-repotwo"
+
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
         runHap $ do

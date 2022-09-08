@@ -1,7 +1,7 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE CPP               #-}
 
 module Main (main) where
 
@@ -9,26 +9,26 @@ import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Monad
 #if !MIN_VERSION_base(4,13,0)
-import           Data.Monoid                ((<>))
+import           Data.Monoid                   ((<>))
 #endif
-import           Data.Version               (showVersion)
-import qualified Data.Yaml.Config           as Yaml
+import           Control.Monad.Catch           (catch, throwM)
+import           Data.Version                  (showVersion)
+import qualified Data.Yaml.Config              as Yaml
 import           Development.GitRev
-import           Formatting                 (formatToString, string, (%))
-import           Options.Applicative        hiding (str)
+import           Formatting                    (formatToString, string, (%))
+import           Options.Applicative           hiding (str)
 import           Path
 import           Path.IO
-import           Paths_hapistrano           (version)
+import           Paths_hapistrano              (version)
 import           System.Exit
-import qualified System.Hapistrano          as Hap
-import qualified System.Hapistrano.Commands as Hap
-import qualified System.Hapistrano.Config   as C
-import qualified System.Hapistrano.Core     as Hap
+import           System.Hapistrano             (createHapistranoDeployState)
+import qualified System.Hapistrano             as Hap
+import qualified System.Hapistrano.Commands    as Hap
+import qualified System.Hapistrano.Config      as C
+import qualified System.Hapistrano.Core        as Hap
 import qualified System.Hapistrano.Maintenance as Hap
 import           System.Hapistrano.Types
 import           System.IO
-import           System.Hapistrano (createHapistranoDeployState)
-import           Control.Monad.Error.Class (throwError, catchError)
 
 ----------------------------------------------------------------------------
 
@@ -142,14 +142,14 @@ main = do
                   keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
                   keepOneFailed = cliKeepOneFailed || configKeepOneFailed
                   -- We define the handler for when an exception happens inside a deployment
-                  failStateAndThrow e@(_, maybeRelease) = do
+                  failStateAndThrow e@(HapistranoException (_, maybeRelease)) = do
                     case maybeRelease of
                       (Just release) -> do
                         createHapistranoDeployState configDeployPath release Fail
                         Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
-                        throwError e
+                        throwM e
                       Nothing -> do
-                        throwError e
+                        throwM e
               in do
                 forM_ configRunLocally Hap.playScriptLocally
                 release <- if configVcAction
@@ -179,7 +179,7 @@ main = do
                 forM_ configRestartCommand (flip Hap.exec $ Just release)
                 Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
                 Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
-              `catchError` failStateAndThrow
+              `catch` failStateAndThrow
             Rollback n -> do
               Hap.rollback configTargetSystem configDeployPath n
               forM_ configRestartCommand (flip Hap.exec Nothing)
