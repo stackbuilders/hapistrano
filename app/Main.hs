@@ -11,21 +11,15 @@ import           Control.Monad
 #if !MIN_VERSION_base(4,13,0)
 import           Data.Monoid                   ((<>))
 #endif
-import           Control.Monad.Catch           (catch, throwM)
 import           Data.Version                  (showVersion)
 import qualified Data.Yaml.Config              as Yaml
 import           Development.GitRev
 import           Formatting                    (formatToString, string, (%))
 import           Options.Applicative           hiding (str)
-import           Path
-import           Path.IO
 import           Paths_hapistrano              (version)
 import           System.Exit
-import           System.Hapistrano             (createHapistranoDeployState)
 import qualified System.Hapistrano             as Hap
-import qualified System.Hapistrano.Commands    as Hap
 import qualified System.Hapistrano.Config      as C
-import qualified System.Hapistrano.Core        as Hap
 import qualified System.Hapistrano.Maintenance as Hap
 import           System.Hapistrano.Types
 import           System.IO
