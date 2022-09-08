@@ -142,12 +142,14 @@ rollback
   :: TargetSystem
   -> Path Abs Dir      -- ^ Deploy path
   -> Natural           -- ^ How many releases back to go, 0 re-activates current
+  -> Maybe GenericCommand -- ^ Restart command
   -> Hapistrano ()
-rollback ts deployPath n = do
+rollback ts deployPath n mbRestartCommand = do
   releases <- releasesWithState Success deployPath
   case genericDrop n releases of
     [] -> failWith 1 (Just "Could not find the requested release to rollback to.") Nothing
     (x:_) -> activateRelease ts deployPath x
+  forM_ mbRestartCommand (`exec` Nothing)
 
 -- | Remove older releases to avoid filling up the target host filesystem.
 

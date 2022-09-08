@@ -180,9 +180,8 @@ main = do
                 Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
                 Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
               `catch` failStateAndThrow
-            Rollback n -> do
-              Hap.rollback configTargetSystem configDeployPath n
-              forM_ configRestartCommand (flip Hap.exec Nothing)
+            Rollback n ->
+              Hap.rollback configTargetSystem configDeployPath n configRestartCommand
             Maintenance Enable-> do
               Hap.writeMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
             Maintenance _ -> do

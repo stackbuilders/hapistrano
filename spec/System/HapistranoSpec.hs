@@ -247,8 +247,9 @@ spec = do
       it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
         runHap $ do
           let task = mkTask deployPath repoPath
+              noCmd = Nothing
           rs <- replicateM 5 (Hap.pushRelease task)
-          Hap.rollback currentSystem deployPath 2
+          Hap.rollback currentSystem deployPath 2 noCmd
           rpath <- Hap.releasePath deployPath (rs !! 2) Nothing
           let rc :: Hap.Readlink Dir
               rc =
