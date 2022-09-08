@@ -135,17 +135,11 @@ main = do
         r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
-              let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
-                  keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
-                  keepOneFailed = cliKeepOneFailed || configKeepOneFailed
-                  task =
-                    Task
-                    { taskDeployPath    = configDeployPath
-                    , taskSource        = configSource
-                    , taskReleaseFormat = releaseFormat
-                    }
-              in
-                Hap.deploy hapConfig task keepReleases keepOneFailed
+              Hap.deploy
+                hapConfig
+                (fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat)
+                (fromMaybeKeepReleases cliKeepReleases configKeepReleases)
+                (cliKeepOneFailed || configKeepOneFailed)
             Rollback n ->
               Hap.rollback configTargetSystem configDeployPath n configRestartCommand
             Maintenance Enable-> do

@@ -140,9 +140,14 @@ createHapistranoDeployState deployPath release state = do
   exec (Touch stateFilePath) (Just release) -- creates '.hapistrano_deploy_state'
   exec (BasicWrite stateFilePath $ show state) (Just release) -- writes the deploy state to '.hapistrano_deploy_state'
 
--- | Deploys!
-deploy :: HC.Config -> Task -> Natural -> Bool -> Hapistrano ()
-deploy HC.Config{..} task keepReleases keepOneFailed = do
+-- | Deploys a new release
+deploy
+  :: HC.Config -- ^ Deploy configuration
+  -> ReleaseFormat -- ^ Long or Short format
+  -> Natural -- ^ Number of releases to keep
+  -> Bool -- ^ Wheter we should keep one failed release or not
+  -> Hapistrano ()
+deploy HC.Config{..} releaseFormat keepReleases keepOneFailed = do
   forM_ configRunLocally playScriptLocally
   release <- if configVcAction
               then pushRelease task
@@ -181,6 +186,12 @@ deploy HC.Config{..} task keepReleases keepOneFailed = do
           throwM e
         Nothing -> do
           throwM e
+    task =
+      Task
+      { taskDeployPath    = configDeployPath
+      , taskSource        = configSource
+      , taskReleaseFormat = releaseFormat
+      }
 
 -- | Activates one of already deployed releases.
 
