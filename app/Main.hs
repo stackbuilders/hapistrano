@@ -11,21 +11,15 @@ import           Control.Monad
 #if !MIN_VERSION_base(4,13,0)
 import           Data.Monoid                   ((<>))
 #endif
-import           Control.Monad.Catch           (catch, throwM)
 import           Data.Version                  (showVersion)
 import qualified Data.Yaml.Config              as Yaml
 import           Development.GitRev
 import           Formatting                    (formatToString, string, (%))
 import           Options.Applicative           hiding (str)
-import           Path
-import           Path.IO
 import           Paths_hapistrano              (version)
 import           System.Exit
-import           System.Hapistrano             (createHapistranoDeployState)
 import qualified System.Hapistrano             as Hap
-import qualified System.Hapistrano.Commands    as Hap
 import qualified System.Hapistrano.Config      as C
-import qualified System.Hapistrano.Core        as Hap
 import qualified System.Hapistrano.Maintenance as Hap
 import           System.Hapistrano.Types
 import           System.IO
@@ -127,62 +121,21 @@ data Message
 main :: IO ()
 main = do
   Opts{..} <- execParser parserInfo
-  C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
+  hapConfig@C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
   chan <- newTChanIO
-  let task rf = Task { taskDeployPath    = configDeployPath
-                     , taskSource        = configSource
-                     , taskReleaseFormat = rf }
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap shell sshOpts = do
         r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
-              let releaseFormat = fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat
-                  keepReleases = fromMaybeKeepReleases cliKeepReleases configKeepReleases
-                  keepOneFailed = cliKeepOneFailed || configKeepOneFailed
-                  -- We define the handler for when an exception happens inside a deployment
-                  failStateAndThrow e@(HapistranoException (_, maybeRelease)) = do
-                    case maybeRelease of
-                      (Just release) -> do
-                        createHapistranoDeployState configDeployPath release Fail
-                        Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
-                        throwM e
-                      Nothing -> do
-                        throwM e
-              in do
-                forM_ configRunLocally Hap.playScriptLocally
-                release <- if configVcAction
-                            then Hap.pushRelease (task releaseFormat)
-                            else Hap.pushReleaseWithoutVc (task releaseFormat)
-                rpath <- Hap.releasePath configDeployPath release configWorkingDir
-                forM_ (toMaybePath configSource) $ \src ->
-                  Hap.scpDir src rpath (Just release)
-                forM_ configCopyFiles $ \(C.CopyThing src dest) -> do
-                  srcPath  <- resolveFile' src
-                  destPath <- parseRelFile dest
-                  let dpath = rpath </> destPath
-                  (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
-                  Hap.scpFile srcPath dpath (Just release)
-                forM_ configCopyDirs $ \(C.CopyThing src dest) -> do
-                  srcPath  <- resolveDir' src
-                  destPath <- parseRelDir dest
-                  let dpath = rpath </> destPath
-                  (flip Hap.exec (Just release) . Hap.MkDir . parent) dpath
-                  Hap.scpDir srcPath dpath (Just release)
-                forM_ configLinkedFiles
-                  $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
-                forM_ configLinkedDirs
-                  $ flip (Hap.linkToShared configTargetSystem rpath configDeployPath) (Just release)
-                forM_ configBuildScript (Hap.playScript configDeployPath release configWorkingDir)
-                Hap.activateRelease configTargetSystem configDeployPath release
-                forM_ configRestartCommand (flip Hap.exec $ Just release)
-                Hap.createHapistranoDeployState configDeployPath release System.Hapistrano.Types.Success
-                Hap.dropOldReleases configDeployPath keepReleases keepOneFailed
-              `catch` failStateAndThrow
-            Rollback n -> do
-              Hap.rollback configTargetSystem configDeployPath n
-              forM_ configRestartCommand (flip Hap.exec Nothing)
+              Hap.deploy
+                hapConfig
+                (fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat)
+                (fromMaybeKeepReleases cliKeepReleases configKeepReleases)
+                (cliKeepOneFailed || configKeepOneFailed)
+            Rollback n ->
+              Hap.rollback configTargetSystem configDeployPath n configRestartCommand
             Maintenance Enable-> do
               Hap.writeMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
             Maintenance _ -> do
