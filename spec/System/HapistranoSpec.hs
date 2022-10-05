@@ -256,6 +256,14 @@ spec = do
                 Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
           Hap.exec rc Nothing `shouldReturn` rpath
           Path.IO.doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+    describe "rollback to non-exist release" $ do
+      it "trying to rollback to a non-exist release, should throw exception" $ \(deployPath, repoPath) ->
+        (runHap $ do
+           let task = mkTask deployPath repoPath
+               noCmd = Nothing
+           rs <- replicateM 5 (Hap.pushRelease task)
+           Hap.rollback currentSystem deployPath 6 noCmd) `shouldThrow`
+        anyException
     describe "dropOldReleases" $ do
       it "works" $ \(deployPath, repoPath) ->
         runHap $ do
