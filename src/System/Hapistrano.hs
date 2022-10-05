@@ -12,6 +12,7 @@
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module System.Hapistrano
   ( runHapistrano
@@ -20,6 +21,7 @@ module System.Hapistrano
   , activateRelease
   , linkToShared
   , createHapistranoDeployState
+  , deploy
   , rollback
   , dropOldReleases
   , playScript
@@ -32,21 +34,25 @@ module System.Hapistrano
   , deployState )
 where
 
+import           Control.Exception          (try)
 import           Control.Monad
+import           Control.Monad.Catch        (catch, throwM)
 import           Control.Monad.Except
-import           Control.Monad.Reader       (local, runReaderT)
+import           Control.Monad.Reader       (local)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
 import           Data.Time
 import           Numeric.Natural
 import           Path
+import           Path.IO
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Config   (deployStateFilename)
+import           System.Hapistrano.Config   (CopyThing (..),
+                                             deployStateFilename)
+import qualified System.Hapistrano.Config   as HC
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
 import           Text.Read                  (readMaybe)
-import Path.IO  (doesDirExist)
 
 ----------------------------------------------------------------------------
 
@@ -67,9 +73,9 @@ runHapistrano sshOptions shell' printFnc m =
             , configShellOptions = shell'
             , configPrint = printFnc
             }
-    r <- runReaderT (runExceptT m) config
+    r <- try @HapistranoException $ unHapistrano m config
     case r of
-      Left (Failure n msg, _) -> do
+      Left (HapistranoException (Failure n msg, _)) -> do
         forM_ msg (printFnc StderrDest)
         return (Left n)
       Right x -> return (Right x)
@@ -138,18 +144,73 @@ createHapistranoDeployState deployPath release state = do
   exec (Touch stateFilePath) (Just release) -- creates '.hapistrano_deploy_state'
   exec (BasicWrite stateFilePath $ show state) (Just release) -- writes the deploy state to '.hapistrano_deploy_state'
 
+-- | Deploys a new release
+deploy
+  :: HC.Config -- ^ Deploy configuration
+  -> ReleaseFormat -- ^ Long or Short format
+  -> Natural -- ^ Number of releases to keep
+  -> Bool -- ^ Wheter we should keep one failed release or not
+  -> Hapistrano ()
+deploy HC.Config{..} releaseFormat keepReleases keepOneFailed = do
+  forM_ configRunLocally playScriptLocally
+  release <- if configVcAction
+              then pushRelease task
+              else pushReleaseWithoutVc task
+  rpath <- releasePath configDeployPath release configWorkingDir
+  forM_ (toMaybePath configSource) $ \src ->
+    scpDir src rpath (Just release)
+  forM_ configCopyFiles $ \(CopyThing src dest) -> do
+    srcPath  <- resolveFile' src
+    destPath <- parseRelFile dest
+    let dpath = rpath </> destPath
+    (flip exec (Just release) . MkDir . parent) dpath
+    scpFile srcPath dpath (Just release)
+  forM_ configCopyDirs $ \(CopyThing src dest) -> do
+    srcPath  <- resolveDir' src
+    destPath <- parseRelDir dest
+    let dpath = rpath </> destPath
+    (flip exec (Just release) . MkDir . parent) dpath
+    scpDir srcPath dpath (Just release)
+  forM_ configLinkedFiles
+    $ flip (linkToShared configTargetSystem rpath configDeployPath) (Just release)
+  forM_ configLinkedDirs
+    $ flip (linkToShared configTargetSystem rpath configDeployPath) (Just release)
+  forM_ configBuildScript (playScript configDeployPath release configWorkingDir)
+  activateRelease configTargetSystem configDeployPath release
+  forM_ configRestartCommand (flip exec $ Just release)
+  createHapistranoDeployState configDeployPath release Success
+  dropOldReleases configDeployPath keepReleases keepOneFailed
+  `catch` failStateAndThrow
+    where
+    failStateAndThrow e@(HapistranoException (_, maybeRelease)) = do
+      case maybeRelease of
+        (Just release) -> do
+          createHapistranoDeployState configDeployPath release Fail
+          dropOldReleases configDeployPath keepReleases keepOneFailed
+          throwM e
+        Nothing -> do
+          throwM e
+    task =
+      Task
+      { taskDeployPath    = configDeployPath
+      , taskSource        = configSource
+      , taskReleaseFormat = releaseFormat
+      }
+
 -- | Activates one of already deployed releases.
 
 rollback
   :: TargetSystem
   -> Path Abs Dir      -- ^ Deploy path
   -> Natural           -- ^ How many releases back to go, 0 re-activates current
+  -> Maybe GenericCommand -- ^ Restart command
   -> Hapistrano ()
-rollback ts deployPath n = do
+rollback ts deployPath n mbRestartCommand = do
   releases <- releasesWithState Success deployPath
   case genericDrop n releases of
     [] -> failWith 1 (Just "Could not find the requested release to rollback to.") Nothing
     (x:_) -> activateRelease ts deployPath x
+  forM_ mbRestartCommand (`exec` Nothing)
 
 -- | Remove older releases to avoid filling up the target host filesystem.
 
@@ -218,9 +279,10 @@ ensureCacheInPlace repo deployPath maybeRelease = do
   let cpath = cacheRepoPath deployPath
       refs  = cpath </> $(mkRelDir "refs")
   exists <- (exec (Ls refs) Nothing >> return True)
-    `catchError` const (return False)
+    `catch` (\(_ :: HapistranoException)  -> return False)
   unless exists $
     exec (GitClone True (Left repo) cpath) maybeRelease
+  exec (Cd cpath (GitSetOrigin repo)) maybeRelease
   exec (Cd cpath (GitFetch "origin")) maybeRelease -- TODO store this in task description?
 
 -- | Create a new release identifier based on current timestamp.
