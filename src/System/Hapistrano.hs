@@ -127,7 +127,7 @@ activateRelease ts deployPath release = do
     exec (Ln ts rpath tpath) (Just release) -- create a symlink for the new candidate
     exec (Mv ts tpath cpath) (Just release) -- atomically replace the symlink
   else
-    failWith 1 (Just "The path to the release you want to rollback to does not exist.") (Just release)
+    failWith 1 (Just $ "The release path '" <> show rpath <> "' cannot be activated.") (Just release)
 
 -- | Creates the file @.hapistrano__state@ containing
 -- @fail@ or @success@ depending on how the deployment ended.
