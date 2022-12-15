@@ -261,7 +261,7 @@ spec = do
         (runHap $ do
            let task = mkTask deployPath repoPath
                noCmd = Nothing
-           rs <- replicateM 5 (Hap.pushRelease task)
+           replicateM_ 5 (Hap.pushRelease task)
            Hap.rollback currentSystem deployPath 6 noCmd) `shouldThrow`
         anyException
     describe "dropOldReleases" $ do
