@@ -1,0 +1,17 @@
+---
+name: Nix
+
+on: push
+
+concurrency:
+  group: nix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v18
+      - run: nix develop -c cabal configure --enable-tests
+      - run: nix develop -c cabal build
