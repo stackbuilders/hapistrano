@@ -14,4 +14,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
       - run: nix develop -c cabal configure --enable-tests
+      - run: nix develop -c cabal update
       - run: nix develop -c cabal build
