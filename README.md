@@ -262,21 +262,18 @@ Check the documentation [here](.github/workflows/README.md)
 
 ## Nix
 
-If you want to use Nix for building Hapistrano, the required release.nix and default.nix are available.
+### Requirements
 
-For installing the hap binary in your local path:
-```bash
-nix-env -i hapistrano -f release.nix
-```
-For developing Hapistrano with Nix, you can create a development environment using:
-```bash
-nix-shell --attr env release.nix
+- Install [Nix](https://nixos.org/download.html) with
+  [Flakes](https://nixos.wiki/wiki/Flakes) enabled
+
+### TODO
+
+```sh
+nix develop .#ghc810
+nix develop .#ghc90
 ```
 
-For just building Hapistrano, you just:
-```bash
-nix-build release.nix
-```
 ## Enable/disable maintenance mode
 
 Present a maintenance page to visitors. Disables your application's web interface by writing a {maintenance_filename} file to each web server. The servers must be configured to detect the presence of this file, and if it is present, always display it instead of performing the request.
