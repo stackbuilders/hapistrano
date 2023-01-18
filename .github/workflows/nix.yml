@@ -32,3 +32,4 @@ jobs:
       - run: nix develop .#${{ matrix.devShell }} -c cabal update
       - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
       - run: nix develop .#${{ matrix.devShell }} -c cabal build
+      - run: nix develop .#${{ matrix.devShell }} -c cabal test
