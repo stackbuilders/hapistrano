@@ -9,26 +9,31 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
         devShell:
           - ghc810
           - ghc90
 
       fail-fast: true
 
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
+      # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
       - uses: actions/cache@v3
         with:
           path: |
             ~/.cabal/packages
             ~/.cabal/store
             dist-newstyle
-          key: ${{ matrix.devShell }}-${{ hashFiles('*.cabal', 'cabal.project.freeze') }}
-          restore-keys: ${{ matrix.devShell }}-
+          key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
       - run: nix develop .#${{ matrix.devShell }} -c cabal update
       - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
       - run: nix develop .#${{ matrix.devShell }} -c cabal build
