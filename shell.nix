@@ -1,14 +1,14 @@
-{ pkgs, version ? "90" }:
+{ pkgs, ghcVersion ? "9.0" }:
 
 let
   supportedGhcVersions = {
-    "810" = pkgs.haskell.compiler.ghc810;
-    "90" = pkgs.haskell.compiler.ghc90;
+    "8.10" = pkgs.haskell.compiler.ghc810;
+    "9.0" = pkgs.haskell.compiler.ghc90;
   };
 in
 pkgs.mkShell {
   buildInputs = [
     pkgs.cabal-install
-    supportedGhcVersions.${version}
+    supportedGhcVersions.${ghcVersion}
   ];
 }

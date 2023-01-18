@@ -10,9 +10,25 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        devShell:
+          - ghc810
+          - ghc90
+
+      fail-fast: true
+
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
-      - run: nix develop -c cabal configure --enable-tests
-      - run: nix develop -c cabal update
-      - run: nix develop -c cabal build
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/packages
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ matrix.devShell }}-${{ hashFiles('*.cabal', 'cabal.project.freeze') }}
+          restore-keys: ${{ matrix.devShell }}-
+      - run: nix develop .#${{ matrix.devShell }} -c cabal update
+      - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
+      - run: nix develop .#${{ matrix.devShell }} -c cabal build
