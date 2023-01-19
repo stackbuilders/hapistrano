@@ -1,4 +1,4 @@
-{ pkgs, ghcVersion ? "9.0" }:
+{ pkgs, haskell, ghcVersion ? "9.0" }:
 
 let
   supportedGhcVersions = {
