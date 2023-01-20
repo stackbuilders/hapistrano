@@ -12,14 +12,14 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          # - ubuntu-latest
           - macos-latest
         devShell:
-          - ghc810
-          - ghc90
-        exclude:
-          - os: macos-latest
-            devShell: ghc810
+          - ghc8107
+          # - ghc90
+        # exclude:
+        #   - os: macos-latest
+        #     devShell: ghc810
 
       fail-fast: true
 
@@ -28,6 +28,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
+        with:
+          extra_nix_config: |
+            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+            substituters = https://cache.iog.io
       # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
       - uses: actions/cache@v3
         with:
@@ -37,7 +41,8 @@ jobs:
             dist-newstyle
           key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
           restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
-      - run: nix develop .#${{ matrix.devShell }} -c cabal update
-      - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
-      - run: nix develop .#${{ matrix.devShell }} -c cabal build
-      - run: nix develop .#${{ matrix.devShell }} -c cabal test
+      # https://serokell.io/blog/practical-nix-flakes
+      - run: nix develop github:input-output-hk/haskell.nix#${{ matrix.devShell }} -c cabal update
+      - run: nix develop github:input-output-hk/haskell.nix#${{ matrix.devShell }} -c cabal configure --enable-tests
+      - run: nix develop github:input-output-hk/haskell.nix#${{ matrix.devShell }} -c cabal build
+      - run: nix develop github:input-output-hk/haskell.nix#${{ matrix.devShell }} -c cabal test
