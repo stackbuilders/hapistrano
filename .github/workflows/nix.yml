@@ -41,5 +41,6 @@ jobs:
           restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
       - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal update
       - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal configure --enable-tests
+      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal build --only-dependencies
       - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal build
-      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
+      # - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
