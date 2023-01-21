@@ -23,7 +23,7 @@
         };
       in
       {
-        devShells.default = pkgs.mkShell {
+        devShells.ghc810 = pkgs.mkShell {
           buildInputs = [
             pkgs.cabal-install
             pkgs.haskell-nix.compiler.ghc8107

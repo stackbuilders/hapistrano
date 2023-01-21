@@ -12,10 +12,10 @@ jobs:
     strategy:
       matrix:
         os:
-          # - ubuntu-latest
           - macos-latest
+          - ubuntu-latest
         devShell:
-          - ghc8107
+          - ghc810
           # - ghc90
         # exclude:
         #   - os: macos-latest
@@ -41,7 +41,7 @@ jobs:
             dist-newstyle
           key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
           restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
-      - run: nix develop .#${{ matrix.devShell }} -c cabal update
-      - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
-      - run: nix develop .#${{ matrix.devShell }} -c cabal build
-      - run: nix develop .#${{ matrix.devShell }} -c cabal test
+      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal update
+      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal configure --enable-tests
+      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal build
+      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
