@@ -29,7 +29,7 @@
             buildInputs = [
               pkgs.cabal-install
               pkgs.haskell-nix.compiler.ghc8107
-              pkgs.stdenv.cc.cc.lib
+              # pkgs.stdenv.cc.cc.lib
             ];
           };
           ghc90 = pkgs.mkShell {
