@@ -8,26 +8,36 @@
   outputs = { self, flake-utils, haskellNix, nixpkgs }:
     let
       supportedSystems = [
+        "aarch64-darwin"
+        "aarch64-linux"
         "x86_64-darwin"
         "x86_64-linux"
-        # "aarch64-darwin"
-        # "aarch64-linux"
       ];
     in
     flake-utils.lib.eachSystem supportedSystems (system:
       let
         overlays = [ haskellNix.overlay ];
         pkgs = import nixpkgs {
-          inherit system overlays;
+          system = if system == "aarch64-darwin" then "x86_64-darwin" else system;
+          inherit overlays;
           inherit (haskellNix) config;
         };
       in
       {
-        devShells.ghc810 = pkgs.mkShell {
-          buildInputs = [
-            pkgs.cabal-install
-            pkgs.haskell-nix.compiler.ghc8107
-          ];
+        devShells = rec {
+          ghc810 = pkgs.mkShell {
+            buildInputs = [
+              pkgs.cabal-install
+              pkgs.haskell-nix.compiler.ghc8107
+            ];
+          };
+          ghc90 = pkgs.mkShell {
+            buildInputs = [
+              pkgs.cabal-install
+              pkgs.haskell-nix.compiler.ghc902
+            ];
+          };
+          default = ghc90;
         };
       });
 
