@@ -35,6 +35,7 @@
           ghc90 = pkgs.mkShell {
             buildInputs = [
               pkgs.cabal-install
+              pkgs.gmp.dev
               pkgs.haskell-nix.compiler.ghc902
             ];
           };

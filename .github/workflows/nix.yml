@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
         with:
-          # https://github.com/cachix/install-nix-action#how-do-i-add-a-binary-cache
+          # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
           extra_nix_config: |
             trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             substituters = https://cache.iog.io https://cache.nixos.org/
