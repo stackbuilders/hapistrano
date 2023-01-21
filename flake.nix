@@ -1,21 +1,45 @@
 {
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    haskell.url = "github:input-output-hk/haskell.nix";
-    nixpkgs.url = "nixpkgs/nixos-22.11-small";
+    haskellNix.url = "github:input-output-hk/haskell.nix";
+    nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   };
 
-  outputs = { self, flake-utils, haskell, nixpkgs }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, flake-utils, haskellNix, nixpkgs }:
+    let
+      supportedSystems = [
+        "x86_64-darwin"
+        "x86_64-linux"
+        # "aarch64-darwin"
+        # "aarch64-linux"
+      ];
+    in
+    flake-utils.lib.eachSystem supportedSystems (system:
       let
-        overlays = [ haskell.overlay ];
-        pkgs = import nixpkgs { inherit system overlays; inherit (haskell) config; };
+        overlays = [ haskellNix.overlay ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+          inherit (haskellNix) config;
+        };
       in
-      rec {
-        devShells = {
-          ghc810 = import ./shell.nix { inherit pkgs haskell; ghcVersion = "8.10"; };
-          ghc90 = import ./shell.nix { inherit pkgs haskell; ghcVersion = "9.0"; };
-          default = devShells.ghc90;
+      {
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            pkgs.cabal-install
+            pkgs.haskell-nix.compiler.ghc8107
+          ];
         };
       });
+
+  # --- Flake Local Nix Configuration ----------------------------
+  nixConfig = {
+    # This sets the flake to use the IOG nix cache.
+    # Nix should ask for permission before using it,
+    # but remove it here if you do not want it to.
+    extra-substituters = [ "https://cache.iog.io" ];
+    extra-trusted-public-keys = [
+      "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
+    ];
+    allow-import-from-derivation = "true";
+  };
 }
