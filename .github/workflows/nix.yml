@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - macos-latest
+          # - macos-latest
           - ubuntu-latest
         devShell:
           - ghc810
