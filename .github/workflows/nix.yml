@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v18
         with:
+          # TODO: required only to install nix-info
           nix_path: nixpkgs=channel:nixos-unstable
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
           extra_nix_config: |
@@ -34,17 +35,18 @@ jobs:
       # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
       - run: nix-shell -p nix-info --run "nix-info -m"
       - run: ls -al /usr/lib/x86_64-linux-gnu/ | grep libstd
-      # - uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       ~/.cabal/packages
-      #       ~/.cabal/store
-      #       dist-newstyle
-      #     key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
-      #     restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
-      # - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
-      # - run: nix develop .#${{ matrix.devShell }} -c cabal update
-      # - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
-      # - run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
-      # - run: nix develop .#${{ matrix.devShell }} -c cabal build
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/packages
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
+      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
+      - run: nix develop .#${{ matrix.devShell }} -c cabal update
+      - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
+      - run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
+      - run: nix develop .#${{ matrix.devShell }} -c cabal clean
+      - run: nix develop .#${{ matrix.devShell }} -c cabal build
       # - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
