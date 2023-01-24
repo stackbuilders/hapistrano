@@ -33,6 +33,7 @@ jobs:
             substituters = https://cache.iog.io https://cache.nixos.org
       # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
       - run: nix-shell -p nix-info --run "nix-info -m"
+      - run: ls -al /usr/lib/x86_64-linux-gnu/ | grep libstd
       # - uses: actions/cache@v3
       #   with:
       #     path: |
