@@ -39,7 +39,10 @@ jobs:
             dist-newstyle
           key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
           restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
-      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
+      - run: |
+          sudo apt update
+          sudo apt install -y libstdc++6
+      - ruN: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
       - run: nix develop .#${{ matrix.devShell }} -c cabal update
       - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
       - run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
