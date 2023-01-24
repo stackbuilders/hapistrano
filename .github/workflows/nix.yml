@@ -31,20 +31,18 @@ jobs:
             trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             substituters = https://cache.iog.io https://cache.nixos.org
       # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cabal/packages
-            ~/.cabal/store
-            dist-newstyle
-          key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
-      - run: |
-          sudo apt update
-          sudo apt install -y libstdc++6
-      - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
-      - run: nix develop .#${{ matrix.devShell }} -c cabal update
-      - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
-      - run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
-      - run: nix develop .#${{ matrix.devShell }} -c cabal build
+      - run: nix-shell -p nix-info --run "nix-info -m"
+      # - uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/.cabal/packages
+      #       ~/.cabal/store
+      #       dist-newstyle
+      #     key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
+      #     restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
+      # - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
+      # - run: nix develop .#${{ matrix.devShell }} -c cabal update
+      # - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
+      # - run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
+      # - run: nix develop .#${{ matrix.devShell }} -c cabal build
       # - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
