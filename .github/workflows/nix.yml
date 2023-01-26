@@ -12,11 +12,14 @@ jobs:
     strategy:
       matrix:
         os:
-          # - macos-latest
+          - macos-latest
           - ubuntu-latest
         devShell:
-          # - ghc810
+          - ghc810
           - ghc90
+        exclude:
+          - os: macos-latest
+            devShell: ghc90
 
       fail-fast: true
 
@@ -44,4 +47,4 @@ jobs:
       - run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
       - run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
       - run: nix develop .#${{ matrix.devShell }} -c cabal build
-      # - run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
+      # -  run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test

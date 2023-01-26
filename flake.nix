@@ -9,7 +9,6 @@
     let
       supportedSystems = [
         "aarch64-darwin"
-        "aarch64-linux"
         "x86_64-darwin"
         "x86_64-linux"
       ];
@@ -25,18 +24,8 @@
       in
       {
         devShells = rec {
-          ghc810 = pkgs.mkShell {
-            buildInputs = [
-              pkgs.cabal-install
-              pkgs.haskell-nix.compiler.ghc8107
-            ];
-          };
-          ghc90 = pkgs.mkShell {
-            buildInputs = [
-              pkgs.cabal-install
-              pkgs.haskell-nix.compiler.ghc902
-            ];
-          };
+          ghc810 = import ./shell.nix { inherit pkgs; ghcVersion = "8.10"; };
+          ghc90 = import ./shell.nix { inherit pkgs; ghcVersion = "9.0"; };
           default = ghc90;
         };
       });
