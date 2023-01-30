@@ -19,7 +19,7 @@ jobs:
           - ghc90
         exclude:
           - os: macos-latest
-            devShell: ghc810
+            devShell: ghc90
 
       fail-fast: true
 
