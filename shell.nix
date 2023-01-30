@@ -12,7 +12,8 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    supportedGhcVersions.${ghcVersion}
     pkgs.cabal-install
+    pkgs.zsh
+    supportedGhcVersions.${ghcVersion}
   ];
 }
