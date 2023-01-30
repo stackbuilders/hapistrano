@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+nix develop .#ghc90 --accept-flake-config "$@"

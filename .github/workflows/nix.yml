@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - macos-latest
+          # - macos-latest
           - ubuntu-latest
         devShell:
           - ghc810
@@ -42,14 +42,15 @@ jobs:
             dist-newstyle
           key: ${{ matrix.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
           restore-keys: ${{ matrix.os }}-${{ matrix.devShell }}-
-      - name: Print GHC version
-        run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c ghc --version
-      - name: Update packages index
-        run: nix develop .#${{ matrix.devShell }} -c cabal update
+      - name: Install packages via Nix
+        run: ./bin/${{ matrix.devShell }} -c ghc --version
+      - name: Update package index
+        run: ./bin/${{ matrix.devShell }} -c cabal update
       - name: Enable tests
-        run: nix develop .#${{ matrix.devShell }} -c cabal configure --enable-tests
+        run: ./bin/${{ matrix.devShell }} -c cabal configure --enable-tests
       - name: Install project dependencies
-        run: nix develop .#${{ matrix.devShell }} -c cabal build --only-dependencies
+        run: ./bin/${{ matrix.devShell }} -c cabal build --only-dependencies
       - name: Compile project
-        run: nix develop .#${{ matrix.devShell }} -c cabal build
-      # -  run: nix develop .#${{ matrix.devShell }} --accept-flake-config -c cabal test
+        run: ./bin/${{ matrix.devShell }} -c cabal build
+      - name: Run tests
+        run: ./bin/${{ matrix.devShell }} -c cabal test
