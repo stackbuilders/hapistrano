@@ -15,10 +15,10 @@
     in
     flake-utils.lib.eachSystem supportedSystems (system:
       let
-        overlays = [ haskellNix.overlay ];
+        # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
         pkgs = import nixpkgs {
           system = if system == "aarch64-darwin" then "x86_64-darwin" else system;
-          inherit overlays;
+          overlays = [ haskellNix.overlay ];
           inherit (haskellNix) config;
         };
       in
