@@ -260,19 +260,71 @@ image reference as follows:
 
 Check the documentation [here](.github/workflows/README.md)
 
-## Nix
+## Development
 
 ### Requirements
 
-- Install [Nix](https://nixos.org/download.html) with
-  [Flakes](https://nixos.wiki/wiki/Flakes) enabled
+- Install [Zsh](https://www.zsh.org/)
+- Use [GHCup][ghcup] to install:
+  - GHC 9.0.2
+  - Cabal 3.x
 
-### TODO
+Alternatively, install only [Nix](https://nixos.org/download.html) and enable
+[Flakes](https://nixos.wiki/wiki/Flakes).
+
+**Note for Mac users:** Setup IOHK [binary
+cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html#setting-up-the-binary-cache).
+
+### Getting Started
+
+Update package index:
 
 ```sh
-nix develop .#ghc810
-nix develop .#ghc90
+cabal update
 ```
+
+Enable tests:
+
+```sh
+cabal configure --enable-tests
+```
+
+Install project dependencies:
+
+```sh
+cabal build --only-dependencies
+```
+
+Compile the project:
+
+```sh
+cabal build
+```
+
+Run tests:
+
+```sh
+cabal test
+```
+
+### Switching between different GHC versions
+
+Use [GHCup][ghcup] to install additional GHC versions like 8.10 or use Nix to
+easily switch between different versions:
+
+Spawn a BASH shell with GHC 9.0:
+
+```sh
+./bin/ghc90
+```
+
+Or GHC 8.10:
+
+```sh
+./bin/ghc810
+```
+
+Run the commands detailed in the [Getting Started](#getting-started) section.
 
 ## Enable/disable maintenance mode
 
@@ -305,3 +357,5 @@ Do you want to contribute to this project? Please take a look at our [contributi
 ---
 <img src="https://cdn.stackbuilders.com/media/images/Sb-supports.original.png" alt="Stack Builders" width="50%"></img>
 [Check out our libraries](https://github.com/stackbuilders/) | [Join our team](https://www.stackbuilders.com/join-us/)
+
+[ghcup]: https://www.haskell.org/ghcup/
