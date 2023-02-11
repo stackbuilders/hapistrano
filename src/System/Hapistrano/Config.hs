@@ -37,50 +37,50 @@ import           System.Hapistrano.Types    (ReleaseFormat (..), Shell (..),
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
 
 data Config = Config
-  { configDeployPath     :: !(Path Abs Dir)
+  { configDeployPath           :: !(Path Abs Dir)
     -- ^ Top-level deploy directory on target machine
-  , configHosts          :: ![Target]
+  , configHosts                :: ![Target]
     -- ^ Hosts\/ports\/shell\/ssh args to deploy to. If empty, localhost will be assumed.
-  , configSource         :: !Source
+  , configSource               :: !Source
     -- ^ Location of the 'Source' that contains the code to deploy
-  , configRestartCommand :: !(Maybe GenericCommand)
+  , configRestartCommand       :: !(Maybe GenericCommand)
     -- ^ The command to execute when switching to a different release
     -- (usually after a deploy or rollback).
-  , configBuildScript    :: !(Maybe [GenericCommand])
+  , configBuildScript          :: !(Maybe [GenericCommand])
     -- ^ Build script to execute to build the project
-  , configCopyFiles      :: ![CopyThing]
+  , configCopyFiles            :: ![CopyThing]
     -- ^ Collection of files to copy over to target machine before building
-  , configCopyDirs       :: ![CopyThing]
+  , configCopyDirs             :: ![CopyThing]
     -- ^ Collection of directories to copy over to target machine before building
-  , configLinkedFiles    :: ![FilePath]
+  , configLinkedFiles          :: ![FilePath]
     -- ^ Collection of files to link from each release to _shared_
-  , configLinkedDirs     :: ![FilePath]
+  , configLinkedDirs           :: ![FilePath]
     -- ^ Collection of directories to link from each release to _shared_
-  , configVcAction       :: !Bool
+  , configVcAction             :: !Bool
   -- ^ Perform version control related actions. By default, it's assumed to be `True`.
-  , configRunLocally     :: !(Maybe [GenericCommand])
+  , configRunLocally           :: !(Maybe [GenericCommand])
   -- ^ Perform a series of commands on the local machine before communication
   -- with target server starts
-  , configTargetSystem   :: !TargetSystem
+  , configTargetSystem         :: !TargetSystem
   -- ^ Optional parameter to specify the target system. It's GNU/Linux by
   -- default
-  , configReleaseFormat  :: !(Maybe ReleaseFormat)
+  , configReleaseFormat        :: !(Maybe ReleaseFormat)
   -- ^ The release timestamp format, the @--release-format@ argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to short
-  , configKeepReleases   :: !(Maybe Natural)
+  , configKeepReleases         :: !(Maybe Natural)
   -- ^ The number of releases to keep, the @--keep-releases@ argument passed via
   -- the CLI takes precedence over this value. If neither CLI or configuration
   -- file value is specified, it defaults to 5
-  , configKeepOneFailed  :: !Bool
+  , configKeepOneFailed        :: !Bool
   -- ^ Specifies whether to keep all failed releases along with the successful releases
   -- or just the latest failed (at least this one should be kept for debugging purposes).
   -- The @--keep-one-failed@ argument passed via the CLI takes precedence over this value.
   -- If neither CLI or configuration file value is specified, it defaults to `False`
   -- (i.e. keep all failed releases).
-  , configWorkingDir :: !(Maybe (Path Rel Dir))
+  , configWorkingDir           :: !(Maybe (Path Rel Dir))
   , configMaintenanceDirectory :: !(Path Rel Dir)
-  , configMaintenanceFileName :: !(Path Rel File)
+  , configMaintenanceFileName  :: !(Path Rel File)
   } deriving (Eq, Ord, Show)
 
 -- | Information about source and destination locations of a file\/directory
@@ -115,8 +115,7 @@ instance FromJSON Config where
         <*> grabPort m
         <*> grabShell m
         <*> grabSshArgs m)
-    let first Target{} = host
-        configHosts = nubBy ((==) `on` first)
+    let configHosts = nubBy ((==) `on` targetHost)
           (maybeToList (Target <$> host <*> pure port <*> pure shell <*> pure sshArgs) ++ hs)
         source m =
               GitRepository <$> m .: "repo" <*> m .: "revision"
