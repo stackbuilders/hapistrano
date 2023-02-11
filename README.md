@@ -1,4 +1,4 @@
-[![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
+[![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
 
