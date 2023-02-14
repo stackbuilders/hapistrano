@@ -42,23 +42,17 @@ spec =
     describe "Config From JSON instances" $ do
       context "when contains unique targets" $
         it "parses all unique targets" $
-          let mbHosts = fmap targetHost <$> configHosts <$> A.decode content
+          let eiHosts = fmap targetHost <$> configHosts <$> A.eitherDecode content
               content =
                 "{\"targets\":[{\"host\":\"user@app1.com\"},{\"host\":\"user@app2.com\"}],\"deploy_path\":\"/tmp\",\"local_directory\":\"/\"}"
-          in maybe
-              (error "Could not parse hosts")
-              (\hosts -> "user@app1.com" `elem` hosts && "user@app2.com" `elem` hosts)
-              mbHosts
+          in eiHosts `shouldBe` Right ["user@app1.com", "user@app2.com"]
 
       context "when contains duplicated targets" $
         it "parses all only unique targets" $
-          let mbHosts = fmap targetHost <$> configHosts <$> A.decode content
+          let eiHosts = fmap targetHost <$> configHosts <$> A.eitherDecode content
               content =
                 "{\"targets\":[{\"host\":\"user@app1.com\"},{\"host\":\"user@app1.com\"}],\"deploy_path\":\"/tmp\",\"local_directory\":\"/\"}"
-          in maybe
-              (error "Could not parse hosts")
-              (\hosts -> length hosts == 1 && "user@app1.com" `elem` hosts)
-              mbHosts
+          in eiHosts `shouldBe` Right ["user@app1.com"]
 
 
 defaultConfiguration :: Config
