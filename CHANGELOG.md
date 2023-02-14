@@ -1,3 +1,7 @@
+## 0.4.7.0
+### Modified
+* Fix issue #210 which cuased concurrent deploys to pick only the first target.
+
 ## 0.4.6.0
 ### Modified
 * It sets the origin repository (`git remote set-url origin <repo>`) on every pushed release.
