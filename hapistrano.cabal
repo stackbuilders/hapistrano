@@ -7,8 +7,8 @@ description:
   Hapistrano makes it easy to reliably deploy Haskell applications
   to a server.
   .
-  Following popular libraries like Ruby's <http://capistranorb.com/
-  Capistrano>, Hapistrano does the work of building the application
+  Following popular libraries like Ruby's <https://capistranorb.com Capistrano>,
+  Hapistrano does the work of building the application
   with dependencies into a distinct folder, and then atomically moves
   a symlink to the latest complete build.
   .
@@ -16,7 +16,7 @@ description:
   build is complete. Rollback is even simpler, since Hapistrano can
   just point the `current` symlink to the previous release.
   .
-  See <https://github.com/stackbuilders/hapistrano the project readme on GitHub>
+  See <https://github.com/stackbuilders/hapistrano#readme the project readme on GitHub>
   for more information.
   .
 license:             MIT
