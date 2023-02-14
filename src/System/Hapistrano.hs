@@ -120,14 +120,10 @@ activateRelease
   -> Hapistrano ()
 activateRelease ts deployPath release = do
   rpath <- releasePath deployPath release Nothing
-  isRpathExist <- doesDirExist rpath
-  if isRpathExist then do
-    let tpath = tempSymlinkPath deployPath
-        cpath = currentSymlinkPath deployPath
-    exec (Ln ts rpath tpath) (Just release) -- create a symlink for the new candidate
-    exec (Mv ts tpath cpath) (Just release) -- atomically replace the symlink
-  else
-    failWith 1 (Just $ "The release path '" <> show rpath <> "' cannot be activated.") (Just release)
+  let tpath = tempSymlinkPath deployPath
+      cpath = currentSymlinkPath deployPath
+  exec (Ln ts rpath tpath) (Just release) -- create a symlink for the new candidate
+  exec (Mv ts tpath cpath) (Just release) -- atomically replace the symlink
 
 -- | Creates the file @.hapistrano__state@ containing
 -- @fail@ or @success@ depending on how the deployment ended.
@@ -209,7 +205,13 @@ rollback ts deployPath n mbRestartCommand = do
   releases <- releasesWithState Success deployPath
   case genericDrop n releases of
     [] -> failWith 1 (Just "Could not find the requested release to rollback to.") Nothing
-    (x:_) -> activateRelease ts deployPath x
+    (x:_) -> do
+      rpath <- releasePath deployPath x Nothing
+      isRpathExist <- doesDirExist rpath
+      if isRpathExist then do
+        activateRelease ts deployPath x
+      else
+        failWith 1 (Just $ "The release path '" <> show rpath <> "' cannot be activated.") (Just x)
   forM_ mbRestartCommand (`exec` Nothing)
 
 -- | Remove older releases to avoid filling up the target host filesystem.
