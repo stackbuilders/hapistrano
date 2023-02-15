@@ -208,10 +208,9 @@ rollback ts deployPath n mbRestartCommand = do
     (x:_) -> do
       rpath <- releasePath deployPath x Nothing
       isRpathExist <- doesDirExist rpath
-      if isRpathExist then do
-        activateRelease ts deployPath x
-      else
-        failWith 1 (Just $ "The release path '" <> show rpath <> "' cannot be activated.") (Just x)
+      if isRpathExist
+      then activateRelease ts deployPath x
+      else failWith 1 (Just $ "Cannot rollback to the release path '" <> show rpath <> "'.") (Just x)
   forM_ mbRestartCommand (`exec` Nothing)
 
 -- | Remove older releases to avoid filling up the target host filesystem.
