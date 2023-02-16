@@ -1,3 +1,7 @@
+## 0.4.8.0
+### Modified
+* Fix issue before activating release
+
 ## 0.4.7.0
 ### Modified
 * Fix issue #210 which cuased concurrent deploys to pick only the first target.
