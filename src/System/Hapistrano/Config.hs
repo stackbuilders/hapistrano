@@ -12,6 +12,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -19,6 +20,7 @@ module System.Hapistrano.Config
   ( Config (..)
   , CopyThing (..)
   , Target (..)
+  , BuildCommand (..)
   , deployStateFilename)
 where
 
@@ -28,6 +30,7 @@ import           Data.Function              (on)
 import           Data.List                  (nubBy)
 import           Data.Maybe                 (maybeToList)
 import           Data.Yaml
+import           Data.Proxy
 import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
@@ -46,7 +49,7 @@ data Config = Config
   , configRestartCommand       :: !(Maybe GenericCommand)
     -- ^ The command to execute when switching to a different release
     -- (usually after a deploy or rollback).
-  , configBuildScript          :: !(Maybe [GenericCommand])
+  , configBuildScript          :: !(Maybe [BuildCommand])
     -- ^ Build script to execute to build the project
   , configCopyFiles            :: ![CopyThing]
     -- ^ Collection of files to copy over to target machine before building
@@ -99,6 +102,23 @@ data Target =
     , targetSshArgs :: [String]
     } deriving (Eq, Ord, Show)
 
+data BuildCommand = BuildCommand
+  { buildCommandGeneric :: GenericCommand
+  , buildCommandOnlyLead :: Bool
+  } deriving (Eq, Ord, Show)
+
+instance Command BuildCommand where
+  type Result BuildCommand = ()
+  renderCommand (BuildCommand cmd _) = renderCommand cmd
+  parseResult Proxy _ = ()
+
+instance FromJSON BuildCommand where
+  parseJSON (String _) = BuildCommand <$> mkCmd "" <*> pure False
+  parseJSON (Object foo) =
+    BuildCommand <$> (foo .: "command" >>= mkCmd)
+                 <*> foo .:? "only_lead" .!= False
+  parseJSON _ = undefined
+
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do
     configDeployPath <- o .: "deploy_path"
@@ -123,8 +143,7 @@ instance FromJSON Config where
     configSource  <- source o
     configRestartCommand <- (o .:? "restart_command") >>=
       maybe (return Nothing) (fmap Just . mkCmd)
-    configBuildScript <- o .:? "build_script" >>=
-      maybe (return Nothing) (fmap Just . mapM mkCmd)
+    configBuildScript <- o .:? "build_script" .!= Nothing
     configCopyFiles  <- o .:? "copy_files" .!= []
     configCopyDirs   <- o .:? "copy_dirs"  .!= []
     configLinkedFiles <- o .:? "linked_files" .!= []

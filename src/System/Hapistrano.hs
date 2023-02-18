@@ -47,7 +47,7 @@ import           Numeric.Natural
 import           Path
 import           Path.IO
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Config   (CopyThing (..),
+import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
                                              deployStateFilename)
 import qualified System.Hapistrano.Config   as HC
 import           System.Hapistrano.Core
@@ -146,8 +146,9 @@ deploy
   -> ReleaseFormat -- ^ Long or Short format
   -> Natural -- ^ Number of releases to keep
   -> Bool -- ^ Wheter we should keep one failed release or not
+  -> Bool
   -> Hapistrano ()
-deploy HC.Config{..} releaseFormat keepReleases keepOneFailed = do
+deploy HC.Config{..} releaseFormat keepReleases keepOneFailed leadTarget = do
   forM_ configRunLocally playScriptLocally
   release <- if configVcAction
               then pushRelease task
@@ -171,7 +172,7 @@ deploy HC.Config{..} releaseFormat keepReleases keepOneFailed = do
     $ flip (linkToShared configTargetSystem rpath configDeployPath) (Just release)
   forM_ configLinkedDirs
     $ flip (linkToShared configTargetSystem rpath configDeployPath) (Just release)
-  forM_ configBuildScript (playScript configDeployPath release configWorkingDir)
+  forM_ configBuildScript (playScript configDeployPath release configWorkingDir leadTarget)
   activateRelease configTargetSystem configDeployPath release
   forM_ configRestartCommand (flip exec $ Just release)
   createHapistranoDeployState configDeployPath release Success
@@ -238,10 +239,12 @@ playScript
   :: Path Abs Dir         -- ^ Deploy path
   -> Release              -- ^ Release identifier
   -> Maybe (Path Rel Dir) -- ^ Working directory
-  -> [GenericCommand]     -- ^ Commands to execute
+  -> Bool
+  -> [BuildCommand]     -- ^ Commands to execute
   -> Hapistrano ()
-playScript deployDir release mWorkingDir cmds = do
+playScript deployDir release mWorkingDir leadTarget cmds = do
   rpath <- releasePath deployDir release mWorkingDir
+  -- TODO: Do some filtering using leadTarget
   forM_ cmds (flip execWithInheritStdout (Just release) . Cd rpath)
 
 -- | Plays the given script on your machine locally.
