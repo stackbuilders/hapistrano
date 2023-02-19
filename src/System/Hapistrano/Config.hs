@@ -103,8 +103,8 @@ data Target =
     } deriving (Eq, Ord, Show)
 
 data BuildCommand = BuildCommand
-  { buildCommandGeneric :: GenericCommand
-  , buildCommandOnlyLead :: Bool
+  { buildCommandGeneric :: !GenericCommand
+  , buildCommandOnlyLead :: !Bool
   } deriving (Eq, Ord, Show)
 
 instance Command BuildCommand where
