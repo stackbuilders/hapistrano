@@ -156,10 +156,11 @@ main = do
       haps :: [IO (Either Int ())]
       haps =
         case configHosts of
-          [] -> [hap Bash Nothing True] -- localhost, no SSH
+          [] -> [hap Bash Nothing C.OnlyLeadTarget] -- localhost, no SSH
           targets@(leadTarget : _) ->
             let runHap target@C.Target{..} =
-                  hap targetShell (Just $ SshOptions targetHost targetPort targetSshArgs) (leadTarget == target)
+                  hap targetShell (Just $ SshOptions targetHost targetPort targetSshArgs)
+                    (if leadTarget == target then C.OnlyLeadTarget else C.AllTargets)
             in runHap <$> targets
   results <- (runConcurrently . traverse Concurrently)
     ((Right () <$ printer (length haps)) : haps)

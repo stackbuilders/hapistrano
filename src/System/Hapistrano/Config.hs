@@ -21,6 +21,7 @@ module System.Hapistrano.Config
   , CopyThing (..)
   , Target (..)
   , BuildCommand (..)
+  , ExecutionMode (..)
   , deployStateFilename)
 where
 
@@ -34,8 +35,8 @@ import           Data.Proxy
 import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types    (ReleaseFormat (..), Shell (..),
-                                             Source (..), TargetSystem (..))
+import           System.Hapistrano.Types    (ReleaseFormat(..), Shell(..),
+                                             Source(..), TargetSystem(..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
 
@@ -103,9 +104,13 @@ data Target =
     } deriving (Eq, Ord, Show)
 
 data BuildCommand = BuildCommand
-  { buildCommandGeneric :: !GenericCommand
-  , buildCommandOnlyLead :: !Bool
+  -- TODO: rename this field
+  { buildCommandGeneric       :: GenericCommand
+  , buildCommandExecutionMode :: ExecutionMode
   } deriving (Eq, Ord, Show)
+
+data ExecutionMode = OnlyLeadTarget | AllTargets
+  deriving (Eq, Ord, Show)
 
 instance Command BuildCommand where
   type Result BuildCommand = ()
@@ -113,11 +118,15 @@ instance Command BuildCommand where
   parseResult Proxy _ = ()
 
 instance FromJSON BuildCommand where
-  parseJSON (String _) = BuildCommand <$> mkCmd "" <*> pure False
-  parseJSON (Object foo) =
-    BuildCommand <$> (foo .: "command" >>= mkCmd)
-                 <*> foo .:? "only_lead" .!= False
+  parseJSON str@(String _) = BuildCommand <$> (parseJSON str >>= mkCmd) <*> pure AllTargets
+  parseJSON (Object obj) =
+    BuildCommand <$> (obj .: "command" >>= mkCmd)
+                 <*> obj .:? "only_lead" .!= AllTargets
   parseJSON _ = undefined
+
+instance FromJSON ExecutionMode where
+  parseJSON = withBool "" $ \b ->
+    pure $ if b then OnlyLeadTarget else AllTargets
 
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do

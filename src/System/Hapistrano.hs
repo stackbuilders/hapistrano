@@ -47,8 +47,11 @@ import           Numeric.Natural
 import           Path
 import           Path.IO
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
-                                             deployStateFilename)
+import           System.Hapistrano.Config   ( BuildCommand (..)
+                                            , CopyThing (..)
+                                            , ExecutionMode (..)
+                                            , deployStateFilename
+                                            )
 import qualified System.Hapistrano.Config   as HC
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
@@ -146,9 +149,9 @@ deploy
   -> ReleaseFormat -- ^ Long or Short format
   -> Natural -- ^ Number of releases to keep
   -> Bool -- ^ Wheter we should keep one failed release or not
-  -> Bool
+  -> ExecutionMode -- ^ Is running on lead target
   -> Hapistrano ()
-deploy HC.Config{..} releaseFormat keepReleases keepOneFailed leadTarget = do
+deploy HC.Config{..} releaseFormat keepReleases keepOneFailed executionMode = do
   forM_ configRunLocally playScriptLocally
   release <- if configVcAction
               then pushRelease task
@@ -172,7 +175,7 @@ deploy HC.Config{..} releaseFormat keepReleases keepOneFailed leadTarget = do
     $ flip (linkToShared configTargetSystem rpath configDeployPath) (Just release)
   forM_ configLinkedDirs
     $ flip (linkToShared configTargetSystem rpath configDeployPath) (Just release)
-  forM_ configBuildScript (playScript configDeployPath release configWorkingDir leadTarget)
+  forM_ configBuildScript (playScript configDeployPath release configWorkingDir executionMode)
   activateRelease configTargetSystem configDeployPath release
   forM_ configRestartCommand (flip exec $ Just release)
   createHapistranoDeployState configDeployPath release Success
@@ -239,13 +242,15 @@ playScript
   :: Path Abs Dir         -- ^ Deploy path
   -> Release              -- ^ Release identifier
   -> Maybe (Path Rel Dir) -- ^ Working directory
-  -> Bool
-  -> [BuildCommand]     -- ^ Commands to execute
+  -> ExecutionMode        -- ^ Execution mode
+  -> [BuildCommand]       -- ^ Commands to execute
   -> Hapistrano ()
-playScript deployDir release mWorkingDir leadTarget cmds = do
+playScript deployDir release mWorkingDir executionMode cmds = do
   rpath <- releasePath deployDir release mWorkingDir
-  -- TODO: Do some filtering using leadTarget
-  forM_ cmds (flip execWithInheritStdout (Just release) . Cd rpath)
+  forM_ (filter foo cmds) (flip execWithInheritStdout (Just release) . Cd rpath)
+  where
+    -- TODO: Do some filtering using executionMode
+    foo BuildCommand{..} = buildCommandExecutionMode == AllTargets
 
 -- | Plays the given script on your machine locally.
 
