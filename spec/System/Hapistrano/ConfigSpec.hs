@@ -2,24 +2,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module System.HapistranoConfigSpec
+module System.Hapistrano.ConfigSpec
   ( spec
   ) where
 
 import qualified Data.Aeson               as A
+import           Data.Maybe                 (fromJust)
 import           System.Hapistrano.Commands (mkGenericCommand)
-import           System.Hapistrano.Config ( Config (..), Target (..)
-                                          , BuildCommand (..), ExecutionMode (..)
-                                          )
-import           System.Hapistrano.Types  (Shell (..), Source (..),
-                                           TargetSystem (..))
+import           System.Hapistrano.Config   (Config (..), Target (..),
+                                             BuildCommand (..), ExecutionMode (..))
+import           System.Hapistrano.Types    (Shell (..), Source (..),
+                                             TargetSystem (..))
 
-import qualified Data.Yaml.Config         as Yaml
+import qualified Data.Yaml.Config           as Yaml
 #if MIN_VERSION_base(4,15,0)
-import           Path                     (mkAbsDir, mkRelDir, mkRelFile)
+import           Path                       (mkAbsDir, mkRelDir, mkRelFile)
 #else
-import           Path                     (Abs, Dir, File, Rel, mkAbsDir,
-                                           mkRelDir, mkRelFile)
+import           Path                       (Abs, Dir, File, Rel, mkAbsDir,
+                                             mkRelDir, mkRelFile)
 #endif
 import           Test.Hspec
 
@@ -28,21 +28,21 @@ spec :: Spec
 spec =
   describe "Hapistrano's configuration file" $ do
     describe "BuildCommand" $ do
-      fit "" $ do
-        let Just cmd = mkGenericCommand "ls"
-        A.eitherDecode "\"ls\"" `shouldBe` Right (BuildCommand cmd AllTargets)
+      let cmd = fromJust $ mkGenericCommand "ls"
 
-      fit "" $ do
-        let Just cmd = mkGenericCommand "ls"
-        A.eitherDecode "{\"command\":\"ls\"}" `shouldBe` Right (BuildCommand cmd AllTargets)
+      context "when \"only_lead\" is present" $ do
+        it "decodes \"true\" as \"LeadTarget\"" $
+          A.eitherDecode "{\"command\":\"ls\",\"only_lead\":true}" `shouldBe` Right (BuildCommand cmd LeadTarget)
 
-      fit "" $ do
-        let Just cmd = mkGenericCommand "ls"
-        A.eitherDecode "{\"command\":\"ls\",\"only_lead\":true}" `shouldBe` Right (BuildCommand cmd LeadTarget)
+        it "decodes \"false\" as \"AllTargets\"" $
+          A.eitherDecode "{\"command\":\"ls\",\"only_lead\":false}" `shouldBe` Right (BuildCommand cmd AllTargets)
 
-      fit "" $ do
-        let Just cmd = mkGenericCommand "ls"
-        A.eitherDecode "{\"command\":\"ls\",\"only_lead\":false}" `shouldBe` Right (BuildCommand cmd AllTargets)
+      context "when \"only_lead\" is not present" $ do
+        it "decodes a single string" $
+          A.eitherDecode "\"ls\"" `shouldBe` Right (BuildCommand cmd AllTargets)
+
+        it "decodos an object with a \"command\" field" $
+          A.eitherDecode "{\"command\":\"ls\"}" `shouldBe` Right (BuildCommand cmd AllTargets)
 
     context "when the key 'local-repository' is present" $
       it "loads LocalRepository as the configuration's source" $

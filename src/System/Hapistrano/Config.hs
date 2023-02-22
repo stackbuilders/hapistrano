@@ -124,7 +124,7 @@ instance FromJSON BuildCommand where
   parseJSON (Object obj) =
     BuildCommand <$> (obj .: "command" >>= mkCmd)
                  <*> obj .:? "only_lead" .!= AllTargets
-  parseJSON val = typeMismatch "String or Object" val
+  parseJSON val = typeMismatch "BuildCommand" val
 
 instance FromJSON ExecutionMode where
   parseJSON = withBool "ExecutionMode" $ \b ->
