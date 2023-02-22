@@ -105,9 +105,8 @@ data Target =
     } deriving (Eq, Ord, Show)
 
 data BuildCommand = BuildCommand
-  -- TODO: rename this field
-  { buildCommandGeneric       :: GenericCommand
-  , buildCommandExecutionMode :: ExecutionMode
+  { buildCommandCommand  :: GenericCommand
+  , buildCommandOnlyLead :: ExecutionMode
   } deriving (Eq, Ord, Show)
 
 data ExecutionMode = LeadTarget | AllTargets
@@ -119,11 +118,13 @@ instance Command BuildCommand where
   parseResult Proxy _ = ()
 
 instance FromJSON BuildCommand where
-  parseJSON str@(String _) = BuildCommand <$> (parseJSON str >>= mkCmd) <*> pure AllTargets
+  parseJSON str@(String _) =
+    BuildCommand <$> (parseJSON str >>= mkCmd)
+                 <*> pure AllTargets
   parseJSON (Object obj) =
     BuildCommand <$> (obj .: "command" >>= mkCmd)
                  <*> obj .:? "only_lead" .!= AllTargets
-  parseJSON val = typeMismatch "expected String or Object" val
+  parseJSON val = typeMismatch "String or Object" val
 
 instance FromJSON ExecutionMode where
   parseJSON = withBool "ExecutionMode" $ \b ->

@@ -7,7 +7,10 @@ module System.HapistranoConfigSpec
   ) where
 
 import qualified Data.Aeson               as A
-import           System.Hapistrano.Config (Config (..), Target (..))
+import           System.Hapistrano.Commands (mkGenericCommand)
+import           System.Hapistrano.Config ( Config (..), Target (..)
+                                          , BuildCommand (..), ExecutionMode (..)
+                                          )
 import           System.Hapistrano.Types  (Shell (..), Source (..),
                                            TargetSystem (..))
 
@@ -24,6 +27,23 @@ import           Test.Hspec
 spec :: Spec
 spec =
   describe "Hapistrano's configuration file" $ do
+    describe "BuildCommand" $ do
+      fit "" $ do
+        let Just cmd = mkGenericCommand "ls"
+        A.eitherDecode "\"ls\"" `shouldBe` Right (BuildCommand cmd AllTargets)
+
+      fit "" $ do
+        let Just cmd = mkGenericCommand "ls"
+        A.eitherDecode "{\"command\":\"ls\"}" `shouldBe` Right (BuildCommand cmd AllTargets)
+
+      fit "" $ do
+        let Just cmd = mkGenericCommand "ls"
+        A.eitherDecode "{\"command\":\"ls\",\"only_lead\":true}" `shouldBe` Right (BuildCommand cmd LeadTarget)
+
+      fit "" $ do
+        let Just cmd = mkGenericCommand "ls"
+        A.eitherDecode "{\"command\":\"ls\",\"only_lead\":false}" `shouldBe` Right (BuildCommand cmd AllTargets)
+
     context "when the key 'local-repository' is present" $
       it "loads LocalRepository as the configuration's source" $
         Yaml.loadYamlSettings ["fixtures/local_directory_config.yaml"] [] Yaml.useEnv
