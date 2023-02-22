@@ -27,6 +27,7 @@ where
 
 import           Control.Applicative        ((<|>))
 import           Data.Aeson
+import           Data.Aeson.Types           (typeMismatch)
 import           Data.Function              (on)
 import           Data.List                  (nubBy)
 import           Data.Maybe                 (maybeToList)
@@ -122,7 +123,7 @@ instance FromJSON BuildCommand where
   parseJSON (Object obj) =
     BuildCommand <$> (obj .: "command" >>= mkCmd)
                  <*> obj .:? "only_lead" .!= AllTargets
-  parseJSON _ = undefined
+  parseJSON val = typeMismatch "expected String or Object" val
 
 instance FromJSON ExecutionMode where
   parseJSON = withBool "ExecutionMode" $ \b ->

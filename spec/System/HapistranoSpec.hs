@@ -52,7 +52,7 @@ spec :: Spec
 spec = do
   describe "playScript" $ around withSandbox $ do
     context "when the target is the lead server" $ do
-      fit "and the command is set to only_lead" $ \(deployPath, repoPath) -> do
+      fit "contains the output of the lead command" $ \(deployPath, repoPath) -> do
         output <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing LeadTarget
@@ -60,7 +60,7 @@ spec = do
             ]
         output `Hspec.shouldContain` "hello world"
 
-      fit "and the command is not set to only_lead" $ \(deployPath, repoPath) -> do
+      fit "contains the output of a regular command" $ \(deployPath, repoPath) -> do
         output <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing LeadTarget
@@ -69,7 +69,7 @@ spec = do
         output `Hspec.shouldContain` "hello world"
 
     context "when the target is not the lead server" $ do
-      fit "and the command is set to only_lead" $ \(deployPath, repoPath) -> do
+      fit "does not contain the output of a lead command" $ \(deployPath, repoPath) -> do
         output <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing AllTargets
@@ -77,7 +77,7 @@ spec = do
             ]
         output `Hspec.shouldNotContain` "hello world"
 
-      fit "and the command is not set to only_lead" $ \(deployPath, repoPath) -> do
+      fit "contains the output of a regular command" $ \(deployPath, repoPath) -> do
         output <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing AllTargets
