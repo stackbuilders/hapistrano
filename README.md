@@ -201,12 +201,29 @@ machines concurrently. The only things you need to do is to adjust your
 configuration file and use `targets` parameter instead of `host` and `port`,
 like this:
 
-```haskell
+```yml
 targets:
   - host: myserver-a.com
     port: 2222
   - host: myserver-b.com
-# the rest is the same…
+# the rest is the same
+```
+
+Additionally, starting with 0.4.9.0 it is possible to run commands only on the
+lead target during a concurrent deploying process ensuring that certain tasks
+only get executed once. The lead target is considered the first entry in the
+`targets` list:
+
+```yml
+targets:
+  - host: app1.example.com # lead server
+  - host: app2.example.com
+
+build_script:
+  - command: ./run_database_migrations
+    only_lead: true
+  - ./build
+# the rest is the same
 ```
 
 A few things to note here:

@@ -6,7 +6,7 @@ module System.Hapistrano.ConfigSpec
   ( spec
   ) where
 
-import qualified Data.Aeson               as A
+import qualified Data.Aeson                 as A
 import           Data.Maybe                 (fromJust)
 import           System.Hapistrano.Commands (mkGenericCommand)
 import           System.Hapistrano.Config   (Config (..), Target (..),
