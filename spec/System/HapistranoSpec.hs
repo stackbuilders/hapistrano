@@ -53,37 +53,37 @@ spec = do
   describe "playScript" $ around withSandbox $ do
     context "when the target is the lead server" $ do
       it "contains the output of the lead command" $ \(deployPath, repoPath) -> do
-        output <- capture_ $ runHap $ do
+        capturedOutput <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing LeadTarget
             [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") LeadTarget
             ]
-        output `Hspec.shouldContain` "hello world"
+        capturedOutput `Hspec.shouldContain` "hello world"
 
       it "contains the output of a regular command" $ \(deployPath, repoPath) -> do
-        output <- capture_ $ runHap $ do
+        capturedOutput <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing LeadTarget
             [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") AllTargets
             ]
-        output `Hspec.shouldContain` "hello world"
+        capturedOutput `Hspec.shouldContain` "hello world"
 
     context "when the target is not the lead server" $ do
       it "does not contain the output of a lead command" $ \(deployPath, repoPath) -> do
-        output <- capture_ $ runHap $ do
+        capturedOutput <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing AllTargets
             [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") LeadTarget
             ]
-        output `Hspec.shouldNotContain` "hello world"
+        capturedOutput `Hspec.shouldNotContain` "hello world"
 
       it "contains the output of a regular command" $ \(deployPath, repoPath) -> do
-        output <- capture_ $ runHap $ do
+        capturedOutput <- capture_ $ runHap $ do
           release <- Hap.pushRelease $ mkTask deployPath repoPath
           Hap.playScript deployPath release Nothing AllTargets
             [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") AllTargets
             ]
-        output `Hspec.shouldContain` "hello world"
+        capturedOutput `Hspec.shouldContain` "hello world"
 
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
