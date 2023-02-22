@@ -109,7 +109,7 @@ data BuildCommand = BuildCommand
   , buildCommandExecutionMode :: ExecutionMode
   } deriving (Eq, Ord, Show)
 
-data ExecutionMode = OnlyLeadTarget | AllTargets
+data ExecutionMode = LeadTarget | AllTargets
   deriving (Eq, Ord, Show)
 
 instance Command BuildCommand where
@@ -125,8 +125,8 @@ instance FromJSON BuildCommand where
   parseJSON _ = undefined
 
 instance FromJSON ExecutionMode where
-  parseJSON = withBool "" $ \b ->
-    pure $ if b then OnlyLeadTarget else AllTargets
+  parseJSON = withBool "ExecutionMode" $ \b ->
+    pure $ if b then LeadTarget else AllTargets
 
 instance FromJSON Config where
   parseJSON = withObject "Hapistrano configuration" $ \o -> do

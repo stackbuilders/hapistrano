@@ -247,10 +247,9 @@ playScript
   -> Hapistrano ()
 playScript deployDir release mWorkingDir executionMode cmds = do
   rpath <- releasePath deployDir release mWorkingDir
-  forM_ (filter foo cmds) (flip execWithInheritStdout (Just release) . Cd rpath)
+  forM_ (filter isLeadCommand cmds) (flip execWithInheritStdout (Just release) . Cd rpath)
   where
-    -- TODO: Do some filtering using executionMode
-    foo BuildCommand{..} = buildCommandExecutionMode == AllTargets
+    isLeadCommand BuildCommand{..} = executionMode == LeadTarget || buildCommandExecutionMode == AllTargets
 
 -- | Plays the given script on your machine locally.
 

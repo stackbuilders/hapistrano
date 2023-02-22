@@ -9,7 +9,7 @@ module System.HapistranoSpec
 import           Control.Monad
 import           Control.Monad.Reader
 import           Data.List                     (isPrefixOf)
-import           Data.Maybe                    (mapMaybe)
+import           Data.Maybe                    (fromJust, mapMaybe)
 import           Numeric.Natural
 import           Path
 
@@ -23,7 +23,10 @@ import           System.Directory              (doesFileExist,
 import           System.Hapistrano             (releasePath)
 import qualified System.Hapistrano             as Hap
 import qualified System.Hapistrano.Commands    as Hap
-import           System.Hapistrano.Config      (deployStateFilename)
+import           System.Hapistrano.Config      ( BuildCommand (..)
+                                               , ExecutionMode (..)
+                                               , deployStateFilename
+                                               )
 import qualified System.Hapistrano.Core        as Hap
 import           System.Hapistrano.Maintenance
 import           System.Hapistrano.Types
@@ -47,6 +50,41 @@ releaseDir = $(mkRelDir "releases")
 
 spec :: Spec
 spec = do
+  describe "playScript" $ around withSandbox $ do
+    context "when the target is the lead server" $ do
+      fit "and the command is set to only_lead" $ \(deployPath, repoPath) -> do
+        output <- capture_ $ runHap $ do
+          release <- Hap.pushRelease $ mkTask deployPath repoPath
+          Hap.playScript deployPath release Nothing LeadTarget
+            [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") LeadTarget
+            ]
+        output `Hspec.shouldContain` "hello world"
+
+      fit "and the command is not set to only_lead" $ \(deployPath, repoPath) -> do
+        output <- capture_ $ runHap $ do
+          release <- Hap.pushRelease $ mkTask deployPath repoPath
+          Hap.playScript deployPath release Nothing LeadTarget
+            [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") AllTargets
+            ]
+        output `Hspec.shouldContain` "hello world"
+
+    context "when the target is not the lead server" $ do
+      fit "and the command is set to only_lead" $ \(deployPath, repoPath) -> do
+        output <- capture_ $ runHap $ do
+          release <- Hap.pushRelease $ mkTask deployPath repoPath
+          Hap.playScript deployPath release Nothing AllTargets
+            [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") LeadTarget
+            ]
+        output `Hspec.shouldNotContain` "hello world"
+
+      fit "and the command is not set to only_lead" $ \(deployPath, repoPath) -> do
+        output <- capture_ $ runHap $ do
+          release <- Hap.pushRelease $ mkTask deployPath repoPath
+          Hap.playScript deployPath release Nothing AllTargets
+            [ BuildCommand (fromJust $ Hap.mkGenericCommand "echo \"hello world\"") AllTargets
+            ]
+        output `Hspec.shouldContain` "hello world"
+
   describe "execWithInheritStdout" $
     context "given a command that prints to stdout" $
     it "redirects commands' output to stdout first" $
@@ -399,7 +437,7 @@ withSandbox action =
 populateTestRepo :: Path Abs Dir -> IO ()
 populateTestRepo path =
   runHap $ do
-    justExec path "git init"
+    justExec path "git init -b master"
     justExec path "git config --local --replace-all push.default simple"
     justExec path "git config --local --replace-all user.email   hap@hap"
     justExec path "git config --local --replace-all user.name    Hap"
