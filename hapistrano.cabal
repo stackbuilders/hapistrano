@@ -51,7 +51,10 @@ library
                      , System.Hapistrano.Types
                      , System.Hapistrano.Commands.Internal
                      , System.Hapistrano.Maintenance
-  build-depends:       aeson              >= 2.0 && < 3.0
+                       -- INFO: Lowering aeson upper bound to 2.1.2 is a
+                       -- workaround until the following issue gets resolved
+                       -- https://github.com/snoyberg/yaml/issues/211
+  build-depends:       aeson              >= 2.0 && < 2.1.2
                      , ansi-terminal      >= 0.9 && < 0.12
                      , base               >= 4.9 && < 5.0
                      , filepath           >= 1.2 && < 1.5
