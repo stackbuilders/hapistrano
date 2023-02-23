@@ -43,8 +43,8 @@ jobs:
             dist-newstyle
           key: ${{ runner.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
           restore-keys: ${{ runner.os }}-${{ matrix.devShell }}-
-      - name: Install packages
-        run: ./bin/${{ matrix.devShell }} -c ghc --version
+      - name: Install packages / Print versions
+        run: ./bin/${{ matrix.devShell }} -c ghc --version && cabal --version
       - name: Update package index
         run: ./bin/${{ matrix.devShell }} -c cabal update
       - name: Enable tests
