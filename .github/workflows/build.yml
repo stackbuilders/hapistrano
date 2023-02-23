@@ -13,64 +13,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-<<<<<<< HEAD
   haskell:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-        ghc:
-          - "9.0"
-          - "8.10"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install dependencies (Linux)
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install zsh
-      - name: Install dependencies (macOS)
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          brew update
-          brew install zsh
-      - name: Install Haskell tooling
-        uses: haskell/actions/setup@v2
-        with:
-          ghc-version: ${{ matrix.ghc }}
-          cabal-version: "3.6"
-      - name: Configure project
-        run: cabal configure --enable-tests
-      - name: Freeze dependencies
-        run: cabal freeze
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cabal/store
-            dist-newstyle
-          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
-      - name: Build project
-        run: cabal build
-      - name: Run tests
-        run: cabal test
-      - name: Check documentation
-        run: ./script/haddock
-=======
-  haskell-linux:
     strategy:
       fail-fast: true
       matrix:
         devShell:
           - ghc810
-          - ghc90
+          # - ghc90
+        os:
+          - macos-latest
+          # - ubuntu-latest
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ runner.os }}
 
     steps:
       - uses: actions/checkout@v3
@@ -78,8 +32,8 @@ jobs:
         with:
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
           extra_nix_config: |
-            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            substituters = https://cache.iog.io https://cache.nixos.org
+            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+            substituters = https://cache.iog.io
       # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
       - uses: actions/cache@v3
         with:
@@ -103,46 +57,6 @@ jobs:
         run: ./bin/${{ matrix.devShell }} -c cabal test
       - name: Check documentation
         run: ./bin/${{ matrix.devShell }} -c ./script/haddock
-
-  haskell-darwin:
-    strategy:
-      fail-fast: true
-      matrix:
-        ghc:
-          - "8.10"
-          - "9.0"
-
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: haskell/actions/setup@v2
-        with:
-          ghc-version: ${{ matrix.ghc }}
-          cabal-version: "3.6"
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cabal/package
-            ~/.cabal/store
-            dist-newstyle
-          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('*.cabal') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
-      - name: Install packages
-        run: |
-          brew update
-          brew install zsh
-      - name: Update package index
-        run: cabal update
-      - name: Enable tests
-        run: cabal configure --enable-tests
-      - name: Install project dependencies
-        run: cabal build --only-dependencies
-      - name: Compile project
-        run: cabal build
-      - name: Run tests
-        run: cabal test
->>>>>>> 5b78a62 (Merge nix workflow into build)
 
   docker:
     uses: ./.github/workflows/reusable-docker.yml
