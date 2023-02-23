@@ -17,12 +17,15 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        devShell:
-          - ghc810
-          # - ghc90
         os:
           - macos-latest
-          # - ubuntu-latest
+          - ubuntu-latest
+        devShell:
+          - ghc810
+          - ghc90
+        exclude:
+          - os: macos-latest
+            devShell: ghc90
 
     runs-on: ${{ matrix.os }}
 
