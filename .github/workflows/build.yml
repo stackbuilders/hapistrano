@@ -24,6 +24,9 @@ jobs:
           - ghc810
           - ghc90
         exclude:
+          # INFO: Disabling GHC 9.0 on macOS for now since Nix doesn't hit the
+          # IOHK cache and starts building the compiler from scratch which takes
+          # too long
           - os: macos-latest
             devShell: ghc90
 
