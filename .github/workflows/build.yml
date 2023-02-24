@@ -60,6 +60,5 @@ jobs:
 
   docker:
     uses: ./.github/workflows/reusable-docker.yml
-    if: false
     with:
       push: false
