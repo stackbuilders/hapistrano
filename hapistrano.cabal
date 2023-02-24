@@ -1,6 +1,6 @@
 cabal-version:       1.18
 name:                hapistrano
-version:             0.4.8.0
+version:             0.4.9.0
 synopsis:            A deployment library for Haskell applications
 description:
   .
@@ -98,7 +98,7 @@ test-suite test
   hs-source-dirs:      spec
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
-                     , System.HapistranoConfigSpec
+                     , System.Hapistrano.ConfigSpec
                      , System.HapistranoPropsSpec
   build-depends:       base               >= 4.9 && < 5.0
                      , aeson

@@ -1,3 +1,7 @@
+## 0.4.9.0
+### Added
+* Add support for lead target commands
+
 ## 0.4.8.0
 ### Modified
 * Fix issue before activating release

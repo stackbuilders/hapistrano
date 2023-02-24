@@ -125,7 +125,7 @@ main = do
   chan <- newTChanIO
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
-      hap shell sshOpts = do
+      hap shell sshOpts executionMode = do
         r <- Hap.runHapistrano sshOpts shell printFnc $
           case optsCommand of
             Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
@@ -134,6 +134,7 @@ main = do
                 (fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat)
                 (fromMaybeKeepReleases cliKeepReleases configKeepReleases)
                 (cliKeepOneFailed || configKeepOneFailed)
+                executionMode
             Rollback n ->
               Hap.rollback configTargetSystem configDeployPath n configRestartCommand
             Maintenance Enable-> do
@@ -155,11 +156,12 @@ main = do
       haps :: [IO (Either Int ())]
       haps =
         case configHosts of
-          [] -> [hap Bash Nothing] -- localhost, no SSH
-          xs ->
-            let runHap C.Target{..} =
+          [] -> [hap Bash Nothing C.LeadTarget] -- localhost, no SSH
+          targets@(leadTarget : _) ->
+            let runHap currentTarget@C.Target{..} =
                   hap targetShell (Just $ SshOptions targetHost targetPort targetSshArgs)
-            in runHap <$> xs
+                    (if leadTarget == currentTarget then C.LeadTarget else C.AllTargets)
+            in runHap <$> targets
   results <- (runConcurrently . traverse Concurrently)
     ((Right () <$ printer (length haps)) : haps)
   case sequence_ results of
