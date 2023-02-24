@@ -266,7 +266,8 @@ Check the documentation [here](.github/workflows/README.md)
 
 - Install [Zsh](https://www.zsh.org/)
 - Use [GHCup][ghcup] to install:
-  - GHC 9.0.2
+  - GHC 8.10.x or 9.0.x (it is recommended to try both for backward
+    compatibility)
   - Cabal 3.x
 
 Alternatively, install only [Nix](https://nixos.org/download.html) and enable
@@ -312,19 +313,25 @@ cabal test
 Use [GHCup][ghcup] to install additional GHC versions like 8.10 or use Nix to
 easily switch between different versions:
 
-Spawn a BASH shell with GHC 9.0:
+Spawn a new shell with GHC 9.0:
 
 ```sh
 ./bin/ghc90
 ```
 
-Or GHC 8.10:
+Or with GHC 8.10:
 
 ```sh
 ./bin/ghc810
 ```
 
-Run the commands detailed in the [Getting Started](#getting-started) section.
+Within the shell, all commands detailed in the [Getting
+Started](#getting-started) section should work as expected. Alternatively, to
+run those as inline commands use the `-c` option:
+
+```sh
+./bin/ghc90 -c <command>
+```
 
 ## Enable/disable maintenance mode
 
