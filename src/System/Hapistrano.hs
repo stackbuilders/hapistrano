@@ -249,7 +249,7 @@ playScript deployDir release mWorkingDir executionMode cmds = do
   rpath <- releasePath deployDir release mWorkingDir
   forM_ (filter byTarget cmds) (flip execWithInheritStdout (Just release) . Cd rpath)
   where
-    byTarget BuildCommand{..} = executionMode == LeadTarget || buildCommandOnlyLead == AllTargets
+    byTarget BuildCommand{..} = executionMode == LeadTarget || buildCommandExecutionMode == AllTargets
 
 -- | Plays the given script on your machine locally.
 

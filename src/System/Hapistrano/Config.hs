@@ -105,8 +105,8 @@ data Target =
     } deriving (Eq, Ord, Show)
 
 data BuildCommand = BuildCommand
-  { buildCommandCommand  :: GenericCommand
-  , buildCommandOnlyLead :: ExecutionMode
+  { buildCommandCommand       :: GenericCommand
+  , buildCommandExecutionMode :: ExecutionMode
   } deriving (Eq, Ord, Show)
 
 data ExecutionMode = LeadTarget | AllTargets
