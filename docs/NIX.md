@@ -35,7 +35,10 @@ is recommended to go over the steps detailed in this section again:
 warning: ignoring untrusted substituter 'https://cache.iog.io'
 ```
 
-TODO: direnv
+TODO:
+
+- Talk about direnv
+- Add link to https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
 
 ## Switching between different GHC versions
 
