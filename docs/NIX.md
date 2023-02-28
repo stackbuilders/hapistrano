@@ -24,14 +24,18 @@ substituters = https://cache.iog.io https://cache.nixos.org
 Restart the `nix-daemon` service:
 
 ```
-launchctl kickstart -k org.nixos.nix-daemon
+sudo launchctl kickstart -k org.nixos.nix-daemon
 ```
 
-TODO
+If the following messages appear running the scripts detailed in the section
+below, it means that the Nix is not able to talk with the cache, in which case
+is recommended to go over the steps detailed in this section again:
 
 ```
 warning: ignoring untrusted substituter 'https://cache.iog.io'
 ```
+
+TODO: direnv
 
 ## Switching between different GHC versions
 
