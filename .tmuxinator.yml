@@ -1,4 +1,0 @@
-name: stackbuilders/hapistrano
-windows:
-  - editor: nvim .
-  - terminal: null
