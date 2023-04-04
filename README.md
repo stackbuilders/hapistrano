@@ -298,13 +298,14 @@ Present a maintenance page to visitors. Disables your application's web interfac
 The maintenance page will just say the site is down for maintenance, and will be back shortly.
 
 To enable maintenance mode run:
+
 ```bash
-hapistrano maintenance enable
+hap maintenance enable
 ```
 Disabling maintenance mode will remove the file from the {maintenance_directory} it can be done with the following command:
 
 ```bash
-hapistrano maintenance disable
+hap maintenance disable
 ```
 
 ## Notes
