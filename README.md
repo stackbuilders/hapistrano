@@ -4,21 +4,7 @@
 
 # Hapistrano
 
- * [Description](#description)
- * [Purpose](#purpose)
- * [How it Works](#how-it-works)
- * [Usage](#usage)
-    * [Environment Variables](#environment-variables)
- * [What to do when compiling on server is not viable](#what-to-do-when-compiling-on-server-is-not-viable)
- * [Deploying to multiple machines concurrently](#deploying-to-multiple-machines-concurrently)
- * [Docker](#docker)
- * [Nix](#nix)
- * [Notes](#notes)
- * [License](#license)
- * [Contributing](#contributing)
-
-
-# Description
+## Description
 
 Hapistrano is a deployment library for Haskell applications similar to
 Ruby's [Capistrano](http://capistranorb.com/).
