@@ -2,15 +2,8 @@
 
 ## Requirements
 
-Install Nix following the instructions detailed
-[here](https://nixos.org/download.html).
-
-Enable Flakes permanently:
-
-```sh
-mkdir -p ~/.config/nix
-echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
-```
+- Install [Nix](https://nixos.org/download.html)
+- Enable Flakes [permanently](https://nixos.wiki/wiki/Flakes#Permanent)
 
 **For macOS users**
 
@@ -35,29 +28,32 @@ is recommended to go over the steps detailed in this section again:
 warning: ignoring untrusted substituter 'https://cache.iog.io'
 ```
 
-TODO:
-
-- Talk about direnv
-- Add link to https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
-
 ## Switching between different GHC versions
 
-Spawn a new shell with GHC 9.0:
+The `bin` directory, holds all available shells:
+
+```
+ls bin | grep ghc
+```
+
+To spawn a new shell with a pre-defined GHC version, choose one of the scripts
+listed above and run the following command:
 
 ```sh
 ./bin/ghc90
 ```
 
-Or with GHC 8.10:
+Once inside the shell, verify the GHC version matches the script name:
 
-```sh
-./bin/ghc810
+```
+ghc --version
 ```
 
-Within the shell, all commands detailed in the [Getting
-Started](../README.md#getting-started) section should work as expected.
+After that, all commands detailed in the [Getting
+Started](../README.md#getting-started) section should work the same.
 
-Alternatively, to run those as inline commands use the `-c` option:
+Alternatively, to run a command without spawning a new shell use the `-c`
+option:
 
 ```sh
 ./bin/ghc90 -c <command>
