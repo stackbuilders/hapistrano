@@ -17,7 +17,8 @@ substituters = https://cache.iog.io https://cache.nixos.org
 Restart the `nix-daemon` service:
 
 ```
-sudo launchctl kickstart -k org.nixos.nix-daemon
+sudo launchctl stop org.nixos.nix-daemon
+sudo launchctl start org.nixos.nix-daemon
 ```
 
 If the following messages appear running the scripts detailed in the section
