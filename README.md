@@ -4,21 +4,7 @@
 
 # Hapistrano
 
- * [Description](#description)
- * [Purpose](#purpose)
- * [How it Works](#how-it-works)
- * [Usage](#usage)
-    * [Environment Variables](#environment-variables)
- * [What to do when compiling on server is not viable](#what-to-do-when-compiling-on-server-is-not-viable)
- * [Deploying to multiple machines concurrently](#deploying-to-multiple-machines-concurrently)
- * [Docker](#docker)
- * [Nix](#nix)
- * [Notes](#notes)
- * [License](#license)
- * [Contributing](#contributing)
-
-
-# Description
+## Description
 
 Hapistrano is a deployment library for Haskell applications similar to
 Ruby's [Capistrano](http://capistranorb.com/).
@@ -260,23 +246,51 @@ image reference as follows:
 
 Check the documentation [here](.github/workflows/README.md)
 
-## Nix
+## Development
 
-If you want to use Nix for building Hapistrano, the required release.nix and default.nix are available.
+### Requirements
 
-For installing the hap binary in your local path:
-```bash
-nix-env -i hapistrano -f release.nix
-```
-For developing Hapistrano with Nix, you can create a development environment using:
-```bash
-nix-shell --attr env release.nix
+- Install [Zsh](https://www.zsh.org/)
+- Use [GHCup][ghcup] to install:
+  - GHC 8.10.x or 9.0.x (it is recommended to try both for backward
+    compatibility)
+  - Cabal 3.x
+
+Alternatively, install only Nix following the instructions detailed
+[here](docs/NIX.md).
+
+### Getting Started
+
+Update package index:
+
+```sh
+cabal update
 ```
 
-For just building Hapistrano, you just:
-```bash
-nix-build release.nix
+Enable tests:
+
+```sh
+cabal configure --enable-tests
 ```
+
+Install project dependencies:
+
+```sh
+cabal build --only-dependencies
+```
+
+Compile the project:
+
+```sh
+cabal build
+```
+
+Run tests:
+
+```sh
+cabal test
+```
+
 ## Enable/disable maintenance mode
 
 Present a maintenance page to visitors. Disables your application's web interface by writing a {maintenance_filename} file to each web server. The servers must be configured to detect the presence of this file, and if it is present, always display it instead of performing the request.
@@ -284,13 +298,14 @@ Present a maintenance page to visitors. Disables your application's web interfac
 The maintenance page will just say the site is down for maintenance, and will be back shortly.
 
 To enable maintenance mode run:
+
 ```bash
-hapistrano maintenance enable
+hap maintenance enable
 ```
 Disabling maintenance mode will remove the file from the {maintenance_directory} it can be done with the following command:
 
 ```bash
-hapistrano maintenance disable
+hap maintenance disable
 ```
 
 ## Notes
@@ -308,3 +323,5 @@ Do you want to contribute to this project? Please take a look at our [contributi
 ---
 <img src="https://cdn.stackbuilders.com/media/images/Sb-supports.original.png" alt="Stack Builders" width="50%"></img>
 [Check out our libraries](https://github.com/stackbuilders/) | [Join our team](https://www.stackbuilders.com/join-us/)
+
+[ghcup]: https://www.haskell.org/ghcup/
