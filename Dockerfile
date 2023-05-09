@@ -11,3 +11,4 @@ FROM gcr.io/distroless/static-debian11
 LABEL maintainer="Nicolas Vivar <nvivar@stackbuilders.com>"
 COPY --from=build /usr/src/app/hap /usr/local/bin/hap
 ENTRYPOINT ["/usr/local/bin/hap"]
+CMD ["--help"]
