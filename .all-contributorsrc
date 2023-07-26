@@ -72,6 +72,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "psibi",
+      "name": "Sibi Prabakaran",
+      "avatar_url": "https://avatars.githubusercontent.com/u/737477?v=4",
+      "profile": "https://psibi.in/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
