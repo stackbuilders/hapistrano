@@ -81,6 +81,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ibarrae",
+      "name": "Esteban Ibarra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22796877?v=4",
+      "profile": "https://github.com/ibarrae",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
