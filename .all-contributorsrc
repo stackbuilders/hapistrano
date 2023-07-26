@@ -18,6 +18,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jsl",
+      "name": "Justin S. Leitgeb",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9977?v=4",
+      "profile": "https://www.stackbuilders.com/news/author/justin-leitgeb",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
