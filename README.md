@@ -1,6 +1,6 @@
 [![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
@@ -351,6 +351,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://psibi.in/"><img src="https://avatars.githubusercontent.com/u/737477?v=4?s=100" width="100px;" alt="Sibi Prabakaran"/><br /><sub><b>Sibi Prabakaran</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=psibi" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ibarrae"><img src="https://avatars.githubusercontent.com/u/22796877?v=4?s=100" width="100px;" alt="Esteban Ibarra"/><br /><sub><b>Esteban Ibarra</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=ibarrae" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cptrodolfox"><img src="https://avatars.githubusercontent.com/u/20303685?v=4?s=100" width="100px;" alt="William R. Arellano"/><br /><sub><b>William R. Arellano</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=cptrodolfox" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://wikipedia.org/"><img src="https://avatars.githubusercontent.com/u/2220440?v=4?s=100" width="100px;" alt="Götz"/><br /><sub><b>Götz</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=goetzc" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>

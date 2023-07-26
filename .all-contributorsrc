@@ -99,6 +99,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "goetzc",
+      "name": "Götz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2220440?v=4",
+      "profile": "https://wikipedia.org/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
