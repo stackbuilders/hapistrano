@@ -1,6 +1,6 @@
 [![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-22-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-23-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
@@ -367,6 +367,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.facebook.com/CSOFTWAREESPE/"><img src="https://avatars.githubusercontent.com/u/26729748?v=4?s=100" width="100px;" alt="Jean Karlo Obando Ramos"/><br /><sub><b>Jean Karlo Obando Ramos</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=boceto1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/ng2906/"><img src="https://avatars.githubusercontent.com/u/26463272?v=4?s=100" width="100px;" alt="Nitin Gupta"/><br /><sub><b>Nitin Gupta</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=ng29" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
