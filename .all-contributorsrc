@@ -1,0 +1,25 @@
+{
+  "projectName": "hapistrano",
+  "projectOwner": "stackbuilders",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "juanpaucar",
+      "name": "Juan Paucar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2164411?v=4",
+      "profile": "https://juancarlos.io/",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "linkToUsage": true
+}
