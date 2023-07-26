@@ -189,6 +189,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "hughjfchen",
+      "name": "Hugh JF Chen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5584544?v=4",
+      "profile": "https://hughjfchen.github.io/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
