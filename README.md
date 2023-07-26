@@ -1,6 +1,6 @@
 [![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-16-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-17-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
@@ -359,6 +359,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/felixminom"><img src="https://avatars.githubusercontent.com/u/42775600?v=4?s=100" width="100px;" alt="Felix Miño"/><br /><sub><b>Felix Miño</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=felixminom" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/elcuy"><img src="https://avatars.githubusercontent.com/u/11718997?v=4?s=100" width="100px;" alt="Luis Fernando Alvarez"/><br /><sub><b>Luis Fernando Alvarez</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=elcuy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fefi95"><img src="https://avatars.githubusercontent.com/u/12057338?v=4?s=100" width="100px;" alt="Stefani Castellanos"/><br /><sub><b>Stefani Castellanos</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=fefi95" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
