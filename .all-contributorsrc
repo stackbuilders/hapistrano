@@ -216,6 +216,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nebtrx",
+      "name": "Omar García",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1876959?v=4",
+      "profile": "http://nebtrx.github.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
