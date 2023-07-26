@@ -1,6 +1,6 @@
 [![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
@@ -354,6 +354,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://wikipedia.org/"><img src="https://avatars.githubusercontent.com/u/2220440?v=4?s=100" width="100px;" alt="Götz"/><br /><sub><b>Götz</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=goetzc" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/javcasas"><img src="https://avatars.githubusercontent.com/u/4497839?v=4?s=100" width="100px;" alt="Javier Casas"/><br /><sub><b>Javier Casas</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=javcasas" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://blog.jakuba.net/"><img src="https://avatars.githubusercontent.com/u/123374?v=4?s=100" width="100px;" alt="Jakub Arnold"/><br /><sub><b>Jakub Arnold</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=darthdeus" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nickovivar"><img src="https://avatars.githubusercontent.com/u/1821812?v=4?s=100" width="100px;" alt="Nicko Vivar D."/><br /><sub><b>Nicko Vivar D.</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=nickovivar" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
