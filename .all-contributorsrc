@@ -108,6 +108,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "javcasas",
+      "name": "Javier Casas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4497839?v=4",
+      "profile": "https://github.com/javcasas",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
