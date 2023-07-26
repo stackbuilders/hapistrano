@@ -198,6 +198,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "boceto1",
+      "name": "Jean Karlo Obando Ramos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26729748?v=4",
+      "profile": "https://www.facebook.com/CSOFTWAREESPE/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
