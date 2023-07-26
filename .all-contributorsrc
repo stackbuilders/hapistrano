@@ -45,6 +45,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "mrkkrp",
+      "name": "Mark Karpov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8165792?v=4",
+      "profile": "https://markkarpov.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
