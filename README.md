@@ -1,4 +1,7 @@
 [![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-25-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
 
@@ -311,6 +314,67 @@ hap maintenance disable
 ## Notes
 
 * Hapistrano is not supported on Windows. Please check: [Issue #96](https://github.com/stackbuilders/hapistrano/issues/96).
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://juancarlos.io/"><img src="https://avatars.githubusercontent.com/u/2164411?v=4?s=100" width="100px;" alt="Juan Paucar"/><br /><sub><b>Juan Paucar</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=juanpaucar" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.stackbuilders.com/news/author/justin-leitgeb"><img src="https://avatars.githubusercontent.com/u/9977?v=4?s=100" width="100px;" alt="Justin S. Leitgeb"/><br /><sub><b>Justin S. Leitgeb</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=jsl" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DavidMazarro"><img src="https://avatars.githubusercontent.com/u/22799724?v=4?s=100" width="100px;" alt="David Mazarro"/><br /><sub><b>David Mazarro</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=DavidMazarro" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sestrella"><img src="https://avatars.githubusercontent.com/u/2049686?v=4?s=100" width="100px;" alt="Sebastián Estrella"/><br /><sub><b>Sebastián Estrella</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=sestrella" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://markkarpov.com/"><img src="https://avatars.githubusercontent.com/u/8165792?v=4?s=100" width="100px;" alt="Mark Karpov"/><br /><sub><b>Mark Karpov</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=mrkkrp" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jpvillaisaza"><img src="https://avatars.githubusercontent.com/u/584947?v=4?s=100" width="100px;" alt="Juan Pedro Villa Isaza"/><br /><sub><b>Juan Pedro Villa Isaza</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=jpvillaisaza" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://cristhianmotoche.github.io/"><img src="https://avatars.githubusercontent.com/u/8370088?v=4?s=100" width="100px;" alt="Cristhian Motoche"/><br /><sub><b>Cristhian Motoche</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=CristhianMotoche" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://psibi.in/"><img src="https://avatars.githubusercontent.com/u/737477?v=4?s=100" width="100px;" alt="Sibi Prabakaran"/><br /><sub><b>Sibi Prabakaran</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=psibi" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ibarrae"><img src="https://avatars.githubusercontent.com/u/22796877?v=4?s=100" width="100px;" alt="Esteban Ibarra"/><br /><sub><b>Esteban Ibarra</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=ibarrae" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cptrodolfox"><img src="https://avatars.githubusercontent.com/u/20303685?v=4?s=100" width="100px;" alt="William R. Arellano"/><br /><sub><b>William R. Arellano</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=cptrodolfox" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://wikipedia.org/"><img src="https://avatars.githubusercontent.com/u/2220440?v=4?s=100" width="100px;" alt="Götz"/><br /><sub><b>Götz</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=goetzc" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/javcasas"><img src="https://avatars.githubusercontent.com/u/4497839?v=4?s=100" width="100px;" alt="Javier Casas"/><br /><sub><b>Javier Casas</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=javcasas" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.jakuba.net/"><img src="https://avatars.githubusercontent.com/u/123374?v=4?s=100" width="100px;" alt="Jakub Arnold"/><br /><sub><b>Jakub Arnold</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=darthdeus" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nickovivar"><img src="https://avatars.githubusercontent.com/u/1821812?v=4?s=100" width="100px;" alt="Nicko Vivar D."/><br /><sub><b>Nicko Vivar D.</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=nickovivar" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/felixminom"><img src="https://avatars.githubusercontent.com/u/42775600?v=4?s=100" width="100px;" alt="Felix Miño"/><br /><sub><b>Felix Miño</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=felixminom" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/elcuy"><img src="https://avatars.githubusercontent.com/u/11718997?v=4?s=100" width="100px;" alt="Luis Fernando Alvarez"/><br /><sub><b>Luis Fernando Alvarez</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=elcuy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fefi95"><img src="https://avatars.githubusercontent.com/u/12057338?v=4?s=100" width="100px;" alt="Stefani Castellanos"/><br /><sub><b>Stefani Castellanos</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=fefi95" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/alexisbcc"><img src="https://avatars.githubusercontent.com/u/38666191?v=4?s=100" width="100px;" alt="Alexis Crespo"/><br /><sub><b>Alexis Crespo</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=alexisbcc" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://giovannipro.com/"><img src="https://avatars.githubusercontent.com/u/6964464?v=4?s=100" width="100px;" alt="David Proaño"/><br /><sub><b>David Proaño</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=GioDavid" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/FranzGB"><img src="https://avatars.githubusercontent.com/u/46214532?v=4?s=100" width="100px;" alt="Franz Guzmán"/><br /><sub><b>Franz Guzmán</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=FranzGB" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://hughjfchen.github.io/"><img src="https://avatars.githubusercontent.com/u/5584544?v=4?s=100" width="100px;" alt="Hugh JF Chen"/><br /><sub><b>Hugh JF Chen</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=hughjfchen" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.facebook.com/CSOFTWAREESPE/"><img src="https://avatars.githubusercontent.com/u/26729748?v=4?s=100" width="100px;" alt="Jean Karlo Obando Ramos"/><br /><sub><b>Jean Karlo Obando Ramos</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=boceto1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/ng2906/"><img src="https://avatars.githubusercontent.com/u/26463272?v=4?s=100" width="100px;" alt="Nitin Gupta"/><br /><sub><b>Nitin Gupta</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=ng29" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://nebtrx.github.com/"><img src="https://avatars.githubusercontent.com/u/1876959?v=4?s=100" width="100px;" alt="Omar García"/><br /><sub><b>Omar García</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=nebtrx" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wanderer163"><img src="https://avatars.githubusercontent.com/u/93438190?v=4?s=100" width="100px;" alt="wanderer163"/><br /><sub><b>wanderer163</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=wanderer163" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td align="center" size="13px" colspan="7">
+        <img src="https://raw.githubusercontent.com/all-contributors/all-contributors-cli/1b8533af435da9854653492b1327a23a4dbd0a10/assets/logo-small.svg">
+          <a href="https://all-contributors.js.org/docs/en/bot/usage">Add your contributions</a>
+        </img>
+      </td>
+    </tr>
+  </tfoot>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
 ## License
 

@@ -1,0 +1,241 @@
+{
+  "projectName": "hapistrano",
+  "projectOwner": "stackbuilders",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "juanpaucar",
+      "name": "Juan Paucar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2164411?v=4",
+      "profile": "https://juancarlos.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jsl",
+      "name": "Justin S. Leitgeb",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9977?v=4",
+      "profile": "https://www.stackbuilders.com/news/author/justin-leitgeb",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "DavidMazarro",
+      "name": "David Mazarro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22799724?v=4",
+      "profile": "https://github.com/DavidMazarro",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sestrella",
+      "name": "Sebastián Estrella",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2049686?v=4",
+      "profile": "https://github.com/sestrella",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "mrkkrp",
+      "name": "Mark Karpov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8165792?v=4",
+      "profile": "https://markkarpov.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jpvillaisaza",
+      "name": "Juan Pedro Villa Isaza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/584947?v=4",
+      "profile": "https://github.com/jpvillaisaza",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "CristhianMotoche",
+      "name": "Cristhian Motoche",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8370088?v=4",
+      "profile": "https://cristhianmotoche.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "psibi",
+      "name": "Sibi Prabakaran",
+      "avatar_url": "https://avatars.githubusercontent.com/u/737477?v=4",
+      "profile": "https://psibi.in/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ibarrae",
+      "name": "Esteban Ibarra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22796877?v=4",
+      "profile": "https://github.com/ibarrae",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "cptrodolfox",
+      "name": "William R. Arellano",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20303685?v=4",
+      "profile": "https://github.com/cptrodolfox",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "goetzc",
+      "name": "Götz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2220440?v=4",
+      "profile": "https://wikipedia.org/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "javcasas",
+      "name": "Javier Casas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4497839?v=4",
+      "profile": "https://github.com/javcasas",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "darthdeus",
+      "name": "Jakub Arnold",
+      "avatar_url": "https://avatars.githubusercontent.com/u/123374?v=4",
+      "profile": "https://blog.jakuba.net/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nickovivar",
+      "name": "Nicko Vivar D.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1821812?v=4",
+      "profile": "https://github.com/nickovivar",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "felixminom",
+      "name": "Felix Miño",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42775600?v=4",
+      "profile": "https://github.com/felixminom",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "elcuy",
+      "name": "Luis Fernando Alvarez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11718997?v=4",
+      "profile": "https://github.com/elcuy",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "fefi95",
+      "name": "Stefani Castellanos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12057338?v=4",
+      "profile": "https://github.com/fefi95",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "alexisbcc",
+      "name": "Alexis Crespo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38666191?v=4",
+      "profile": "https://github.com/alexisbcc",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "GioDavid",
+      "name": "David Proaño",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6964464?v=4",
+      "profile": "https://giovannipro.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "FranzGB",
+      "name": "Franz Guzmán",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46214532?v=4",
+      "profile": "https://github.com/FranzGB",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "hughjfchen",
+      "name": "Hugh JF Chen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5584544?v=4",
+      "profile": "https://hughjfchen.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "boceto1",
+      "name": "Jean Karlo Obando Ramos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26729748?v=4",
+      "profile": "https://www.facebook.com/CSOFTWAREESPE/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ng29",
+      "name": "Nitin Gupta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26463272?v=4",
+      "profile": "https://www.linkedin.com/in/ng2906/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nebtrx",
+      "name": "Omar García",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1876959?v=4",
+      "profile": "http://nebtrx.github.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "wanderer163",
+      "name": "wanderer163",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93438190?v=4",
+      "profile": "https://github.com/wanderer163",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "linkToUsage": true
+}
