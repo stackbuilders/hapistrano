@@ -11,12 +11,16 @@ import           Control.Monad
 #if !MIN_VERSION_base(4,13,0)
 import           Data.Monoid                   ((<>))
 #endif
+import qualified Data.Text                     as T
+import qualified Data.Text.IO                  as T
 import           Data.Version                  (showVersion)
+import qualified Data.Yaml                     as Yaml
 import qualified Data.Yaml.Config              as Yaml
 import           Development.GitRev
 import           Formatting                    (formatToString, string, (%))
 import           Options.Applicative           hiding (str)
 import           Paths_hapistrano              (version)
+import           System.Directory              (doesFileExist)
 import           System.Exit
 import qualified System.Hapistrano             as Hap
 import qualified System.Hapistrano.Config      as C
@@ -52,7 +56,9 @@ optionParser = Opts
     command "rollback"
     (info rollbackParser (progDesc "Roll back to Nth previous release")) <>
     command "maintenance"
-    (info maintenanceParser (progDesc "Enable/Disable maintenance mode"))
+    (info maintenanceParser (progDesc "Enable/Disable maintenance mode")) <>
+    command "init"
+    (info initParser (progDesc "Initialize hapistrano file"))
     )
   <*> strOption
   ( long "config"
@@ -92,6 +98,9 @@ rollbackParser = Rollback
   <> showDefault
   <> help "How many deployments back to go?" )
 
+initParser :: Parser Command
+initParser = pure InitConfig
+
 maintenanceParser :: Parser Command
 maintenanceParser =
   Maintenance
@@ -120,27 +129,65 @@ data Message
 
 main :: IO ()
 main = do
-  Opts{..} <- execParser parserInfo
+  opts@Opts{..} <- execParser parserInfo
+  case optsCommand of
+    Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
+      runHapCmd opts $ \hapConfig@C.Config{..} executionMode ->
+        Hap.deploy
+          hapConfig
+          (fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat)
+          (fromMaybeKeepReleases cliKeepReleases configKeepReleases)
+          (cliKeepOneFailed || configKeepOneFailed)
+          executionMode
+    Rollback n ->
+      runHapCmd opts $ \C.Config{..} _ ->
+        Hap.rollback configTargetSystem configDeployPath n configRestartCommand
+    Maintenance Enable ->
+      runHapCmd opts $ \C.Config{..} _ ->
+        Hap.writeMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
+    Maintenance _ ->
+      runHapCmd opts $ \C.Config{..} _ ->
+        Hap.deleteMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
+    InitConfig -> do
+      alreadyExisting <- doesFileExist "hap.yml"
+      when alreadyExisting $ do
+        hPutStrLn stderr "'hap.yml' already exists"
+        exitFailure
+      putStrLn "Creating 'hap.yml'"
+      defaults <- defaultInitTemplateConfig
+      let prompt :: Read a => T.Text -> a -> IO a
+          prompt title d = do
+            T.putStrLn $ title <> "?: "
+            x <- getLine
+            return $
+              if null x
+                then d
+                else read x
+          prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
+          prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
+
+      let yesNo :: a -> a -> T.Text -> a
+          yesNo t f x = if x == "y" then t else f
+
+      config <-
+        InitTemplateConfig
+          <$> prompt' "repo" repo repo
+          <*> prompt' "revision" revision revision
+          <*> prompt' "host" host host
+          <*> prompt' "port" (T.pack . show . port) port
+          <*> return (buildScript defaults)
+          <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
+
+      Yaml.encodeFile "hap.yml" config
+
+runHapCmd :: Opts -> (C.Config -> C.ExecutionMode -> Hapistrano ()) -> IO ()
+runHapCmd Opts{..} hapCmd = do
   hapConfig@C.Config{..} <- Yaml.loadYamlSettings [optsConfigFile] [] Yaml.useEnv
   chan <- newTChanIO
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap shell sshOpts executionMode = do
-        r <- Hap.runHapistrano sshOpts shell printFnc $
-          case optsCommand of
-            Deploy cliReleaseFormat cliKeepReleases cliKeepOneFailed ->
-              Hap.deploy
-                hapConfig
-                (fromMaybeReleaseFormat cliReleaseFormat configReleaseFormat)
-                (fromMaybeKeepReleases cliKeepReleases configKeepReleases)
-                (cliKeepOneFailed || configKeepOneFailed)
-                executionMode
-            Rollback n ->
-              Hap.rollback configTargetSystem configDeployPath n configRestartCommand
-            Maintenance Enable-> do
-              Hap.writeMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
-            Maintenance _ -> do
-              Hap.deleteMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
+        r <- Hap.runHapistrano sshOpts shell printFnc $ hapCmd hapConfig executionMode
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()
@@ -162,6 +209,7 @@ main = do
                   hap targetShell (Just $ SshOptions targetHost targetPort targetSshArgs)
                     (if leadTarget == currentTarget then C.LeadTarget else C.AllTargets)
             in runHap <$> targets
+
   results <- (runConcurrently . traverse Concurrently)
     ((Right () <$ printer (length haps)) : haps)
   case sequence_ results of
