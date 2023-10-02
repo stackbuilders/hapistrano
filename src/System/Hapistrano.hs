@@ -9,6 +9,7 @@
 -- A module for creating reliable deploy processes for Haskell applications.
 {-# LANGUAGE CPP                 #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE QuasiQuotes         #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
@@ -26,6 +27,7 @@ module System.Hapistrano
   , dropOldReleases
   , playScript
   , playScriptLocally
+  , initConfig
     -- * Path helpers
   , releasePath
   , sharedPath
@@ -42,7 +44,10 @@ import           Control.Monad.Reader       (local)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
+import qualified Data.Text                  as T
+import qualified Data.Text.IO               as T
 import           Data.Time
+import qualified Data.Yaml                  as Yaml
 import           Numeric.Natural
 import           Path
 import           Path.IO
@@ -55,6 +60,8 @@ import           System.Hapistrano.Config   ( BuildCommand (..)
 import qualified System.Hapistrano.Config   as HC
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
+import           System.Exit                (exitFailure)
+import           System.IO                  (stderr)
 import           Text.Read                  (readMaybe)
 
 ----------------------------------------------------------------------------
@@ -261,6 +268,39 @@ playScriptLocally cmds =
         { configSshOptions = Nothing
         }) $
   forM_ cmds $ flip execWithInheritStdout Nothing
+
+initConfig :: IO ()
+initConfig = do
+  alreadyExisting <- doesFileExist $ [relfile|"hap.yml"|]
+  when alreadyExisting $ do
+    T.hPutStrLn stderr "'hap.yml' already exists"
+    exitFailure
+  putStrLn "Creating 'hap.yml'"
+  defaults <- defaultInitTemplateConfig
+  let prompt :: Read a => T.Text -> a -> IO a
+      prompt title d = do
+        T.putStrLn $ title <> "?: "
+        x <- getLine
+        return $
+          if null x
+            then d
+            else read x
+      prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
+      prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
+
+  let yesNo :: a -> a -> T.Text -> a
+      yesNo t f x = if x == "y" then t else f
+
+  config <-
+    InitTemplateConfig
+      <$> prompt' "repo" repo repo
+      <*> prompt' "revision" revision revision
+      <*> prompt' "host" host host
+      <*> prompt' "port" (T.pack . show . port) port
+      <*> return (buildScript defaults)
+      <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
+
+  Yaml.encodeFile "hap.yml" config
 
 ----------------------------------------------------------------------------
 -- Helpers

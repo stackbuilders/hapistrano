@@ -11,16 +11,12 @@ import           Control.Monad
 #if !MIN_VERSION_base(4,13,0)
 import           Data.Monoid                   ((<>))
 #endif
-import qualified Data.Text                     as T
-import qualified Data.Text.IO                  as T
 import           Data.Version                  (showVersion)
-import qualified Data.Yaml                     as Yaml
 import qualified Data.Yaml.Config              as Yaml
 import           Development.GitRev
 import           Formatting                    (formatToString, string, (%))
 import           Options.Applicative           hiding (str)
 import           Paths_hapistrano              (version)
-import           System.Directory              (doesFileExist)
 import           System.Exit
 import qualified System.Hapistrano             as Hap
 import qualified System.Hapistrano.Config      as C
@@ -148,37 +144,7 @@ main = do
     Maintenance _ ->
       runHapCmd opts $ \C.Config{..} _ ->
         Hap.deleteMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
-    InitConfig -> do
-      alreadyExisting <- doesFileExist "hap.yml"
-      when alreadyExisting $ do
-        hPutStrLn stderr "'hap.yml' already exists"
-        exitFailure
-      putStrLn "Creating 'hap.yml'"
-      defaults <- defaultInitTemplateConfig
-      let prompt :: Read a => T.Text -> a -> IO a
-          prompt title d = do
-            T.putStrLn $ title <> "?: "
-            x <- getLine
-            return $
-              if null x
-                then d
-                else read x
-          prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
-          prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
-
-      let yesNo :: a -> a -> T.Text -> a
-          yesNo t f x = if x == "y" then t else f
-
-      config <-
-        InitTemplateConfig
-          <$> prompt' "repo" repo repo
-          <*> prompt' "revision" revision revision
-          <*> prompt' "host" host host
-          <*> prompt' "port" (T.pack . show . port) port
-          <*> return (buildScript defaults)
-          <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
-
-      Yaml.encodeFile "hap.yml" config
+    InitConfig -> Hap.initConfig
 
 runHapCmd :: Opts -> (C.Config -> C.ExecutionMode -> Hapistrano ()) -> IO ()
 runHapCmd Opts{..} hapCmd = do
