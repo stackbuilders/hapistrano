@@ -54,6 +54,7 @@ library
   build-depends:       aeson              >= 2.0 && < 3.0
                      , ansi-terminal      >= 0.9 && < 0.12
                      , base               >= 4.9 && < 5.0
+                     , directory          >= 1.2.5 && < 1.4
                      , filepath           >= 1.2 && < 1.5
                      , gitrev             >= 1.2 && < 1.4
                      , mtl                >= 2.0 && < 3.0
@@ -100,6 +101,7 @@ test-suite test
   main-is:             Spec.hs
   other-modules:       System.HapistranoSpec
                      , System.Hapistrano.ConfigSpec
+                     , System.Hapistrano.InitSpec
                      , System.HapistranoPropsSpec
   build-depends:       base               >= 4.9 && < 5.0
                      , aeson

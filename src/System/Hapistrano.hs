@@ -60,7 +60,9 @@ import           System.Hapistrano.Config   ( BuildCommand (..)
 import qualified System.Hapistrano.Config   as HC
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
+import qualified System.Directory           as Directory
 import           System.Exit                (exitFailure)
+import qualified System.FilePath            as FilePath
 import           System.IO                  (stderr)
 import           Text.Read                  (readMaybe)
 
@@ -269,9 +271,10 @@ playScriptLocally cmds =
         }) $
   forM_ cmds $ flip execWithInheritStdout Nothing
 
-initConfig :: IO ()
-initConfig = do
-  alreadyExisting <- doesFileExist $ [relfile|"hap.yml"|]
+initConfig :: IO String -> IO ()
+initConfig getLine' = do
+  configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
+  alreadyExisting <- Directory.doesFileExist configFilePath
   when alreadyExisting $ do
     T.hPutStrLn stderr "'hap.yml' already exists"
     exitFailure
@@ -280,7 +283,7 @@ initConfig = do
   let prompt :: Read a => T.Text -> a -> IO a
       prompt title d = do
         T.putStrLn $ title <> "?: "
-        x <- getLine
+        x <- getLine'
         return $
           if null x
             then d
@@ -300,7 +303,8 @@ initConfig = do
       <*> return (buildScript defaults)
       <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
 
-  Yaml.encodeFile "hap.yml" config
+  Yaml.encodeFile configFilePath config
+  putStrLn $ "Configuration written at " <> configFilePath
 
 ----------------------------------------------------------------------------
 -- Helpers

@@ -144,7 +144,7 @@ main = do
     Maintenance _ ->
       runHapCmd opts $ \C.Config{..} _ ->
         Hap.deleteMaintenanceFile configDeployPath configMaintenanceDirectory configMaintenanceFileName
-    InitConfig -> Hap.initConfig
+    InitConfig -> Hap.initConfig getLine
 
 runHapCmd :: Opts -> (C.Config -> C.ExecutionMode -> Hapistrano ()) -> IO ()
 runHapCmd Opts{..} hapCmd = do
