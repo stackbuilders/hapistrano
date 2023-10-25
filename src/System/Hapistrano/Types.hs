@@ -28,6 +28,7 @@ module System.Hapistrano.Types
   , Opts(..)
   , Command(..)
   , MaintenanceOptions(..)
+  , InitTemplateConfig(..)
   -- * Types helpers
   , mkRelease
   , releaseTime
@@ -36,6 +37,7 @@ module System.Hapistrano.Types
   , fromMaybeReleaseFormat
   , fromMaybeKeepReleases
   , toMaybePath
+  , defaultInitTemplateConfig
   ) where
 
 import           Control.Applicative
@@ -44,9 +46,14 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Aeson
 import           Data.Maybe
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Time
 import           Numeric.Natural
 import           Path
+import           System.Exit (ExitCode(ExitSuccess))
+import           System.Process.Typed (nullStream, readProcessStdout, setStderr, shell)
 
 -- | Hapistrano monad.
 newtype Hapistrano a =
@@ -192,6 +199,7 @@ data Command
     -- get deleted or not)
   | Rollback Natural -- ^ Rollback to Nth previous release
   | Maintenance MaintenanceOptions
+  | InitConfig -- ^ initialize configuration file
 
 -- | Create a 'Release' indentifier.
 mkRelease :: ReleaseFormat -> UTCTime -> Release
@@ -209,6 +217,48 @@ renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
       case rfmt of
         ReleaseShort -> releaseFormatShort
         ReleaseLong  -> releaseFormatLong
+
+-- | Initial configurable fields
+data InitTemplateConfig = InitTemplateConfig
+  { repo :: T.Text
+  , revision :: T.Text
+  , host :: T.Text
+  , port :: Word
+  , buildScript :: [T.Text]
+  , restartCommand :: Maybe T.Text
+  }
+
+defaultInitTemplateConfig :: IO InitTemplateConfig
+defaultInitTemplateConfig = do
+  let shellWithDefault d cmd = do
+        (exitCode, stdout) <- readProcessStdout $ setStderr nullStream $ shell cmd
+        return $
+          if exitCode == ExitSuccess
+            then maybe d (T.strip . TL.toStrict) $ listToMaybe $ TL.lines $ TL.decodeUtf8 stdout
+            else d
+  remoteBranch <- shellWithDefault "origin/main" "git rev-parse --abbrev-ref --symbolic-full-name @{u}"
+  let remote = T.takeWhile (/='/') remoteBranch
+  repository <- shellWithDefault "https://github.com/user/repo.git" ("git ls-remote --get-url " <> T.unpack remote)
+  return $
+    InitTemplateConfig
+      { repo = repository
+      , revision = remoteBranch
+      , host = "root@localhost"
+      , port = 22
+      , buildScript = ["echo 'Build steps'"]
+      , restartCommand = Just "echo 'Restart command'"
+      }
+
+instance ToJSON InitTemplateConfig where
+  toJSON x =
+    object
+    [ "repo" .= repo x
+    , "revision" .= revision x
+    , "host" .= host x
+    , "port" .= port x
+    , "buildScript" .= buildScript x
+    , "restartCommand" .= restartCommand x
+    ]
 
 ----------------------------------------------------------------------------
 -- Types helpers
