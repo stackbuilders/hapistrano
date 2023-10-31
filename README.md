@@ -9,36 +9,27 @@
 
 ## Description
 
-Hapistrano is a deployment library for Haskell applications similar to
-Ruby's [Capistrano](http://capistranorb.com/).
+Hapistrano is a deployment library for Haskell applications, similar to Ruby's [Capistrano](http://capistranorb.com/).
 
 ## Purpose
 
-We created Hapistrano because:
+We created Hapistrano with the following objectives:
 
-* Deploys should be simple, but as close to atomic as possible (eg,
-  they shouldn't require much application downtime).
-* Rollback should be trivial to achieve to bring the application back
-  to the last-deployed state.
-* Deploys shouldn't fail because of dependency problems.
+* Deploys should be simple yet as close to atomic as possible, minimizing application downtime.
+* Rollbacks should be straightforward to revert the application back to its last-deployed state.
+* Deploys shouldn't fail due to dependency problems.
 
 ## How it Works
 
-Hapistrano (like Capistrano for Ruby) deploys applications to a new
-directory marked with a timestamp on the remote host. It creates this
-new directory quickly by placing a git repository for caching purposes
-on the remote server.
+Hapistrano, much like Ruby's Capistrano, deploys applications to a new directory on the remote host marked with a timestamp. It accomplishes this quickly by placing a Git repository on the remote server for caching purposes.
 
-When the build process completes, it switches a symlink to the `current`
-release directory, and optionally restarts the web server.
+Once the build process is complete, it switches a symlink to the `current` release directory and optionally restarts the web server.
 
-By default, Hapistrano keeps the last five releases on the target host
-filesystem and deletes previous releases to avoid filling up the disk.
+By default, Hapistrano retains the last five releases on the target host's filesystem and removes previous releases to prevent disk space saturation.
 
 ## Usage
 
-Hapistrano 0.4.0.0 looks for a configuration file called `hap.yaml` that
-typically looks like this:
+Hapistrano 0.4.0.0 looks for a configuration file named `hap.yaml`. A typical configuration file looks like this:
 
 ```yaml
 deploy_path: '/var/projects/my-project'
