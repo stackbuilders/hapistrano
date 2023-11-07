@@ -1,6 +1,6 @@
 [![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-25-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-26-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Draft](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/draft.yml)
 [![Release](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml/badge.svg)](https://github.com/stackbuilders/hapistrano/actions/workflows/release.yml)
@@ -356,6 +356,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/ng2906/"><img src="https://avatars.githubusercontent.com/u/26463272?v=4?s=100" width="100px;" alt="Nitin Gupta"/><br /><sub><b>Nitin Gupta</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=ng29" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://nebtrx.github.com/"><img src="https://avatars.githubusercontent.com/u/1876959?v=4?s=100" width="100px;" alt="Omar García"/><br /><sub><b>Omar García</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=nebtrx" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wanderer163"><img src="https://avatars.githubusercontent.com/u/93438190?v=4?s=100" width="100px;" alt="wanderer163"/><br /><sub><b>wanderer163</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=wanderer163" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://gautier.difolco.dev/"><img src="https://avatars.githubusercontent.com/u/1362807?v=4?s=100" width="100px;" alt="Gautier DI FOLCO"/><br /><sub><b>Gautier DI FOLCO</b></sub></a><br /><a href="https://github.com/stackbuilders/hapistrano/commits?author=blackheaven" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
