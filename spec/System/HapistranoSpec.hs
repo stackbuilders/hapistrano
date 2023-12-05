@@ -200,7 +200,7 @@ spec = do
         -- let's check that the dir exists and contains the right files
           (liftIO . readFile . fromAbsFile) (rpath </> $(mkRelFile "foo.txt")) `shouldReturn`
             "Foo!\n"
-      it "deploys properly a branch other than master" $ \(deployPath, repoPath) ->
+      it "deploys properly a branch other than main" $ \(deployPath, repoPath) ->
         runHap $ do
           let task = mkTaskWithCustomRevision deployPath repoPath testBranchName
           release <- Hap.pushRelease task
@@ -437,19 +437,19 @@ withSandbox action =
 populateTestRepo :: Path Abs Dir -> IO ()
 populateTestRepo path =
   runHap $ do
-    justExec path "git init -b master"
+    justExec path "git init -b main"
     justExec path "git config --local --replace-all push.default simple"
     justExec path "git config --local --replace-all user.email   hap@hap"
     justExec path "git config --local --replace-all user.name    Hap"
     justExec path "echo 'Foo!' > foo.txt"
     justExec path "git add -A"
     justExec path "git commit -m 'Initial commit'"
-  -- Add dummy content to a branch that is not master
+  -- Add dummy content to a branch that is not main
     justExec path ("git checkout -b " ++ testBranchName)
     justExec path "echo 'Bar!' > bar.txt"
     justExec path "git add bar.txt"
     justExec path "git commit -m 'Added more bars to another branch'"
-    justExec path "git checkout master"
+    justExec path "git checkout main"
 
 -- | Execute arbitrary commands in the specified directory.
 justExec :: Path Abs Dir -> String -> Hapistrano ()
@@ -480,7 +480,7 @@ runHapWithShell shell m = do
 -- | Make a 'Task' given deploy path and path to the repo.
 mkTask :: Path Abs Dir -> Path Abs Dir -> Task
 mkTask deployPath repoPath =
-  mkTaskWithCustomRevision deployPath repoPath "master"
+  mkTaskWithCustomRevision deployPath repoPath "main"
 
 mkTaskWithCustomRevision :: Path Abs Dir -> Path Abs Dir -> String -> Task
 mkTaskWithCustomRevision deployPath repoPath revision =
