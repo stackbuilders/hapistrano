@@ -104,11 +104,13 @@ data Target =
     , targetSshArgs :: [String]
     } deriving (Eq, Ord, Show)
 
+-- | Command and execution mode for build command.
 data BuildCommand = BuildCommand
   { buildCommandCommand       :: GenericCommand
   , buildCommandExecutionMode :: ExecutionMode
   } deriving (Eq, Ord, Show)
 
+-- | Execute either on Lead or All targets.
 data ExecutionMode = LeadTarget | AllTargets
   deriving (Eq, Ord, Show)
 
