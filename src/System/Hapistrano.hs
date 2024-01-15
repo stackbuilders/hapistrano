@@ -271,7 +271,6 @@ playScriptLocally cmds =
 
 -- | Create a file with an initial config file by getting information from the
 -- user.
-
 initConfig :: IO String -> IO ()
 initConfig getLine' = do
   configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
