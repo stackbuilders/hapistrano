@@ -228,6 +228,7 @@ data InitTemplateConfig = InitTemplateConfig
   , restartCommand :: Maybe T.Text
   }
 
+-- | Default initial template for creating hapistrano file.
 defaultInitTemplateConfig :: IO InitTemplateConfig
 defaultInitTemplateConfig = do
   let shellWithDefault d cmd = do
