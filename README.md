@@ -1,4 +1,4 @@
-[![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
+[![Build](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/stackbuilders/hapistrano/actions/workflows/build.yml)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-26-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
@@ -46,7 +46,7 @@ host: user@myserver.com
 port: 2222
 # To perform version control operations
 repo: 'https://github.com/stackbuilders/hapistrano.git'
-revision: origin/master
+revision: origin/main
 # To copy the contents of the directory
 local_directory: '/tmp/my-project'
 build_script:
@@ -151,7 +151,7 @@ Configuration files are parsed using
 therefore, variable substitution is supported. Considering the following configuration file:
 
 ```yaml
-revision: "_env:HAPISTRANO_REVISION:origin/master
+revision: "_env:HAPISTRANO_REVISION:origin/main
 ...
 ```
 
