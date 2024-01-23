@@ -234,8 +234,18 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "blackheaven",
+      "name": "Gautier DI FOLCO",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1362807?v=4",
+      "profile": "https://gautier.difolco.dev/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
-  "linkToUsage": true
+  "linkToUsage": true,
+  "commitType": "docs"
 }

@@ -31,13 +31,13 @@ import           Data.Aeson.Types           (typeMismatch)
 import           Data.Function              (on)
 import           Data.List                  (nubBy)
 import           Data.Maybe                 (maybeToList)
-import           Data.Yaml
 import           Data.Proxy
+import           Data.Yaml
 import           Numeric.Natural
 import           Path
 import           System.Hapistrano.Commands
-import           System.Hapistrano.Types    (ReleaseFormat(..), Shell(..),
-                                             Source(..), TargetSystem(..))
+import           System.Hapistrano.Types    (ReleaseFormat (..), Shell (..),
+                                             Source (..), TargetSystem (..))
 
 -- | Hapistrano configuration typically loaded from @hap.yaml@ file.
 
@@ -104,11 +104,14 @@ data Target =
     , targetSshArgs :: [String]
     } deriving (Eq, Ord, Show)
 
+-- | Command and execution mode for build command.
 data BuildCommand = BuildCommand
   { buildCommandCommand       :: GenericCommand
   , buildCommandExecutionMode :: ExecutionMode
   } deriving (Eq, Ord, Show)
 
+-- | The execution mode determines whether commands will be executed
+-- on the lead target or on all targets.
 data ExecutionMode = LeadTarget | AllTargets
   deriving (Eq, Ord, Show)
 

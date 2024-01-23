@@ -51,18 +51,16 @@ import qualified Data.Yaml                  as Yaml
 import           Numeric.Natural
 import           Path
 import           Path.IO
-import           System.Hapistrano.Commands
-import           System.Hapistrano.Config   ( BuildCommand (..)
-                                            , CopyThing (..)
-                                            , ExecutionMode (..)
-                                            , deployStateFilename
-                                            )
-import qualified System.Hapistrano.Config   as HC
-import           System.Hapistrano.Core
-import           System.Hapistrano.Types
 import qualified System.Directory           as Directory
 import           System.Exit                (exitFailure)
 import qualified System.FilePath            as FilePath
+import           System.Hapistrano.Commands
+import qualified System.Hapistrano.Config   as HC
+import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
+                                             ExecutionMode (..),
+                                             deployStateFilename)
+import           System.Hapistrano.Core
+import           System.Hapistrano.Types
 import           System.IO                  (stderr)
 import           Text.Read                  (readMaybe)
 
@@ -271,6 +269,8 @@ playScriptLocally cmds =
         }) $
   forM_ cmds $ flip execWithInheritStdout Nothing
 
+-- | Create a file with an initial config file by getting information from the
+-- user.
 initConfig :: IO String -> IO ()
 initConfig getLine' = do
   configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
