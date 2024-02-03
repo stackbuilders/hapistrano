@@ -10,6 +10,7 @@
 {-# LANGUAGE DerivingVia       #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module System.Hapistrano.Types
   ( Hapistrano(..)
@@ -30,6 +31,7 @@ module System.Hapistrano.Types
   , MaintenanceOptions(..)
   , InitTemplateConfig(..)
   -- * Types helpers
+  , Foo(..)
   , mkRelease
   , releaseTime
   , renderRelease
@@ -218,11 +220,25 @@ renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
         ReleaseShort -> releaseFormatShort
         ReleaseLong  -> releaseFormatLong
 
+newtype Foo = Foo { unFoo :: T.Text}
+  deriving (Show, ToJSON)
+
+instance Read Foo where
+  readsPrec _ input = f <$> lex input
+    where
+      f (s, s2) = (Foo $ T.pack s, s2)
+
+-- readFoo :: ReadS Foo
+-- readFoo = flip readPrec_to_S 0 $ parens $ do
+--   str <- lex
+--   let txt = T.pack str
+--   return (Foo txt)
+
 -- | Initial configurable fields
 data InitTemplateConfig = InitTemplateConfig
-  { repo :: T.Text
-  , revision :: T.Text
-  , host :: T.Text
+  { repo :: Foo
+  , revision :: Foo
+  , host :: Foo
   , port :: Word
   , buildScript :: [T.Text]
   , restartCommand :: Maybe T.Text
@@ -242,9 +258,9 @@ defaultInitTemplateConfig = do
   repository <- shellWithDefault "https://github.com/user/repo.git" ("git ls-remote --get-url " <> T.unpack remote)
   return $
     InitTemplateConfig
-      { repo = repository
-      , revision = remoteBranch
-      , host = "root@localhost"
+      { repo = Foo repository
+      , revision = Foo remoteBranch
+      , host = Foo "root@localhost"
       , port = 22
       , buildScript = ["echo 'Build steps'"]
       , restartCommand = Just "echo 'Restart command'"

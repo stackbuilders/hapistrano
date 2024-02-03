@@ -280,16 +280,18 @@ initConfig getLine' = do
     exitFailure
   putStrLn "Creating 'hap.yml'"
   defaults <- defaultInitTemplateConfig
-  let prompt :: Read a => T.Text -> a -> IO a
+  let prompt :: forall a. Read a => T.Text -> a -> IO a
       prompt title d = do
         T.putStrLn $ title <> "?: "
         x <- getLine'
         return $
-          if null x
-            then d
-            else read x
-      prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
-      prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
+          case (null x, readMaybe x :: Maybe a) of
+            (True, _) -> d
+            (_, Just y) -> y
+            (_, Nothing) ->
+              error $ "'" <> x <> "'" <> " was not expected for '" <> T.unpack title <> "'"
+      prompt' :: Read a => T.Text -> (InitTemplateConfig -> Foo) -> (InitTemplateConfig -> a) -> IO a
+      prompt' title f fd = prompt (title <> " (default: " <> unFoo (f defaults) <> ")") (fd defaults)
 
   let yesNo :: a -> a -> T.Text -> a
       yesNo t f x = if x == "y" then t else f
@@ -299,9 +301,9 @@ initConfig getLine' = do
       <$> prompt' "repo" repo repo
       <*> prompt' "revision" revision revision
       <*> prompt' "host" host host
-      <*> prompt' "port" (T.pack . show . port) port
+      <*> prompt' "port" (Foo . T.pack . show . port) port
       <*> return (buildScript defaults)
-      <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
+      <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const (Foo "Y/n")) (const "y"))
 
   Yaml.encodeFile configFilePath config
   putStrLn $ "Configuration written at " <> configFilePath
