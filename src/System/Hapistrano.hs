@@ -54,6 +54,8 @@ import           Path.IO
 import qualified System.Directory           as Directory
 import           System.Exit                (exitFailure)
 import qualified System.FilePath            as FilePath
+
+import           System.Hapistrano.Internal (initConfig')
 import           System.Hapistrano.Commands
 import qualified System.Hapistrano.Config   as HC
 import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
@@ -271,40 +273,40 @@ playScriptLocally cmds =
 
 -- | Create a file with an initial config file by getting information from the
 -- user.
-initConfig :: IO String -> IO ()
-initConfig getLine' = do
-  configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
-  alreadyExisting <- Directory.doesFileExist configFilePath
-  when alreadyExisting $ do
-    T.hPutStrLn stderr "'hap.yml' already exists"
-    exitFailure
-  putStrLn "Creating 'hap.yml'"
-  defaults <- defaultInitTemplateConfig
-  let prompt :: Read a => T.Text -> a -> IO a
-      prompt title d = do
-        T.putStrLn $ title <> "?: "
-        x <- getLine'
-        return $
-          if null x
-            then d
-            else read x
-      prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
-      prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
+initConfig :: IO ()
+initConfig = initConfig' (const getLine)
+  -- configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
+  -- alreadyExisting <- Directory.doesFileExist configFilePath
+  -- when alreadyExisting $ do
+  --   T.hPutStrLn stderr "'hap.yml' already exists"
+  --   exitFailure
+  -- putStrLn "Creating 'hap.yml'"
+  -- defaults <- defaultInitTemplateConfig
+  -- let prompt :: Read a => T.Text -> a -> IO a
+  --     prompt title d = do
+  --       T.putStrLn $ title <> "?: "
+  --       x <- getLine'
+  --       return $
+  --         if null x
+  --           then d
+  --           else read x
+  --     prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
+  --     prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
 
-  let yesNo :: a -> a -> T.Text -> a
-      yesNo t f x = if x == "y" then t else f
+  -- let yesNo :: a -> a -> T.Text -> a
+  --     yesNo t f x = if x == "y" then t else f
 
-  config <-
-    InitTemplateConfig
-      <$> prompt' "repo" repo repo
-      <*> prompt' "revision" revision revision
-      <*> prompt' "host" host host
-      <*> prompt' "port" (T.pack . show . port) port
-      <*> return (buildScript defaults)
-      <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
+  -- config <-
+  --   InitTemplateConfig
+  --     <$> prompt' "repo" repo repo
+  --     <*> prompt' "revision" revision revision
+  --     <*> prompt' "host" host host
+  --     <*> prompt' "port" (T.pack . show . port) port
+  --     <*> return (buildScript defaults)
+  --     <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
 
-  Yaml.encodeFile configFilePath config
-  putStrLn $ "Configuration written at " <> configFilePath
+  -- Yaml.encodeFile configFilePath config
+  -- putStrLn $ "Configuration written at " <> configFilePath
 
 ----------------------------------------------------------------------------
 -- Helpers

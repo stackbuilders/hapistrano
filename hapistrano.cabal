@@ -48,6 +48,7 @@ library
                      , System.Hapistrano.Commands
                      , System.Hapistrano.Config
                      , System.Hapistrano.Core
+                     , System.Hapistrano.Internal
                      , System.Hapistrano.Types
                      , System.Hapistrano.Commands.Internal
                      , System.Hapistrano.Maintenance
