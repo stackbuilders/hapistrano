@@ -58,6 +58,7 @@ library
                      , filepath           >= 1.2 && < 1.5
                      , gitrev             >= 1.2 && < 1.4
                      , mtl                >= 2.0 && < 3.0
+                     , megaparsec
                      , stm                >= 2.0 && < 2.6
                      , path               >= 0.5 && < 1.0
                      , path-io            >= 1.2 && < 1.9

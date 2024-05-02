@@ -44,8 +44,6 @@ import           Control.Monad.Reader       (local)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
-import qualified Data.Text                  as T
-import qualified Data.Text.IO               as T
 import           Data.Time
 import qualified Data.Yaml                  as Yaml
 import           Numeric.Natural
@@ -61,8 +59,11 @@ import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
                                              deployStateFilename)
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
-import           System.IO                  (stderr)
+import           System.IO                  (stderr, hPutStrLn)
 import           Text.Read                  (readMaybe)
+import Text.Megaparsec (Parsec, many)
+import Data.Void (Void)
+import qualified Text.Megaparsec as M
 
 ----------------------------------------------------------------------------
 
@@ -276,35 +277,57 @@ initConfig getLine' = do
   configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
   alreadyExisting <- Directory.doesFileExist configFilePath
   when alreadyExisting $ do
-    T.hPutStrLn stderr "'hap.yml' already exists"
+    hPutStrLn stderr "'hap.yml' already exists"
     exitFailure
+
   putStrLn "Creating 'hap.yml'"
-  defaults <- defaultInitTemplateConfig
-  let prompt :: Read a => T.Text -> a -> IO a
-      prompt title d = do
-        T.putStrLn $ title <> "?: "
-        x <- getLine'
-        return $
-          if null x
-            then d
-            else read x
-      prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
-      prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
 
-  let yesNo :: a -> a -> T.Text -> a
-      yesNo t f x = if x == "y" then t else f
-
-  config <-
-    InitTemplateConfig
-      <$> prompt' "repo" repo repo
-      <*> prompt' "revision" revision revision
-      <*> prompt' "host" host host
-      <*> prompt' "port" (T.pack . show . port) port
-      <*> return (buildScript defaults)
-      <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
+  config <- generateUserConfig defaultInitTemplateConfig
 
   Yaml.encodeFile configFilePath config
   putStrLn $ "Configuration written at " <> configFilePath
+
+  where
+
+    promptString :: String -> String -> IO String
+    promptString parameterName def  = do
+      userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
+      let parsed = M.parseMaybe stringParser userInput
+      pure $ fromMaybe def parsed
+
+    prompt' :: String -> IO String
+    prompt' title = do
+        hPutStrLn stderr title
+        getLine'
+
+
+    generateUserConfig :: IO InitTemplateConfig -> IO InitTemplateConfig
+    generateUserConfig initCfg = do
+      InitTemplateConfig{..} <- initCfg
+      InitTemplateConfig
+        <$> promptString "repo" repo
+        <*> promptString "revision" revision
+        <*> promptString "host" host
+        <*> pure port
+        <*> pure buildScript 
+        <*> pure restartCommand
+
+type MParser = Parsec Void String
+
+
+stringParser :: MParser String
+stringParser = many (M.satisfy (not . barOrNewline))
+
+barOrNewline :: Char -> Bool
+barOrNewline c = c == '|' || c == '\n'
+
+
+-- numberParser :: MParser Word
+-- numberParser = read <$>
+--   integerParser
+--   where
+--     integerParser :: MParser String
+--     integerParser = M.try (some M.digitChar)
 
 ----------------------------------------------------------------------------
 -- Helpers
