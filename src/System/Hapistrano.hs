@@ -39,8 +39,7 @@ where
 import           Control.Exception          (try)
 import           Control.Monad
 import           Control.Monad.Catch        (catch, throwM)
-import           Control.Monad.Except
-import           Control.Monad.Reader       (local)
+import           Control.Monad.Reader       (local, MonadIO, liftIO)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
@@ -61,9 +60,10 @@ import           System.Hapistrano.Core
 import           System.Hapistrano.Types
 import           System.IO                  (stderr, hPutStrLn)
 import           Text.Read                  (readMaybe)
-import Text.Megaparsec (Parsec, many)
+import Text.Megaparsec (Parsec, many, some)
 import Data.Void (Void)
 import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Char as M
 
 ----------------------------------------------------------------------------
 
@@ -289,10 +289,10 @@ initConfig getLine' = do
 
   where
 
-    promptString :: String -> String -> IO String
-    promptString parameterName def  = do
+    prompt :: forall a. Show a => String -> a -> MParser a -> IO a
+    prompt parameterName def parser = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      let parsed = M.parseMaybe stringParser userInput
+      let parsed = M.parseMaybe parser userInput
       pure $ fromMaybe def parsed
 
     prompt' :: String -> IO String
@@ -305,15 +305,14 @@ initConfig getLine' = do
     generateUserConfig initCfg = do
       InitTemplateConfig{..} <- initCfg
       InitTemplateConfig
-        <$> promptString "repo" repo
-        <*> promptString "revision" revision
-        <*> promptString "host" host
-        <*> pure port
+        <$> prompt "repo" repo stringParser
+        <*> prompt "revision" revision stringParser
+        <*> prompt "host" host stringParser
+        <*> prompt "port" port numberParser
         <*> pure buildScript 
         <*> pure restartCommand
 
 type MParser = Parsec Void String
-
 
 stringParser :: MParser String
 stringParser = many (M.satisfy (not . barOrNewline))
@@ -321,13 +320,8 @@ stringParser = many (M.satisfy (not . barOrNewline))
 barOrNewline :: Char -> Bool
 barOrNewline c = c == '|' || c == '\n'
 
-
--- numberParser :: MParser Word
--- numberParser = read <$>
---   integerParser
---   where
---     integerParser :: MParser String
---     integerParser = M.try (some M.digitChar)
+numberParser :: MParser Word
+numberParser = read <$> M.try (some M.digitChar)
 
 ----------------------------------------------------------------------------
 -- Helpers
