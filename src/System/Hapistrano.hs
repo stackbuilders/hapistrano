@@ -44,6 +44,7 @@ import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
 import           Data.Time
+import           Data.Void                  (Void)
 import qualified Data.Yaml                  as Yaml
 import           Numeric.Natural
 import           Path
@@ -60,10 +61,9 @@ import           System.Hapistrano.Core
 import           System.Hapistrano.Types
 import           System.IO                  (stderr, hPutStrLn)
 import           Text.Read                  (readMaybe)
-import Text.Megaparsec (Parsec, many, some)
-import Data.Void (Void)
-import qualified Text.Megaparsec as M
-import qualified Text.Megaparsec.Char as M
+import           Text.Megaparsec            (Parsec, some, (<?>))
+import qualified Text.Megaparsec            as M
+import qualified Text.Megaparsec.Char       as M
 
 ----------------------------------------------------------------------------
 
@@ -289,39 +289,60 @@ initConfig getLine' = do
 
   where
 
-    prompt :: forall a. Show a => String -> a -> MParser a -> IO a
-    prompt parameterName def parser = do
+    prompt :: forall a. Show a => String -> a -> MParser a -> Bool -> IO a
+    prompt parameterName def parser isRequired = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      let parsed = M.parseMaybe parser userInput
-      pure $ fromMaybe def parsed
+      let parsed = M.parse parser "" userInput
+      case parsed of
+        Left err -> do
+          if isRequired then do
+            hPutStrLn stderr ("Invalid value for " <> parameterName)
+            hPutStrLn stderr (M.errorBundlePretty err)
+            prompt parameterName def parser isRequired
+          else
+            pure def
+        Right res -> pure res
 
     prompt' :: String -> IO String
     prompt' title = do
         hPutStrLn stderr title
         getLine'
 
-
     generateUserConfig :: IO InitTemplateConfig -> IO InitTemplateConfig
     generateUserConfig initCfg = do
       InitTemplateConfig{..} <- initCfg
       InitTemplateConfig
-        <$> prompt "repo" repo stringParser
-        <*> prompt "revision" revision stringParser
-        <*> prompt "host" host stringParser
-        <*> prompt "port" port numberParser
+        <$> prompt "repo" repo pUri True
+        <*> prompt "revision" revision stringParser False
+        <*> prompt "host" host stringParser False
+        <*> prompt "port" port numberParser False
         <*> pure buildScript 
         <*> pure restartCommand
 
 type MParser = Parsec Void String
 
-stringParser :: MParser String
-stringParser = many (M.satisfy (not . barOrNewline))
+oScheme :: MParser String
+oScheme = M.choice [M.string "://", M.string "@"]
 
-barOrNewline :: Char -> Bool
-barOrNewline c = c == '|' || c == '\n'
+pScheme :: MParser String
+pScheme = M.choice
+  [ M.string "https"
+  , M.string "http"
+  , M.string "ssh"
+  , M.string "git" ]
+
+pUri :: MParser String
+pUri = do
+  r <- pScheme
+  scheme <- oScheme
+  rest <- stringParser
+  pure $ r <> scheme <> rest
+
+stringParser :: MParser String
+stringParser = M.many $ M.satisfy (const True)
 
 numberParser :: MParser Word
-numberParser = read <$> M.try (some M.digitChar)
+numberParser = read <$> some M.digitChar
 
 ----------------------------------------------------------------------------
 -- Helpers
