@@ -40,6 +40,7 @@ import           Control.Exception          (try)
 import           Control.Monad
 import           Control.Monad.Catch        (catch, throwM)
 import           Control.Monad.Reader       (local, MonadIO, liftIO)
+import           Data.Char                  (toLower)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
@@ -61,9 +62,11 @@ import           System.Hapistrano.Core
 import           System.Hapistrano.Types
 import           System.IO                  (stderr, hPutStrLn)
 import           Text.Read                  (readMaybe)
-import           Text.Megaparsec            (Parsec, some, (<?>))
+import           Text.Megaparsec            (Parsec, some)
+import           Text.Megaparsec.Error      (ParseError(..), ParseErrorBundle (..), ErrorItem (..))
 import qualified Text.Megaparsec            as M
 import qualified Text.Megaparsec.Char       as M
+import qualified Data.List.NonEmpty         as NE (filter)
 
 ----------------------------------------------------------------------------
 
@@ -288,20 +291,33 @@ initConfig getLine' = do
   putStrLn $ "Configuration written at " <> configFilePath
 
   where
-
-    prompt :: forall a. Show a => String -> a -> MParser a -> Bool -> IO a
+    prompt :: Show a => String -> a -> MParser a -> Bool -> IO a
     prompt parameterName def parser isRequired = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      let parsed = M.parse parser "" userInput
+      let parsed = M.parse (parser <* M.eof) "" userInput
       case parsed of
-        Left err -> do
-          if isRequired then do
-            hPutStrLn stderr ("Invalid value for " <> parameterName)
-            hPutStrLn stderr (M.errorBundlePretty err)
-            prompt parameterName def parser isRequired
-          else
-            pure def
+        Left errB@(ParseErrorBundle err _) -> do
+          case NE.filter isNotEOIErr err of
+            [] -> do
+              hPutStrLn stderr ("Invalid value for " <> parameterName)
+              hPutStrLn stderr (M.errorBundlePretty errB)
+              prompt parameterName def parser isRequired
+            _ -> do
+              if isRequired then do
+                hPutStrLn stderr ("Value required: " <> parameterName)
+                hPutStrLn stderr (M.errorBundlePretty errB)
+                prompt parameterName def parser isRequired
+              else
+                pure def
         Right res -> pure res
+    isNotEOIErr (TrivialError _ (Just EndOfInput) _) = False
+    isNotEOIErr _ = True
+
+    promptYN = do
+      userInput <- prompt "Include restart command? y/N" 'N' yNParser True
+      case toLower userInput of
+        'y' -> pure $ Just "echo 'Restart command'"
+        _ -> pure Nothing
 
     prompt' :: String -> IO String
     prompt' title = do
@@ -317,7 +333,7 @@ initConfig getLine' = do
         <*> prompt "host" host stringParser False
         <*> prompt "port" port numberParser False
         <*> pure buildScript 
-        <*> pure restartCommand
+        <*> promptYN
 
 type MParser = Parsec Void String
 
@@ -343,6 +359,11 @@ stringParser = M.many $ M.satisfy (const True)
 
 numberParser :: MParser Word
 numberParser = read <$> some M.digitChar
+
+yNParser :: MParser Char
+yNParser = M.choice
+    [ M.char' 'y'
+    , M.char' 'n' ]
 
 ----------------------------------------------------------------------------
 -- Helpers
