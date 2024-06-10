@@ -155,7 +155,7 @@ deploy
   :: HC.Config -- ^ Deploy configuration
   -> ReleaseFormat -- ^ Long or Short format
   -> Natural -- ^ Number of releases to keep
-  -> Bool -- ^ Wheter we should keep one failed release or not
+  -> Bool -- ^ Whether we should keep one failed release or not
   -> ExecutionMode -- ^ Is running on lead target
   -> Hapistrano ()
 deploy HC.Config{..} releaseFormat keepReleases keepOneFailed executionMode = do
