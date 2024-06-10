@@ -158,7 +158,7 @@ data OutputDest
   | StderrDest
   deriving (Eq, Show, Read, Ord, Bounded, Enum)
 
--- | Release indentifier.
+-- | Release identifier.
 data Release =
   Release ReleaseFormat UTCTime
   deriving (Eq, Show, Ord)
@@ -201,7 +201,7 @@ data Command
   | Maintenance MaintenanceOptions
   | InitConfig -- ^ initialize configuration file
 
--- | Create a 'Release' indentifier.
+-- | Create a 'Release' identifier.
 mkRelease :: ReleaseFormat -> UTCTime -> Release
 mkRelease = Release
 
@@ -209,7 +209,7 @@ mkRelease = Release
 releaseTime :: Release -> UTCTime
 releaseTime (Release _ time) = time
 
--- | Render 'Release' indentifier as a 'String'.
+-- | Render 'Release' identifier as a 'String'.
 renderRelease :: Release -> String
 renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
   where
