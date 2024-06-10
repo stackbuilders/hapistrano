@@ -152,7 +152,7 @@ spec = do
         it "creates the maintenance file in the given path" $ \(deployPath, _) -> do
           result <- runHap $ do
             writeMaintenanceFile deployPath $(mkRelDir "maintenance") $(mkRelFile "maintenance.html")
-            liftIO $ System.Directory.doesFileExist ((fromAbsDir deployPath) <> "/maintenance/maintenance.html")
+            liftIO $ System.Directory.doesFileExist (fromAbsDir deployPath <> "/maintenance/maintenance.html")
           result `shouldBe` True
     describe "deleteMaintenanceFile" $
       context "when the file exists" $
@@ -160,7 +160,7 @@ spec = do
           result <- runHap $ do
             writeMaintenanceFile deployPath $(mkRelDir "maintenance") $(mkRelFile "maintenance.html")
             deleteMaintenanceFile deployPath $(mkRelDir "maintenance") $(mkRelFile "maintenance.html")
-            liftIO $ System.Directory.doesFileExist ((fromAbsDir deployPath) <> "/maintenance/maintenance.html")
+            liftIO $ System.Directory.doesFileExist (fromAbsDir deployPath <> "/maintenance/maintenance.html")
           result `shouldBe` False
     describe "releasePath" $ do
       context "when the configWorkingDir is Nothing" $
@@ -215,17 +215,17 @@ spec = do
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
       it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
-         withSystemTempDir "hap-test-repotwo" $ \repoPathTwo -> do
+         withSystemTempDir "hap-test-repotwo" $ \repoPathTwo ->
           runHap $ do
-            let task1 = mkTask deployPath repoPath
-                task2 = mkTask deployPath repoPathTwo
-                repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
-            liftIO $ populateTestRepo repoPathTwo
-            void $ Hap.pushRelease task1
-            void $ Hap.pushRelease task2
+        let task1 = mkTask deployPath repoPath
+            task2 = mkTask deployPath repoPathTwo
+            repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
+        liftIO $ populateTestRepo repoPathTwo
+        void $ Hap.pushRelease task1
+        void $ Hap.pushRelease task2
 
-            repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile
-            repoFile `shouldContain` "hap-test-repotwo"
+        repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile
+        repoFile `shouldContain` "hap-test-repotwo"
 
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
@@ -273,7 +273,7 @@ spec = do
             True
     describe "playScriptLocally (error exit)" $
       it "check that deployment isn't done" $ \(deployPath, repoPath) ->
-        (runHap $ do
+        runHap (do
            let localCommands =
                  mapMaybe Hap.mkGenericCommand ["pwd", "ls", "false"]
                task = mkTask deployPath repoPath
@@ -281,29 +281,29 @@ spec = do
            release <- Hap.pushRelease task
            Hap.createHapistranoDeployState deployPath release Success) `shouldThrow`
         anyException
-    describe "rollback" $ do
+    describe "rollback" $
       it "resets the ‘current’ symlink correctly" $ \(deployPath, repoPath) ->
-        runHap $ do
-          let task = mkTask deployPath repoPath
-              noCmd = Nothing
-          rs <- replicateM 5 (Hap.pushRelease task)
-          Hap.rollback currentSystem deployPath 2 noCmd
-          rpath <- Hap.releasePath deployPath (rs !! 2) Nothing
-          let rc :: Hap.Readlink Dir
-              rc =
-                Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
-          Hap.exec rc Nothing `shouldReturn` rpath
-          Path.IO.doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
-    describe "rollback to non-exist release" $ do
+      runHap $ do
+        let task = mkTask deployPath repoPath
+            noCmd = Nothing
+        rs <- replicateM 5 (Hap.pushRelease task)
+        Hap.rollback currentSystem deployPath 2 noCmd
+        rpath <- Hap.releasePath deployPath (rs !! 2) Nothing
+        let rc :: Hap.Readlink Dir
+            rc =
+              Hap.Readlink currentSystem (Hap.currentSymlinkPath deployPath)
+        Hap.exec rc Nothing `shouldReturn` rpath
+        Path.IO.doesFileExist (Hap.tempSymlinkPath deployPath) `shouldReturn` False
+    describe "rollback to non-exist release" $
       it "trying to rollback to a non-exist release, should throw exception" $ \(deployPath, repoPath) ->
-        (runHap $ do
-           let task = mkTask deployPath repoPath
-               noCmd = Nothing
-           replicateM_ 5 (Hap.pushRelease task)
-           Hap.rollback currentSystem deployPath 6 noCmd) `shouldThrow`
-        anyException
+      runHap (do
+         let task = mkTask deployPath repoPath
+             noCmd = Nothing
+         replicateM_ 5 (Hap.pushRelease task)
+         Hap.rollback currentSystem deployPath 6 noCmd) `shouldThrow`
+      anyException
     describe "dropOldReleases" $ do
-      it "works" $ \(deployPath, repoPath) ->
+      it "should not keep more than 5 releases by default after a successful release" $ \(deployPath, repoPath) ->
         runHap $ do
           rs <-
             replicateM 7 $ do
@@ -513,3 +513,4 @@ arbitraryReleaseFormat = elements [ReleaseShort, ReleaseLong]
 
 arbitraryKeepReleases :: Gen Natural
 arbitraryKeepReleases = fromInteger . getPositive <$> arbitrary
+
