@@ -215,17 +215,17 @@ spec = do
         -- This fails if there are unstaged changes
           justExec rpath "git diff --exit-code"
       it "updates the origin url when it's changed" $ \(deployPath, repoPath) ->
-         withSystemTempDir "hap-test-repotwo" $ \repoPathTwo ->
+         withSystemTempDir "hap-test-repotwo" $ \repoPathTwo -> do
           runHap $ do
-        let task1 = mkTask deployPath repoPath
-            task2 = mkTask deployPath repoPathTwo
-            repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
-        liftIO $ populateTestRepo repoPathTwo
-        void $ Hap.pushRelease task1
-        void $ Hap.pushRelease task2
+            let task1 = mkTask deployPath repoPath
+                task2 = mkTask deployPath repoPathTwo
+                repoConfigFile = deployPath </> $(mkRelDir "repo") </> $(mkRelFile "config")
+            liftIO $ populateTestRepo repoPathTwo
+            void $ Hap.pushRelease task1
+            void $ Hap.pushRelease task2
 
-        repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile
-        repoFile `shouldContain` "hap-test-repotwo"
+            repoFile <- (liftIO . readFile . fromAbsFile) repoConfigFile
+            repoFile `shouldContain` "hap-test-repotwo"
 
     describe "createHapistranoDeployState" $ do
       it ("creates the " <> deployStateFilename <> " file correctly") $ \(deployPath, repoPath) ->
