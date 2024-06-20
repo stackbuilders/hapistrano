@@ -62,11 +62,9 @@ import           System.Hapistrano.Core
 import           System.Hapistrano.Types
 import           System.IO                  (stderr, hPutStrLn)
 import           Text.Read                  (readMaybe)
-import           Text.Megaparsec            (Parsec, some)
-import           Text.Megaparsec.Error      (ParseError(..), ParseErrorBundle (..), ErrorItem (..))
+import           Text.Megaparsec            (Parsec)
 import qualified Text.Megaparsec            as M
 import qualified Text.Megaparsec.Char       as M
-import qualified Data.List.NonEmpty         as NE (filter)
 
 ----------------------------------------------------------------------------
 
@@ -294,27 +292,21 @@ initConfig getLine' = do
     prompt :: Show a => String -> a -> MParser a -> Bool -> IO a
     prompt parameterName def parser isRequired = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      let parsed = M.parse (parser <* M.eof) "" userInput
-      case parsed of
-        Left errB@(ParseErrorBundle err _) -> do
-          case NE.filter isNotEOIErr err of
-            [] -> do
-              hPutStrLn stderr ("Invalid value for " <> parameterName)
-              hPutStrLn stderr (M.errorBundlePretty errB)
-              prompt parameterName def parser isRequired
-            _ -> do
-              if isRequired then do
-                hPutStrLn stderr ("Value required: " <> parameterName)
-                hPutStrLn stderr (M.errorBundlePretty errB)
-                prompt parameterName def parser isRequired
-              else
-                pure def
-        Right res -> pure res
-    isNotEOIErr (TrivialError _ (Just EndOfInput) _) = False
-    isNotEOIErr _ = True
+      if null userInput && isRequired then do
+        hPutStrLn stderr ("Required value: " <> parameterName)
+        prompt parameterName def parser isRequired
+      else if null userInput && not isRequired then
+        pure def
+      else do
+        let parsed = M.parse (parser <* M.eof) "" userInput
+        case parsed of
+          Left err -> do
+            hPutStrLn stderr (M.errorBundlePretty  err)
+            prompt parameterName def parser isRequired
+          Right res -> pure res
 
     promptYN = do
-      userInput <- prompt "Include restart command? y/N" 'N' yNParser True
+      userInput <- prompt "Include restart command? y/N" 'N' yNParser False
       case toLower userInput of
         'y' -> pure $ Just "echo 'Restart command'"
         _ -> pure Nothing
@@ -358,7 +350,7 @@ stringParser :: MParser String
 stringParser = M.many $ M.satisfy (const True)
 
 numberParser :: MParser Word
-numberParser = read <$> some M.digitChar
+numberParser = read <$> M.some M.digitChar
 
 yNParser :: MParser Char
 yNParser = M.choice
