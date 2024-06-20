@@ -12,7 +12,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    pkgs.haskell.cabal-install
+    pkgs.haskellPackages.cabal-install
     # pkgs.zsh
     # supportedGhcVersions.${ghcVersion}
   ];
