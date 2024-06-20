@@ -13,7 +13,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    strategy:
+      matrix:
+        os:
+          - macos-13 # Intel
+          - macos-14 # ARM
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: cabal --version
+
   haskell:
+    if: false
     strategy:
       fail-fast: true
       matrix:
