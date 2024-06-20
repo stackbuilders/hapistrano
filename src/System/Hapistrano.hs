@@ -289,24 +289,21 @@ initConfig getLine' = do
   putStrLn $ "Configuration written at " <> configFilePath
 
   where
-    prompt :: Show a => String -> a -> MParser a -> Bool -> IO a
-    prompt parameterName def parser isRequired = do
+    prompt :: Show a => String -> a -> MParser a -> IO a
+    prompt parameterName def parser = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      if null userInput && isRequired then do
-        hPutStrLn stderr ("Required value: " <> parameterName)
-        prompt parameterName def parser isRequired
-      else if null userInput && not isRequired then
+      if null userInput then
         pure def
       else do
         let parsed = M.parse (parser <* M.eof) "" userInput
         case parsed of
           Left err -> do
             hPutStrLn stderr (M.errorBundlePretty  err)
-            prompt parameterName def parser isRequired
+            prompt parameterName def parser
           Right res -> pure res
 
     promptYN = do
-      userInput <- prompt "Include restart command? y/N" 'N' yNParser False
+      userInput <- prompt "Include restart command? y/N" 'N' yNParser
       case toLower userInput of
         'y' -> pure $ Just "echo 'Restart command'"
         _ -> pure Nothing
@@ -320,10 +317,10 @@ initConfig getLine' = do
     generateUserConfig initCfg = do
       InitTemplateConfig{..} <- initCfg
       InitTemplateConfig
-        <$> prompt "repo" repo pUri True
-        <*> prompt "revision" revision stringParser False
-        <*> prompt "host" host stringParser False
-        <*> prompt "port" port numberParser False
+        <$> prompt "repo" repo pUri
+        <*> prompt "revision" revision stringParser
+        <*> prompt "host" host stringParser
+        <*> prompt "port" port numberParser
         <*> pure buildScript 
         <*> promptYN
 
