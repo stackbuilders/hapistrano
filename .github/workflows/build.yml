@@ -33,8 +33,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-          ghcup list
-          exit 1
+          ghcup nuke
+          ghc --version
+          cabal --version
       - uses: cachix/install-nix-action@v22
         with:
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
