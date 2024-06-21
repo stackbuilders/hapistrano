@@ -3,7 +3,7 @@
 let
   supportedGhcVersions = {
     "8.10" = pkgs.haskell.ghc8107;
-    "9.0" = pkgs.haskell.ghc902;
+    "9.0" = pkgs.haskell.ghc901;
   };
 in
 pkgs.mkShell {
