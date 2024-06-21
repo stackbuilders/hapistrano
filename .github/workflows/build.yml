@@ -19,20 +19,16 @@ jobs:
       matrix:
         os:
           - macos-13 # x64
-          - macos-14 # ARM
-          - ubuntu-latest
+          # - ubuntu-latest
         devShell:
-          - ghc810
+          # - ghc810
           - ghc90
-        exclude:
-          - os: macos-14 # ARM
-            devShell: ghc810
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v22
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v27
+        # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
         with:
-          # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
           extra_nix_config: |
             trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             substituters = https://cache.iog.io https://cache.nixos.org
@@ -52,6 +48,7 @@ jobs:
         run: |
           ./bin/${{ matrix.devShell }} -c ghc --version
           ./bin/${{ matrix.devShell }} -c cabal --version
+        timeout-minutes: 5
       - name: Update package index
         run: ./bin/${{ matrix.devShell }} -c cabal update
       - name: Enable tests

@@ -1,14 +1,13 @@
 {
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    haskellNix.url = "github:input-output-hk/haskell.nix/0.0.117";
+    haskellNix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   };
 
   outputs = { self, flake-utils, haskellNix, nixpkgs }:
     let
       supportedSystems = [
-        "aarch64-darwin"
         "x86_64-darwin"
         "x86_64-linux"
       ];
@@ -17,9 +16,9 @@
       let
         # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
         pkgs = import nixpkgs {
-          system = if system == "aarch64-darwin" then "x86_64-darwin" else system;
-          overlays = [ haskellNix.overlay ];
+          inherit system;
           inherit (haskellNix) config;
+          overlays = [ haskellNix.overlay ];
         };
       in
       {
