@@ -21,7 +21,7 @@ jobs:
           - macos-13 # x64
           # - ubuntu-latest
         devShell:
-          # - ghc810
+          - ghc810
           - ghc90
     runs-on: ${{ matrix.os }}
     steps:
@@ -30,8 +30,8 @@ jobs:
         # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
         with:
           extra_nix_config: |
-            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             substituters = https://cache.iog.io https://cache.nixos.org
+            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
       # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
       - uses: actions/cache@v3
         with:
