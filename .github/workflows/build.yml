@@ -32,7 +32,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: sudo apt-get remove -y ghc cabal-install
+      - run: |
+          ghcup list
+          exit 1
       - uses: cachix/install-nix-action@v22
         with:
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
@@ -50,8 +52,8 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ matrix.devShell }}-
       - name: Install packages / Print versions
         run: |
-          ./bin/${{ matrix.devShell }} -c which ghc && ghc --version
-          ./bin/${{ matrix.devShell }} -c which cabal && cabal --version
+          ./bin/${{ matrix.devShell }} -c "which ghc && ghc --version"
+          ./bin/${{ matrix.devShell }} -c "which cabal && cabal --version"
       # - name: Update package index
       #   run: ./bin/${{ matrix.devShell }} -c cabal update
       # - name: Enable tests
