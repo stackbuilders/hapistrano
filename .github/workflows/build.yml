@@ -27,9 +27,7 @@ jobs:
         exclude:
           - os: macos-14 # ARM
             devShell: ghc810
-
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v22
@@ -68,7 +66,6 @@ jobs:
         run: ./bin/${{ matrix.devShell }} -c ./script/haddock
 
   docker:
-    if: false
     uses: ./.github/workflows/reusable-docker.yml
     with:
       push: false
