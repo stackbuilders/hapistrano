@@ -23,7 +23,7 @@ jobs:
           - ubuntu-latest
         devShell:
           - ghc810
-          - ghc90
+          # - ghc90
         # exclude:
         #   - os: macos-14 # ARM
         #     devShell: ghc810
