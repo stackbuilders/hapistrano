@@ -18,15 +18,15 @@ jobs:
       fail-fast: true
       matrix:
         os:
-          # - macos-13 # Intel
-          # - macos-14 # ARM
+          - macos-13 # Intel
+          - macos-14 # ARM
           - ubuntu-latest
         devShell:
           - ghc810
-          # - ghc90
-        # exclude:
-        #   - os: macos-14 # ARM
-        #     devShell: ghc810
+          - ghc90
+        exclude:
+          - os: macos-14 # ARM
+            devShell: ghc810
 
     runs-on: ${{ matrix.os }}
 
