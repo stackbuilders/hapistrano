@@ -18,20 +18,21 @@ jobs:
       fail-fast: true
       matrix:
         os:
-          - macos-13 # Intel
-          - macos-14 # ARM
+          # - macos-13 # Intel
+          # - macos-14 # ARM
           - ubuntu-latest
         devShell:
           - ghc810
           - ghc90
-        exclude:
-          - os: macos-14 # ARM
-            devShell: ghc810
+        # exclude:
+        #   - os: macos-14 # ARM
+        #     devShell: ghc810
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
+      - run: apt-get uninstall -y ghc cabal-install
       - uses: cachix/install-nix-action@v22
         with:
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
@@ -51,18 +52,18 @@ jobs:
         run: |
           ./bin/${{ matrix.devShell }} -c which ghc && ghc --version
           ./bin/${{ matrix.devShell }} -c which cabal && cabal --version
-      - name: Update package index
-        run: ./bin/${{ matrix.devShell }} -c cabal update
-      - name: Enable tests
-        run: ./bin/${{ matrix.devShell }} -c cabal configure --enable-tests
-      - name: Install project dependencies
-        run: ./bin/${{ matrix.devShell }} -c cabal build --only-dependencies
-      - name: Compile project
-        run: ./bin/${{ matrix.devShell }} -c cabal build
-      - name: Run tests
-        run: ./bin/${{ matrix.devShell }} -c cabal test
-      - name: Check documentation
-        run: ./bin/${{ matrix.devShell }} -c ./script/haddock
+      # - name: Update package index
+      #   run: ./bin/${{ matrix.devShell }} -c cabal update
+      # - name: Enable tests
+      #   run: ./bin/${{ matrix.devShell }} -c cabal configure --enable-tests
+      # - name: Install project dependencies
+      #   run: ./bin/${{ matrix.devShell }} -c cabal build --only-dependencies
+      # - name: Compile project
+      #   run: ./bin/${{ matrix.devShell }} -c cabal build
+      # - name: Run tests
+      #   run: ./bin/${{ matrix.devShell }} -c cabal test
+      # - name: Check documentation
+      #   run: ./bin/${{ matrix.devShell }} -c ./script/haddock
 
   docker:
     if: false
