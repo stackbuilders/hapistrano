@@ -32,10 +32,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          ghcup nuke
-          ghc --version
-          cabal --version
+      - name: Uninstall GHCup
+        run: ghcup nuke
       - uses: cachix/install-nix-action@v22
         with:
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
