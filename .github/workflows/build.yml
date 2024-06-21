@@ -32,8 +32,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Uninstall GHCup
-        run: ghcup nuke
       - uses: cachix/install-nix-action@v22
         with:
           # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
@@ -49,22 +47,24 @@ jobs:
             dist-newstyle
           key: ${{ runner.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
           restore-keys: ${{ runner.os }}-${{ matrix.devShell }}-
+      - name: Uninstall GHCup
+        run: ghcup nuke
       - name: Install packages / Print versions
         run: |
           ./bin/${{ matrix.devShell }} -c "which ghc && ghc --version"
           ./bin/${{ matrix.devShell }} -c "which cabal && cabal --version"
-      # - name: Update package index
-      #   run: ./bin/${{ matrix.devShell }} -c cabal update
-      # - name: Enable tests
-      #   run: ./bin/${{ matrix.devShell }} -c cabal configure --enable-tests
-      # - name: Install project dependencies
-      #   run: ./bin/${{ matrix.devShell }} -c cabal build --only-dependencies
-      # - name: Compile project
-      #   run: ./bin/${{ matrix.devShell }} -c cabal build
-      # - name: Run tests
-      #   run: ./bin/${{ matrix.devShell }} -c cabal test
-      # - name: Check documentation
-      #   run: ./bin/${{ matrix.devShell }} -c ./script/haddock
+      - name: Update package index
+        run: ./bin/${{ matrix.devShell }} -c cabal update
+      - name: Enable tests
+        run: ./bin/${{ matrix.devShell }} -c cabal configure --enable-tests
+      - name: Install project dependencies
+        run: ./bin/${{ matrix.devShell }} -c cabal build --only-dependencies
+      - name: Compile project
+        run: ./bin/${{ matrix.devShell }} -c cabal build
+      - name: Run tests
+        run: ./bin/${{ matrix.devShell }} -c cabal test
+      - name: Check documentation
+        run: ./bin/${{ matrix.devShell }} -c ./script/haddock
 
   docker:
     if: false
