@@ -18,7 +18,7 @@ jobs:
       fail-fast: true
       matrix:
         os:
-          - macos-13 # Intel
+          - macos-13 # x64
           - macos-14 # ARM
           - ubuntu-latest
         devShell:
