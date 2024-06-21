@@ -49,6 +49,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ matrix.devShell }}-
       - name: Uninstall GHCup
         run: ghcup nuke
+        if: ${{ runner.os == "Linux" }}
       - name: Install packages / Print versions
         run: |
           ./bin/${{ matrix.devShell }} -c ghc --version
