@@ -17,7 +17,7 @@
         overlays = [
           haskellNix.overlay
           (final: prev: {
-            hixProject =
+            hapistrano =
               final.haskell-nix.project' {
                 src = ./.;
                 compiler-nix-name = "ghc8107";
@@ -29,7 +29,7 @@
           inherit system overlays;
           inherit (haskellNix) config;
         };
-        flake = pkgs.hixProject.flake { };
+        flake = pkgs.hapistrano.flake { };
       in
       flake);
 }
