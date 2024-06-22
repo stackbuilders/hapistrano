@@ -1,40 +1,40 @@
 {
   inputs = {
-    devenv.url = "github:cachix/devenv";
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+    haskellNix.url = "github:input-output-hk/haskell.nix";
+    nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   };
 
+  nixConfig = {
+    allow-import-from-derivation = "true";
+    extra-substituters = [ "https://cache.iog.io" ];
+    extra-trusted-public-keys = [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
+  };
   # nixConfig = {
   #   extra-trusted-public-keys = "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
   #   extra-substituters = "https://devenv.cachix.org";
   # };
 
-  outputs = inputs@{ self, devenv, flake-utils, nixpkgs }:
-    # let
-    #   supportedSystems = [
-    #   "x86_64-darwin"
-    #   "x86_64-linux"
-    # ];
-    # in
+  outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        mkHaskellShell = ghcPackage: pkgs.mkShell {
-          buildInputs = [
-            ghcPackage
-            pkgs.cabal-install
-            pkgs.zsh
-          ];
+        pkgs = import nixpkgs {
+          inherit system;
+          inherit (haskellNix) config;
+          overlays = [ haskellNix.overlay ];
+        };
+        hapistrano = pkgs.haskell-nix.project' {
+          src = ./.;
+          compiler-nix-name = "ghc8107";
+          shell.tools = {
+            cabal = { };
+          };
         };
       in
-      {
-        devShells = rec {
-          ghc810 = mkHaskellShell pkgs.haskell.compiler.ghc810;
-          ghc90 = mkHaskellShell pkgs.haskell.compiler.ghc90;
-          default = ghc90;
-        };
-      });
+      hapistrano.flake { });
+
+
+  # TODO: try with haskellNix again :(
 
   # # --- Flake Local Nix Configuration ----------------------------
   # nixConfig = {
