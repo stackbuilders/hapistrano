@@ -19,10 +19,9 @@
           haskellNix.overlay
           (final: prev: {
             hapistrano =
-              final.haskell-nix.project' {
+              final.haskell-nix.cabalProject' {
                 src = ./.;
                 compiler-nix-name = "ghc8107";
-                shell.tools.cabal = { };
               };
           })
         ];
