@@ -48,7 +48,7 @@ jobs:
       #   run: |
       #     ./bin/${{ matrix.devShell }} -c ghc --version
       #     ./bin/${{ matrix.devShell }} -c cabal --version
-      - run: nix flake check --accept-flake-config
+      - run: nix flake develop --accept-flake-config -c ghc --version
         timeout-minutes: 2
       #   timeout-minutes: 5
       # - name: Update package index
