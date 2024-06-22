@@ -14,33 +14,22 @@
   outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        overlays = [
+          haskellNix.overlay
+          (final: prev: {
+            hixProject =
+              final.haskell-nix.project' {
+                src = ./.;
+                compiler-nix-name = "ghc8107";
+                shell.tools.cabal = { };
+              };
+          })
+        ];
         pkgs = import nixpkgs {
-          inherit system;
+          inherit system overlays;
           inherit (haskellNix) config;
-          overlays = [ haskellNix.overlay ];
         };
-        hapistrano = pkgs.haskell-nix.project' {
-          src = ./.;
-          compiler-nix-name = "ghc8107";
-          shell.tools = {
-            cabal = { };
-          };
-        };
+        flake = pkgs.hixProject.flake { };
       in
-      hapistrano.flake { });
-
-
-  # TODO: try with haskellNix again :(
-
-  # # --- Flake Local Nix Configuration ----------------------------
-  # nixConfig = {
-  #   # This sets the flake to use the IOG nix cache.
-  #   # Nix should ask for permission before using it,
-  #   # but remove it here if you do not want it to.
-  #   extra-substituters = [ "https://cache.iog.io" ];
-  #   extra-trusted-public-keys = [
-  #     "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
-  #   ];
-  #   allow-import-from-derivation = "true";
-  # };
+      flake);
 }
