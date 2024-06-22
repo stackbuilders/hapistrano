@@ -12,6 +12,7 @@
   };
 
   outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }:
+    # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [
@@ -31,5 +32,7 @@
         };
         flake = pkgs.hapistrano.flake { };
       in
-      flake);
+      flake // {
+        packages.default = flake.packages."hapistrano:exe:hap";
+      });
 }

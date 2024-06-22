@@ -14,16 +14,17 @@ concurrency:
 
 jobs:
   haskell:
-    strategy:
-      fail-fast: true
-      matrix:
-        os:
+    # strategy:
+      # fail-fast: true
+      # matrix:
+      #   os:
           # - macos-13 # x64
-          - ubuntu-latest
+          # - ubuntu-latest
         # devShell:
         #   - ghc810
         #   - ghc90
-    runs-on: ${{ matrix.os }}
+    # runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v27
@@ -48,8 +49,8 @@ jobs:
       #   run: |
       #     ./bin/${{ matrix.devShell }} -c ghc --version
       #     ./bin/${{ matrix.devShell }} -c cabal --version
-      - run: nix develop --accept-flake-config -c ghc --version
-        timeout-minutes: 2
+      - run: nix build --accept-flake-config
+        timeout-minutes: 10
       #   timeout-minutes: 5
       # - name: Update package index
       #   run: ./bin/${{ matrix.devShell }} -c cabal update
