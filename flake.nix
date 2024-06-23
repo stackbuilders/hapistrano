@@ -36,7 +36,7 @@
           type = "app";
           program = "${flake.packages."hapistrano:test:test"}/bin/test";
         };
-        packages.default = flake.packages." hapistrano:exe:hap ";
+        packages.default = flake.packages."hapistrano:exe:hap ";
       });
 }
 
