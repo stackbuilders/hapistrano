@@ -28,6 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config:
+            accept-flake-config = true
         # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
         # with:
           # extra_nix_config: |
@@ -49,8 +52,10 @@ jobs:
       #   run: |
       #     ./bin/${{ matrix.devShell }} -c ghc --version
       #     ./bin/${{ matrix.devShell }} -c cabal --version
-      - run: nix build --accept-flake-config
+      - run: nix build
         timeout-minutes: 10
+      - run: nix run .#test
+        timeout-minutes: 5
       #   timeout-minutes: 5
       # - name: Update package index
       #   run: ./bin/${{ matrix.devShell }} -c cabal update
