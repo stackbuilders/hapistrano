@@ -32,6 +32,12 @@
         flake = pkgs.hapistrano.flake { };
       in
       flake // {
-        packages.default = flake.packages."hapistrano:exe:hap";
+        apps.test = {
+          type = "app";
+          program = "${flake.packages."hapistrano:test:test"}/bin/test";
+        };
+        packages.default = flake.packages." hapistrano:exe:hap ";
       });
 }
+
+
