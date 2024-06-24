@@ -22,6 +22,9 @@
               final.haskell-nix.cabalProject' {
                 src = ./.;
                 compiler-nix-name = "ghc8107";
+                shell.buildInputs = [
+                  pkgs.zsh
+                ];
               };
           })
         ];
