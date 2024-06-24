@@ -31,12 +31,15 @@
         };
         flake = pkgs.hapistrano.flake { };
       in
-      flake // {
+      flake // rec {
         apps.test = {
           type = "app";
-          program = "${flake.packages."hapistrano:test:test"}/bin/test";
+          program = "${packages.test}/bin/test";
         };
-        packages.default = flake.packages."hapistrano:exe:hap";
+        packages = {
+          default = flake.packages."hapistrano:exe:hap";
+          test = flake.packages."hapistrano:test:test";
+        };
       });
 }
 
