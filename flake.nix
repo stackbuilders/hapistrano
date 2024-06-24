@@ -20,12 +20,12 @@
           (final: prev: {
             hapistrano =
               final.haskell-nix.cabalProject' {
-                src = pkgs.haskell-nix.haskellLib.cleanGit {
+                src = final.haskell-nix.haskellLib.cleanGit {
                   name = "hapistrano";
                   src = ./.;
                 };
                 compiler-nix-name = "ghc8107";
-                buildInputs = [
+                pkg-def-extras = [
                   pkgs.zsh
                 ];
               };
