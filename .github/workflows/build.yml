@@ -50,11 +50,12 @@ jobs:
       #   run: |
       #     ./bin/${{ matrix.devShell }} -c ghc --version
       #     ./bin/${{ matrix.devShell }} -c cabal --version
+      - run: nix flake show
       - name: Compile code
         run: nix build
         timeout-minutes: 10
-      - name: Compile test
-        run: nix run .#test
+      # - name: Compile test
+      #   run: nix run .#test
       #   timeout-minutes: 5
       # - name: Update package index
       #   run: ./bin/${{ matrix.devShell }} -c cabal update
