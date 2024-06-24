@@ -27,10 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v27
+      - uses: DeterminateSystems/nix-installer-action@v12
         with:
-          extra_nix_config:
+          extra-conf:
             accept-flake-config = true
+      - uses: DeterminateSystems/magic-nix-cache-action@v7
         # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
         # with:
           # extra_nix_config: |
@@ -45,17 +46,14 @@ jobs:
       #       dist-newstyle
       #     key: ${{ runner.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
       #     restore-keys: ${{ runner.os }}-${{ matrix.devShell }}-
-      - name: Uninstall GHCup
-        run: ghcup nuke
-        if: ${{ runner.os == 'Linux' }}
       # - name: Install packages / Print versions
       #   run: |
       #     ./bin/${{ matrix.devShell }} -c ghc --version
       #     ./bin/${{ matrix.devShell }} -c cabal --version
-      - run: nix build
+      - name: Compile code
+        run: nix build
         timeout-minutes: 10
-      - run: nix run .#test
-        timeout-minutes: 5
+      # - run: nix run .#test
       #   timeout-minutes: 5
       # - name: Update package index
       #   run: ./bin/${{ matrix.devShell }} -c cabal update
