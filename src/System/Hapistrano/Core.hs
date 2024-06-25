@@ -23,7 +23,6 @@ where
 import           Control.Concurrent.STM     (atomically)
 import           Control.Monad
 import           Control.Monad.Catch        (throwM)
-import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Proxy
 import           Data.Time
