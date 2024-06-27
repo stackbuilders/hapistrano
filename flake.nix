@@ -44,7 +44,9 @@
         };
         packages = {
           default = flake.packages."hapistrano:exe:hap";
-          test = flake.packages."hapistrano:test:test";
+          test = flake.packages."hapistrano:test:test".overrideAttrs (prev: {
+            buildInputs = prev.buildInputs ++ [ pkgs.zsh ];
+          });
         };
       });
 }
