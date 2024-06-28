@@ -14,17 +14,17 @@ concurrency:
 
 jobs:
   haskell:
-    # strategy:
-      # fail-fast: true
-      # matrix:
-      #   os:
-          # - macos-13 # x64
-          # - ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+          - macos-13 # x86_64-darwin
+          - macos-latest # aarch64-darwin
+          - ubuntu-latest # x86_64-linux
         # devShell:
         #   - ghc810
         #   - ghc90
-    # runs-on: ${{ matrix.os }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v12
@@ -32,43 +32,10 @@ jobs:
           extra-conf:
             accept-flake-config = true
       - uses: DeterminateSystems/magic-nix-cache-action@v7
-        # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html
-        # with:
-          # extra_nix_config: |
-          #   substituters = https://cache.iog.io https://cache.nixos.org
-          #   trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-      # https://github.com/actions/cache/blob/main/examples.md#haskell---cabal
-      # - uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       ~/.cabal/packages
-      #       ~/.cabal/store
-      #       dist-newstyle
-      #     key: ${{ runner.os }}-${{ matrix.devShell }}-${{ hashFiles('*.cabal') }}
-      #     restore-keys: ${{ runner.os }}-${{ matrix.devShell }}-
-      # - name: Install packages / Print versions
-      #   run: |
-      #     ./bin/${{ matrix.devShell }} -c ghc --version
-      #     ./bin/${{ matrix.devShell }} -c cabal --version
-      # - run: nix flake show
       - name: Compile code
         run: nix build .#test
-        timeout-minutes: 10
       - name: Run tests
         run: nix run .#test
-      #   timeout-minutes: 5
-      # - name: Update package index
-      #   run: ./bin/${{ matrix.devShell }} -c cabal update
-      # - name: Enable tests
-      #   run: ./bin/${{ matrix.devShell }} -c cabal configure --enable-tests
-      # - name: Install project dependencies
-      #   run: ./bin/${{ matrix.devShell }} -c cabal build --only-dependencies
-      # - name: Compile project
-      #   run: ./bin/${{ matrix.devShell }} -c cabal build
-      # - name: Run tests
-      #   run: ./bin/${{ matrix.devShell }} -c cabal test
-      # - name: Check documentation
-      #   run: ./bin/${{ matrix.devShell }} -c ./script/haddock
 
   docker:
     if: false
