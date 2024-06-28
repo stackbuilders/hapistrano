@@ -25,9 +25,6 @@
                   src = ./.;
                 };
                 compiler-nix-name = "ghc8107";
-                pkg-def-extras = [
-                  pkgs.zsh
-                ];
               };
           })
         ];
@@ -44,8 +41,17 @@
         };
         packages = {
           default = flake.packages."hapistrano:exe:hap";
-          test = flake.packages."hapistrano:test:test".overrideAttrs (prev: {
-            buildInputs = prev.buildInputs ++ [ pkgs.zsh ];
+          test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
+            postFixup = ''
+              wrapProgram $out/bin/test \
+                --set PATH ${pkgs.lib.makeBinPath [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.findutils
+                  pkgs.git
+                  pkgs.zsh
+                ]}
+            '';
           });
         };
       });
