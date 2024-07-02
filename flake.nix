@@ -18,23 +18,26 @@
         pkgs = import nixpkgs {
           inherit system;
           inherit (haskellNix) config;
-          overlays = [ haskellNix.overlay ];
+          overlays = [
+            haskellNix.overlay
+            (final: prev:
+              let
+                mkCabalProject = compiler-nix-name: final.haskell-nix.cabalProject' {
+                  inherit compiler-nix-name;
+                  src = final.haskell-nix.haskellLib.cleanGit {
+                    name = "hapistrano";
+                    src = ./.;
+                  };
+                };
+              in
+              {
+                hapistrano-ghc8107 = mkCabalProject "ghc8107";
+                hapistrano-ghc902 = mkCabalProject "ghc902";
+              })
+          ];
         };
-        mkCabalProject = compiler-nix-name: pkgs.haskell-nix.cabalProject' {
-          inherit compiler-nix-name;
-          src = pkgs.haskell-nix.haskellLib.cleanGit {
-            name = "hapistrano";
-            src = ./.;
-          };
-        };
-        hapistrano = {
-          ghc8107 = mkCabalProject "ghc8107";
-          ghc902 = mkCabalProject "ghc902";
-        };
-        flake = {
-          ghc8107 = hapistrano.ghc8107.flake { };
-          ghc902 = hapistrano.ghc902.flake { };
-        };
+        flake-ghc8107 = pkgs.hapistrano-ghc8107.flake { };
+        flake-ghc902 = pkgs.hapistrano-ghc902.flake { };
         overrideTestPackage = flake: flake.packages."hapistrano:test:test".overrideAttrs (_: {
           postFixup = ''
             wrapProgram $out/bin/test \
@@ -61,15 +64,15 @@
         };
         devShells = {
           default = devShells.ghc902;
-          ghc8107 = flake.ghc8107.devShells.default;
-          ghc902 = flake.ghc902.devShells.default;
+          ghc8107 = flake-ghc8107.devShells.default;
+          ghc902 = flake-ghc902.devShells.default;
         };
         packages = {
           default = packages.hap-ghc902;
-          hap-ghc8107 = flake.ghc8107.packages."hapistrano:exe:hap";
-          hap-ghc902 = flake.ghc902.packages."hapistrano:exe:hap";
-          test-ghc8107 = overrideTestPackage flake.ghc8107;
-          test-ghc902 = overrideTestPackage flake.ghc902;
+          hap-ghc8107 = flake-ghc8107.packages."hapistrano:exe:hap";
+          hap-ghc902 = flake-ghc902.packages."hapistrano:exe:hap";
+          test-ghc8107 = overrideTestPackage flake-ghc8107;
+          test-ghc902 = overrideTestPackage flake-ghc902;
         };
       });
 }
