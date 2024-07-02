@@ -25,6 +25,7 @@ jobs:
           - test-ghc8107
           - test-ghc902
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v12
