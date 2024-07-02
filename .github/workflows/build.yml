@@ -18,12 +18,12 @@ jobs:
       fail-fast: true
       matrix:
         os:
-          - macos-13 # x86_64-darwin
+          # - macos-13 # x86_64-darwin
           - macos-latest # aarch64-darwin
           - ubuntu-latest # x86_64-linux
-        # devShell:
-        #   - ghc810
-        #   - ghc90
+        installable:
+          - test-ghc8107
+          - test-ghc902
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -33,9 +33,9 @@ jobs:
             accept-flake-config = true
       - uses: DeterminateSystems/magic-nix-cache-action@v7
       - name: Compile code
-        run: nix build .#test
+        run: nix build .#${{ matrix.installable }}
       - name: Run tests
-        run: nix run .#test
+        run: nix run .#${{ matrix.installable }}
 
   docker:
     if: false
