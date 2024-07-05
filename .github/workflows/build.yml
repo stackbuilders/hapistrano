@@ -30,7 +30,6 @@ jobs:
         run: nix run .#test
 
   docker:
-    if: false
     uses: ./.github/workflows/reusable-docker.yml
     with:
       push: false
