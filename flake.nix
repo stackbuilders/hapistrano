@@ -32,7 +32,7 @@
               in
               {
                 hapistrano-ghc8107 = mkCabalProject "ghc8107";
-                hapistrano-ghc902 = mkCabalProject "ghc902";
+                hapistrano-ghc902 = mkCabalProject "ghc924";
               })
           ];
         };

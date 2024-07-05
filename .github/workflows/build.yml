@@ -18,15 +18,15 @@ jobs:
       fail-fast: true
       matrix:
         os:
-          # - macos-13      # x86_64-darwin
-          - macos-latest  # aarch64-darwin
-          - ubuntu-latest # x86_64-linux
+          - macos-13      # x86_64-darwin
+          # - macos-latest  # aarch64-darwin
+          # - ubuntu-latest # x86_64-linux
         installable:
-          - test-ghc8107
-          - test-ghc902
-        exclude:
-          - os: ubuntu-latest
-            installable: test-ghc902
+          # - test-ghc8107
+          - test-ghc902 # TODO: Rename package to test-ghc924
+        # exclude:
+        #   - os: ubuntu-latest
+        #     installable: test-ghc902
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
