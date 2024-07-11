@@ -1,44 +1,62 @@
 {
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    haskellNix.url = "github:input-output-hk/haskell.nix/0.0.117";
+    haskellNix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   };
 
-  outputs = { self, flake-utils, haskellNix, nixpkgs }:
-    let
-      supportedSystems = [
-        "aarch64-darwin"
-        "x86_64-darwin"
-        "x86_64-linux"
-      ];
-    in
-    flake-utils.lib.eachSystem supportedSystems (system:
+  nixConfig = {
+    allow-import-from-derivation = "true";
+    extra-substituters = [ "https://cache.iog.io" ];
+    extra-trusted-public-keys = [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
+  };
+
+  outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }:
+    # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
+    flake-utils.lib.eachDefaultSystem (system:
       let
-        # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
         pkgs = import nixpkgs {
-          system = if system == "aarch64-darwin" then "x86_64-darwin" else system;
-          overlays = [ haskellNix.overlay ];
+          inherit system;
           inherit (haskellNix) config;
+          overlays = [
+            haskellNix.overlay
+            (final: prev: {
+              hapistrano = final.haskell-nix.cabalProject' {
+                src = final.haskell-nix.haskellLib.cleanGit {
+                  name = "hapistrano";
+                  src = ./.;
+                };
+                compiler-nix-name = "ghc8107";
+              };
+            })
+          ];
         };
+        flake = pkgs.hapistrano.flake { };
       in
-      {
-        devShells = rec {
-          ghc810 = import ./shell.nix { inherit pkgs; ghcVersion = "8.10"; };
-          ghc90 = import ./shell.nix { inherit pkgs; ghcVersion = "9.0"; };
-          default = ghc90;
+      flake // rec {
+        apps = {
+          test = {
+            type = "app";
+            program = "${packages.test}/bin/test";
+          };
+        };
+        legacyPackages = pkgs;
+        packages = {
+          default = flake.packages."hapistrano:exe:hap";
+          test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
+            postFixup = ''
+              wrapProgram $out/bin/test \
+                --set PATH ${pkgs.lib.makeBinPath [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.findutils
+                  pkgs.git
+                  pkgs.zsh
+                ]}
+            '';
+          });
         };
       });
-
-  # --- Flake Local Nix Configuration ----------------------------
-  nixConfig = {
-    # This sets the flake to use the IOG nix cache.
-    # Nix should ask for permission before using it,
-    # but remove it here if you do not want it to.
-    extra-substituters = [ "https://cache.iog.io" ];
-    extra-trusted-public-keys = [
-      "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
-    ];
-    allow-import-from-derivation = "true";
-  };
 }
+
+
