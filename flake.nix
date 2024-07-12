@@ -17,52 +17,53 @@
     ];
   };
 
-  outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }:
-    # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          inherit (haskellNix) config;
-          overlays = [
-            haskellNix.overlay
-            (final: prev: {
-              hapistrano = final.haskell-nix.cabalProject' {
-                src = final.haskell-nix.haskellLib.cleanGit {
-                  name = "hapistrano";
-                  src = ./.;
+  outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }: 
+    let
+      buildWithGhc = ghcVersion: system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            inherit (haskellNix) config;
+            overlays = [
+              haskellNix.overlay
+              (final: prev: {
+                hapistrano = final.haskell-nix.cabalProject' {
+                  src = final.haskell-nix.haskellLib.cleanGit {
+                    name = "hapistrano";
+                    src = ./.;
+                  };
+                  compiler-nix-name = ghcVersion;
                 };
-                compiler-nix-name = "ghc902";
-              };
-            })
-          ];
-        };
-        flake = pkgs.hapistrano.flake { };
-      in
-      flake // rec {
-        apps = {
-          test = {
-            type = "app";
-            program = "${packages.test}/bin/test";
+              })
+            ];
+          };
+          flake = pkgs.hapistrano.flake { };
+        in
+        flake // rec {
+          apps = {
+            test = {
+              type = "app";
+              program = "${packages.test}/bin/test";
+            };
+          };
+          legacyPackages = pkgs;
+          packages = {
+            default = flake.packages."hapistrano:exe:hap";
+            test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
+              postFixup = ''
+                wrapProgram $out/bin/test \
+                  --set PATH ${pkgs.lib.makeBinPath [
+                    pkgs.bash
+                    pkgs.coreutils
+                    pkgs.findutils
+                    pkgs.git
+                    pkgs.zsh
+                  ]}
+              '';
+            });
           };
         };
-        legacyPackages = pkgs;
-        packages = {
-          default = flake.packages."hapistrano:exe:hap";
-          test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
-            postFixup = ''
-              wrapProgram $out/bin/test \
-                --set PATH ${pkgs.lib.makeBinPath [
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.findutils
-                  pkgs.git
-                  pkgs.zsh
-                ]}
-            '';
-          });
-        };
-      });
+    in
+    flake-utils.lib.eachDefaultSystem (buildWithGhc "ghc902") // 
+    flake-utils.lib.eachDefaultSystem (buildWithGhc "ghc8107");
 }
-
-
