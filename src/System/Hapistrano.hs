@@ -307,9 +307,7 @@ initConfig getLine' = do
         _ -> Nothing
 
     prompt' :: String -> IO String
-    prompt' title = do
-        hPutStrLn stderr title
-        getLine'
+    prompt' title = hPutStrLn stderr title >> getLine'
 
     generateUserConfig :: IO InitTemplateConfig -> IO InitTemplateConfig
     generateUserConfig initCfg = do
