@@ -292,10 +292,10 @@ initConfig getLine' = do
     prompt :: Show a => String -> a -> MParser a -> IO a
     prompt parameterName def parser = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      when (null userInput)
+      if null userInput then
         pure def
-
-      either
+      else
+        either
           (\err -> hPutStrLn stderr (M.errorBundlePretty err) >> prompt parameterName def parser)
           pure
           (M.parse (parser <* M.eof) "" userInput)
