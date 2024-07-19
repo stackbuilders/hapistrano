@@ -292,15 +292,13 @@ initConfig getLine' = do
     prompt :: Show a => String -> a -> MParser a -> IO a
     prompt parameterName def parser = do
       userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
-      if null userInput then
+      when (null userInput)
         pure def
-      else do
-        let parsed = M.parse (parser <* M.eof) "" userInput
-        case parsed of
-          Left err -> do
-            hPutStrLn stderr (M.errorBundlePretty  err)
-            prompt parameterName def parser
-          Right res -> pure res
+
+      either
+          (\err -> hPutStrLn stderr (M.errorBundlePretty err) >> prompt parameterName def parser)
+          pure
+          (M.parse (parser <* M.eof) "" userInput)
 
     promptYN = do
       userInput <- prompt "Include restart command? y/N" 'N' yNParser
