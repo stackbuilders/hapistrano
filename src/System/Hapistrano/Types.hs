@@ -220,35 +220,36 @@ renderRelease (Release rfmt time) = formatTime defaultTimeLocale fmt time
 
 -- | Initial configurable fields
 data InitTemplateConfig = InitTemplateConfig
-  { repo :: T.Text
-  , revision :: T.Text
-  , host :: T.Text
+  { repo :: String
+  , revision :: String
+  , host :: String
   , port :: Word
-  , buildScript :: [T.Text]
-  , restartCommand :: Maybe T.Text
+  , buildScript :: [String]
+  , restartCommand :: Maybe String
   }
 
 -- | Default initial template for creating hapistrano file.
 defaultInitTemplateConfig :: IO InitTemplateConfig
 defaultInitTemplateConfig = do
-  let shellWithDefault d cmd = do
-        (exitCode, stdout) <- readProcessStdout $ setStderr nullStream $ shell cmd
-        return $
-          if exitCode == ExitSuccess
-            then maybe d (T.strip . TL.toStrict) $ listToMaybe $ TL.lines $ TL.decodeUtf8 stdout
-            else d
   remoteBranch <- shellWithDefault "origin/main" "git rev-parse --abbrev-ref --symbolic-full-name @{u}"
   let remote = T.takeWhile (/='/') remoteBranch
   repository <- shellWithDefault "https://github.com/user/repo.git" ("git ls-remote --get-url " <> T.unpack remote)
   return $
     InitTemplateConfig
-      { repo = repository
-      , revision = remoteBranch
+      { repo = T.unpack repository
+      , revision = T.unpack remoteBranch
       , host = "root@localhost"
       , port = 22
       , buildScript = ["echo 'Build steps'"]
       , restartCommand = Just "echo 'Restart command'"
       }
+  where
+    shellWithDefault def cmd = do
+      (exitCode, stdout) <- readProcessStdout $ setStderr nullStream $ shell cmd
+      return $ case exitCode of
+        ExitSuccess ->
+          maybe def (T.strip . TL.toStrict) $ listToMaybe $ TL.lines $ TL.decodeUtf8 stdout
+        _ -> def
 
 instance ToJSON InitTemplateConfig where
   toJSON x =

@@ -39,14 +39,13 @@ where
 import           Control.Exception          (try)
 import           Control.Monad
 import           Control.Monad.Catch        (catch, throwM)
-import           Control.Monad.Except
-import           Control.Monad.Reader       (local)
+import           Control.Monad.Reader       (local, MonadIO, liftIO)
+import           Data.Char                  (toLower)
 import           Data.List                  (dropWhileEnd, genericDrop, sortOn)
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import           Data.Ord                   (Down (..))
-import qualified Data.Text                  as T
-import qualified Data.Text.IO               as T
 import           Data.Time
+import           Data.Void                  (Void)
 import qualified Data.Yaml                  as Yaml
 import           Numeric.Natural
 import           Path
@@ -61,8 +60,10 @@ import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
                                              deployStateFilename)
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
-import           System.IO                  (stderr)
 import           Text.Read                  (readMaybe)
+import           Text.Megaparsec            (Parsec)
+import qualified Text.Megaparsec            as M
+import qualified Text.Megaparsec.Char       as M
 
 ----------------------------------------------------------------------------
 
@@ -276,35 +277,77 @@ initConfig getLine' = do
   configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
   alreadyExisting <- Directory.doesFileExist configFilePath
   when alreadyExisting $ do
-    T.hPutStrLn stderr "'hap.yml' already exists"
+    putStrLn "'hap.yml' already exists"
     exitFailure
+
   putStrLn "Creating 'hap.yml'"
-  defaults <- defaultInitTemplateConfig
-  let prompt :: Read a => T.Text -> a -> IO a
-      prompt title d = do
-        T.putStrLn $ title <> "?: "
-        x <- getLine'
-        return $
-          if null x
-            then d
-            else read x
-      prompt' :: Read a => T.Text -> (InitTemplateConfig -> T.Text) -> (InitTemplateConfig -> a) -> IO a
-      prompt' title f fd = prompt (title <> " (default: " <> f defaults <> ")") (fd defaults)
 
-  let yesNo :: a -> a -> T.Text -> a
-      yesNo t f x = if x == "y" then t else f
-
-  config <-
-    InitTemplateConfig
-      <$> prompt' "repo" repo repo
-      <*> prompt' "revision" revision revision
-      <*> prompt' "host" host host
-      <*> prompt' "port" (T.pack . show . port) port
-      <*> return (buildScript defaults)
-      <*> fmap (yesNo (restartCommand defaults) Nothing) (prompt' "Include restart command" (const "Y/n") (const "y"))
+  config <- generateUserConfig defaultInitTemplateConfig
 
   Yaml.encodeFile configFilePath config
   putStrLn $ "Configuration written at " <> configFilePath
+
+  where
+    prompt :: Show a => String -> a -> MParser a -> IO a
+    prompt parameterName def parser = do
+      userInput <- prompt' (parameterName <> " (default: " <> show def <> ")")
+      if null userInput then
+        pure def
+      else
+        either
+          (\err -> putStrLn (M.errorBundlePretty err) >> prompt parameterName def parser)
+          pure
+          (M.parse (parser <* M.eof) "" userInput)
+
+    promptYN = do
+      userInput <- prompt "Include restart command? y/N" 'N' yNParser
+      pure $ case toLower userInput of
+        'y' -> Just "echo 'Restart command'"
+        _ -> Nothing
+
+    prompt' :: String -> IO String
+    prompt' title = putStrLn title >> getLine'
+
+    generateUserConfig :: IO InitTemplateConfig -> IO InitTemplateConfig
+    generateUserConfig initCfg = do
+      InitTemplateConfig{..} <- initCfg
+      InitTemplateConfig
+        <$> prompt "repo" repo pUri
+        <*> prompt "revision" revision stringParser
+        <*> prompt "host" host stringParser
+        <*> prompt "port" port numberParser
+        <*> pure buildScript 
+        <*> promptYN
+
+type MParser = Parsec Void String
+
+oScheme :: MParser String
+oScheme = M.choice [M.string "://", M.string "@"]
+
+pScheme :: MParser String
+pScheme = M.choice
+  [ M.string "https"
+  , M.string "http"
+  , M.string "ssh"
+  , M.string "git" ]
+
+pUri :: MParser String
+pUri = do
+  r <- pScheme
+  scheme <- oScheme
+  rest <- stringParser
+  pure $ r <> scheme <> rest
+
+stringParser :: MParser String
+stringParser = M.many $ M.satisfy (const True)
+
+numberParser :: MParser Word
+numberParser = read <$> M.some M.digitChar
+
+yNParser :: MParser Char
+yNParser = M.choice
+    [ M.char' 'y'
+    , M.char' 'n' ]
 
 ----------------------------------------------------------------------------
 -- Helpers
