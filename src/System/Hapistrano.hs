@@ -302,9 +302,9 @@ initConfig getLine' = do
 
     promptYN = do
       userInput <- prompt "Include restart command? y/N" 'N' yNParser
-      case toLower userInput of
-        'y' -> pure $ Just "echo 'Restart command'"
-        _ -> pure Nothing
+      pure $ case toLower userInput of
+        'y' -> Just "echo 'Restart command'"
+        _ -> Nothing
 
     prompt' :: String -> IO String
     prompt' title = do
