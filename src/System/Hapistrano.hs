@@ -60,7 +60,6 @@ import           System.Hapistrano.Config   (BuildCommand (..), CopyThing (..),
                                              deployStateFilename)
 import           System.Hapistrano.Core
 import           System.Hapistrano.Types
-import           System.IO                  (stderr, hPutStrLn)
 import           Text.Read                  (readMaybe)
 import           Text.Megaparsec            (Parsec)
 import qualified Text.Megaparsec            as M
@@ -278,7 +277,7 @@ initConfig getLine' = do
   configFilePath <- (FilePath.</> "hap.yml") <$> Directory.getCurrentDirectory
   alreadyExisting <- Directory.doesFileExist configFilePath
   when alreadyExisting $ do
-    hPutStrLn stderr "'hap.yml' already exists"
+    putStrLn "'hap.yml' already exists"
     exitFailure
 
   putStrLn "Creating 'hap.yml'"
@@ -296,7 +295,7 @@ initConfig getLine' = do
         pure def
       else
         either
-          (\err -> hPutStrLn stderr (M.errorBundlePretty err) >> prompt parameterName def parser)
+          (\err -> putStrLn (M.errorBundlePretty err) >> prompt parameterName def parser)
           pure
           (M.parse (parser <* M.eof) "" userInput)
 
@@ -307,7 +306,7 @@ initConfig getLine' = do
         _ -> Nothing
 
     prompt' :: String -> IO String
-    prompt' title = hPutStrLn stderr title >> getLine'
+    prompt' title = putStrLn title >> getLine'
 
     generateUserConfig :: IO InitTemplateConfig -> IO InitTemplateConfig
     generateUserConfig initCfg = do
