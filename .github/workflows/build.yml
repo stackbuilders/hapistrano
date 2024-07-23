@@ -24,10 +24,15 @@ jobs:
         with:
           extra-conf: accept-flake-config = true
       - uses: DeterminateSystems/magic-nix-cache-action@v7
-      - name: Compile code
-        run: nix build .#test
-      - name: Run tests
-        run: nix run .#test
+      # TODO: improve with matrix
+      - name: Compile code ghc8107
+        run: nix build .#test-ghc8107
+      - name: Run tests ghc8107
+        run: nix run .#test-ghc8107
+      - name: Compile code ghc902
+        run: nix build .#test-ghc902
+      - name: Run tests ghc902
+        run: nix run .#test-ghc902
 
   docker:
     uses: ./.github/workflows/reusable-docker.yml
