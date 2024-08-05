@@ -46,8 +46,7 @@
         };
         flake-ghc8107 = pkgs.hapistrano-ghc8107.flake { };
         flake-ghc902 = pkgs.hapistrano-ghc902.flake { };
-      in
-      flake-ghc8107 // flake-ghc902 // rec {
+      in rec {
         apps = {
           test-ghc8107 = {
             type = "app";
@@ -58,7 +57,6 @@
             program = "${packages.test-ghc902}/bin/test";
           };
         };
-        legacyPackages = pkgs;
         packages = {
           default = flake-ghc8107.packages."hapistrano:exe:hap";
           test-ghc8107 = flake-ghc8107.packages."hapistrano:test:test".overrideAttrs (_: {
@@ -85,6 +83,11 @@
                 ]}
             '';
           });
+        };
+        devShells = {
+          default = devShells.ghc902;
+          ghc8107 = flake-ghc8107.devShells.default;
+          ghc902 = flake-ghc902.devShells.default;
         };
       });
 }
