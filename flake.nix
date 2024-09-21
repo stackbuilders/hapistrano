@@ -27,51 +27,27 @@
           overlays = [
             haskellNix.overlay
             (final: prev: {
-              hapistrano-ghc8107 = final.haskell-nix.cabalProject' {
+              hapistrano-ghc96 = final.haskell-nix.cabalProject' {
                 src = final.haskell-nix.haskellLib.cleanGit {
                   name = "hapistrano";
                   src = ./.;
                 };
-                compiler-nix-name = "ghc8107";
-              };
-              hapistrano-ghc902 = final.haskell-nix.cabalProject' {
-                src = final.haskell-nix.haskellLib.cleanGit {
-                  name = "hapistrano";
-                  src = ./.;
-                };
-                compiler-nix-name = "ghc902";
+                compiler-nix-name = "ghc96";
               };
             })
           ];
         };
-        flake-ghc8107 = pkgs.hapistrano-ghc8107.flake { };
-        flake-ghc902 = pkgs.hapistrano-ghc902.flake { };
+        flake-ghc96 = pkgs.hapistrano-ghc96.flake { };
       in rec {
         apps = {
-          test-ghc8107 = {
+          test-ghc96 = {
             type = "app";
-            program = "${packages.test-ghc8107}/bin/test";
-          };
-          test-ghc902 = {
-            type = "app";
-            program = "${packages.test-ghc902}/bin/test";
+            program = "${packages.test-ghc96}/bin/test";
           };
         };
         packages = {
-          default = flake-ghc8107.packages."hapistrano:exe:hap";
-          test-ghc8107 = flake-ghc8107.packages."hapistrano:test:test".overrideAttrs (_: {
-            postFixup = ''
-              wrapProgram $out/bin/test \
-                --set PATH ${pkgs.lib.makeBinPath [
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.findutils
-                  pkgs.git
-                  pkgs.zsh
-                ]}
-            '';
-          });
-          test-ghc902 = flake-ghc902.packages."hapistrano:test:test".overrideAttrs (_: {
+          default = flake-ghc96.packages."hapistrano:exe:hap";
+          test-ghc96 = flake-ghc96.packages."hapistrano:test:test".overrideAttrs (_: {
             postFixup = ''
               wrapProgram $out/bin/test \
                 --set PATH ${pkgs.lib.makeBinPath [
@@ -85,9 +61,8 @@
           });
         };
         devShells = {
-          default = devShells.ghc902;
-          ghc8107 = flake-ghc8107.devShells.default;
-          ghc902 = flake-ghc902.devShells.default;
+          default = devShells.ghc96;
+          ghc96 = flake-ghc96.devShells.default;
         };
       });
 }
