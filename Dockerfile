@@ -1,4 +1,4 @@
-FROM utdemir/ghc-musl:v24-ghc96 AS build
+FROM quay.io/benz0li/ghc-musl:9.6.6 AS build
 WORKDIR /usr/src/app
 COPY hapistrano.cabal .
 RUN cabal update && \
