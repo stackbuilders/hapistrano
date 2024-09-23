@@ -1,4 +1,4 @@
-FROM utdemir/ghc-musl:v24-ghc902 AS build
+FROM utdemir/ghc-musl:v24-ghc96 AS build
 WORKDIR /usr/src/app
 COPY hapistrano.cabal .
 RUN cabal update && \
@@ -8,7 +8,7 @@ RUN cabal build --enable-executable-static && \
     cp $(cabal exec which hap) hap
 
 FROM alpine:3.15
-MAINTAINER Nicolas Vivar <nvivar@stackbuilders.com>
+MAINTAINER Cristhian Motoche <cmotoche@stackbuilders.com>
 RUN apk update && \
     apk add \
       ca-certificates \
