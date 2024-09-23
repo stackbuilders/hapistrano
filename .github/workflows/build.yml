@@ -16,8 +16,7 @@ jobs:
           - macos-latest  # aarch64-darwin
           - ubuntu-latest # x86_64-linux
         ghc:
-          - ghc8107
-          - ghc902
+          - ghc96
       fail-fast: true
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
