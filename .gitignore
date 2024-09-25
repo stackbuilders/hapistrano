@@ -6,7 +6,6 @@
 *.o
 .cabal-sandbox/
 .direnv/
-.envrc
 .hpc
 .hsenv
 .tool-versions
