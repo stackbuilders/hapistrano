@@ -28,7 +28,7 @@ category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
-tested-with:         GHC==8.10.17, GHC==9.0.2
+tested-with:         GHC==9.6.5
 extra-doc-files:     CHANGELOG.md
                    , README.md
 
