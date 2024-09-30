@@ -27,7 +27,7 @@
           overlays = [
             haskellNix.overlay
             (final: prev: {
-              hapistrano-ghc96 = final.haskell-nix.cabalProject' {
+              hapistrano-ghc966 = final.haskell-nix.cabalProject' {
                 src = final.haskell-nix.haskellLib.cleanGit {
                   name = "hapistrano";
                   src = ./.;
@@ -39,22 +39,22 @@
                   hlint = {};
                   haskell-language-server = {};
                 };
-                compiler-nix-name = "ghc96";
+                compiler-nix-name = "ghc966";
               };
             })
           ];
         };
-        flake-ghc96 = pkgs.hapistrano-ghc96.flake { };
+        flake-ghc966 = pkgs.hapistrano-ghc966.flake { };
       in rec {
         apps = {
-          test-ghc96 = {
+          test-ghc966 = {
             type = "app";
-            program = "${packages.test-ghc96}/bin/test";
+            program = "${packages.test-ghc966}/bin/test";
           };
         };
         packages = {
-          default = flake-ghc96.packages."hapistrano:exe:hap";
-          test-ghc96 = flake-ghc96.packages."hapistrano:test:test".overrideAttrs (_: {
+          default = flake-ghc966.packages."hapistrano:exe:hap";
+          test-ghc966 = flake-ghc966.packages."hapistrano:test:test".overrideAttrs (_: {
             postFixup = ''
               wrapProgram $out/bin/test \
                 --set PATH ${pkgs.lib.makeBinPath [
@@ -68,8 +68,8 @@
           });
         };
         devShells = {
-          default = devShells.ghc96;
-          ghc96 = flake-ghc96.devShells.default;
+          default = devShells.ghc966;
+          ghc966 = flake-ghc966.devShells.default;
         };
       });
 }
