@@ -21,40 +21,37 @@
     # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          inherit (haskellNix) config;
-          overlays = [
-            haskellNix.overlay
-            (final: prev: {
-              hapistrano-ghc966 = final.haskell-nix.cabalProject' {
-                src = final.haskell-nix.haskellLib.cleanGit {
-                  name = "hapistrano";
-                  src = ./.;
-                };
-                # This is used by `nix develop .` to open a shell for use with
-                # `cabal`, `hlint` and `haskell-language-server`
-                shell.tools = {
-                  cabal = {};
-                  hlint = {};
-                  haskell-language-server = {};
-                };
-                compiler-nix-name = "ghc966";
+        overlays = [
+          haskellNix.overlay
+          (final: prev: {
+            hapistrano = final.haskell-nix.cabalProject' {
+              src = final.haskell-nix.haskellLib.cleanGit {
+                name = "hapistrano";
+                src = ./.;
               };
-            })
-          ];
-        };
-        flake-ghc966 = pkgs.hapistrano-ghc966.flake { };
+              # This is used by `nix develop .` to open a shell for use with
+              # `cabal`, `hlint` and `haskell-language-server`
+              shell.tools = {
+                cabal = {};
+                hlint = {};
+                haskell-language-server = {};
+              };
+              compiler-nix-name = "ghc966";
+            };
+          })
+        ];       
+        pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
+        flake = pkgs.hapistrano.flake { };
       in rec {
         apps = {
-          test-ghc966 = {
+          test = {
             type = "app";
-            program = "${packages.test-ghc966}/bin/test";
+            program = "${packages.test}/bin/test";
           };
         };
         packages = {
-          default = flake-ghc966.packages."hapistrano:exe:hap";
-          test-ghc966 = flake-ghc966.packages."hapistrano:test:test".overrideAttrs (_: {
+          default = flake.packages."hapistrano:exe:hap";
+          test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
             postFixup = ''
               wrapProgram $out/bin/test \
                 --set PATH ${pkgs.lib.makeBinPath [
@@ -66,10 +63,6 @@
                 ]}
             '';
           });
-        };
-        devShells = {
-          default = devShells.ghc966;
-          ghc966 = flake-ghc966.devShells.default;
         };
       });
 }
