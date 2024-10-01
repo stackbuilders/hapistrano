@@ -88,6 +88,7 @@ data Config =
     -- ^ One of the supported 'Shell's
     , configPrint        :: !(OutputDest -> String -> IO ())
     -- ^ How to print messages
+    , configDryRun       :: !Bool
     }
 
 -- | The source of the repository. It can be from a version control provider
@@ -189,6 +190,7 @@ data MaintenanceOptions = Enable | Disable
 data Opts = Opts
   { optsCommand    :: Command
   , optsConfigFile :: FilePath
+  , optsDryRun     :: Bool
   }
 
 -- | Command to execute and command-specific options.
