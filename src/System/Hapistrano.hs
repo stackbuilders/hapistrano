@@ -70,19 +70,21 @@ import qualified Text.Megaparsec.Char       as M
 -- | Run the 'Hapistrano' monad. The monad hosts 'exec' actions.
 runHapistrano ::
      MonadIO m
-  => Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
+  => Bool -- ^ Is running in dry run
+  -> Maybe SshOptions -- ^ SSH options to use or 'Nothing' if we run locally
   -> Shell -- ^ Shell to run commands
   -> (OutputDest -> String -> IO ()) -- ^ How to print messages
   -> Hapistrano a -- ^ The computation to run
   -> m (Either Int a) -- ^ Status code in 'Left' on failure, result in
               -- 'Right' on success
-runHapistrano sshOptions shell' printFnc m =
+runHapistrano isDryRun sshOptions shell' printFnc m =
   liftIO $ do
     let config =
           Config
             { configSshOptions = sshOptions
             , configShellOptions = shell'
             , configPrint = printFnc
+            , configDryRun = isDryRun
             }
     r <- try @HapistranoException $ unHapistrano m config
     case r of

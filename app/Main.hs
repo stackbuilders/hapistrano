@@ -63,6 +63,11 @@ optionParser = Opts
   <> metavar "PATH"
   <> showDefault
   <> help "Configuration file to use" )
+  <*> flag
+  False
+  True
+  ( long "dry-run"
+  <> help "Display command (without running them)" )
 
 deployParser :: Parser Command
 deployParser = Deploy
@@ -153,7 +158,7 @@ runHapCmd Opts{..} hapCmd = do
   let printFnc dest str = atomically $
         writeTChan chan (PrintMsg dest str)
       hap shell sshOpts executionMode = do
-        r <- Hap.runHapistrano sshOpts shell printFnc $ hapCmd hapConfig executionMode
+        r <- Hap.runHapistrano optsDryRun sshOpts shell printFnc $ hapCmd hapConfig executionMode
         atomically (writeTChan chan FinishMsg)
         return r
       printer :: Int -> IO ()

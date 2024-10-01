@@ -469,7 +469,7 @@ runHapWithShell shell m = do
         case dest of
           StdoutDest -> putStr str
           StderrDest -> hPutStr stderr str
-  r <- Hap.runHapistrano Nothing shell printFnc m
+  r <- Hap.runHapistrano False Nothing shell printFnc m
   case r of
     Left n -> do
       expectationFailure ("Failed with status code: " ++ show n)
