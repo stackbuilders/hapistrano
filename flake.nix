@@ -21,45 +21,37 @@
     # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          inherit (haskellNix) config;
-          overlays = [
-            haskellNix.overlay
-            (final: prev: {
-              hapistrano-ghc8107 = final.haskell-nix.cabalProject' {
-                src = final.haskell-nix.haskellLib.cleanGit {
-                  name = "hapistrano";
-                  src = ./.;
-                };
-                compiler-nix-name = "ghc8107";
+        overlays = [
+          haskellNix.overlay
+          (final: prev: {
+            hapistrano = final.haskell-nix.cabalProject' {
+              src = final.haskell-nix.haskellLib.cleanGit {
+                name = "hapistrano";
+                src = ./.;
               };
-              hapistrano-ghc902 = final.haskell-nix.cabalProject' {
-                src = final.haskell-nix.haskellLib.cleanGit {
-                  name = "hapistrano";
-                  src = ./.;
-                };
-                compiler-nix-name = "ghc902";
+              # This is used by `nix develop .` to open a shell for use with
+              # `cabal`, `hlint` and `haskell-language-server`
+              shell.tools = {
+                cabal = {};
+                hlint = {};
+                haskell-language-server = {};
               };
-            })
-          ];
-        };
-        flake-ghc8107 = pkgs.hapistrano-ghc8107.flake { };
-        flake-ghc902 = pkgs.hapistrano-ghc902.flake { };
+              compiler-nix-name = "ghc966";
+            };
+          })
+        ];       
+        pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
+        flake = pkgs.hapistrano.flake { };
       in rec {
         apps = {
-          test-ghc8107 = {
+          test = {
             type = "app";
-            program = "${packages.test-ghc8107}/bin/test";
-          };
-          test-ghc902 = {
-            type = "app";
-            program = "${packages.test-ghc902}/bin/test";
+            program = "${packages.test}/bin/test";
           };
         };
         packages = {
-          default = flake-ghc8107.packages."hapistrano:exe:hap";
-          test-ghc8107 = flake-ghc8107.packages."hapistrano:test:test".overrideAttrs (_: {
+          default = flake.packages."hapistrano:exe:hap";
+          test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
             postFixup = ''
               wrapProgram $out/bin/test \
                 --set PATH ${pkgs.lib.makeBinPath [
@@ -71,23 +63,6 @@
                 ]}
             '';
           });
-          test-ghc902 = flake-ghc902.packages."hapistrano:test:test".overrideAttrs (_: {
-            postFixup = ''
-              wrapProgram $out/bin/test \
-                --set PATH ${pkgs.lib.makeBinPath [
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.findutils
-                  pkgs.git
-                  pkgs.zsh
-                ]}
-            '';
-          });
-        };
-        devShells = {
-          default = devShells.ghc902;
-          ghc8107 = flake-ghc8107.devShells.default;
-          ghc902 = flake-ghc902.devShells.default;
         };
       });
 }

@@ -15,9 +15,6 @@ jobs:
           - macos-13      # x86_64-darwin
           - macos-latest  # aarch64-darwin
           - ubuntu-latest # x86_64-linux
-        ghc:
-          - ghc8107
-          - ghc902
       fail-fast: true
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -28,9 +25,9 @@ jobs:
           extra-conf: accept-flake-config = true
       - uses: DeterminateSystems/magic-nix-cache-action@v7
       - name: Compile code ${{ matrix.ghc }}
-        run: nix build .#test-${{ matrix.ghc }}
+        run: nix build .#test
       - name: Run tests ${{ matrix.ghc }}
-        run: nix run .#test-${{ matrix.ghc }}
+        run: nix run .#test
 
   docker:
     uses: ./.github/workflows/reusable-docker.yml

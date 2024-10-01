@@ -28,7 +28,7 @@ category:            System
 homepage:            https://github.com/stackbuilders/hapistrano
 bug-reports:         https://github.com/stackbuilders/hapistrano/issues
 build-type:          Simple
-tested-with:         GHC==8.10.17, GHC==9.0.2
+tested-with:         GHC==9.6.6
 extra-doc-files:     CHANGELOG.md
                    , README.md
 
@@ -66,7 +66,7 @@ library
                      , text               >= 1.2 && < 3
                      , typed-process      >= 0.2 && < 0.3
                      , time               >= 1.5 && < 1.13
-                     , transformers       >= 0.4 && < 0.6
+                     , transformers       >= 0.4 && < 0.7
                      , exceptions         >= 0.10 && < 0.11
                      , yaml               >= 0.11.7 && < 0.12
   if flag(dev)

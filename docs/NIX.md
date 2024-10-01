@@ -22,40 +22,27 @@ sudo launchctl start org.nixos.nix-daemon
 ```
 
 If the following messages appear running the scripts detailed in the section
-below, it means that the Nix is not able to talk with the cache, in which case
-is recommended to go over the steps detailed in this section again:
+below, it means that Nix is not picking up the substituters we described
+earlier and is unable to use them as a derivation cache: 
 
 ```
 warning: ignoring untrusted substituter 'https://cache.iog.io'
 ```
+in which case
+it is recommended to go over the steps detailed in this section again, or look for alternative ways to add extra substituters in [nix.conf](https://nix.dev/manual/nix/2.18/command-ref/conf-file).
 
-## Switching between different GHC versions
+## Enabling the development environment
 
-The `bin` directory, holds all available shells:
-
-```
-ls bin | grep ghc
-```
-
-To spawn a new shell with a pre-defined GHC version, choose one of the scripts
-listed above and run the following command:
-
-```sh
-./bin/ghc90
-```
-
-Once inside the shell, verify the GHC version matches the script name:
+To enable the development environment exposed by the project's [Nix flake](../flake.nix), you can start a development shell by running the following command from within the project's root:
 
 ```
-ghc --version
+nix develop
 ```
 
-After that, all commands detailed in the [Getting
-Started](../README.md#getting-started) section should work the same.
+Alternatively, if you are using [nix-direnv](https://github.com/nix-community/nix-direnv) (recommended), you can run:
 
-Alternatively, to run a command without spawning a new shell use the `-c`
-option:
-
-```sh
-./bin/ghc90 -c <command>
 ```
+direnv allow
+```
+
+that will enable the development shell according to the contents of [.envrc](../.envrc). It is advisable not to run `direnv allow` blindly and always check the contents of [.envrc](../.envrc) files first to ensure nothing malicious is executed.
