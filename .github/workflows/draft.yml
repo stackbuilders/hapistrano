@@ -43,18 +43,24 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
+      - name: Copy static binary
+        run: |
+          docker run \
+            --entrypoint cp \
+            --volume $PWD/bin:/root/bin \
+            ${{ github.repository }} \
+            /usr/local/bin/hap \
+            /root/bin/hap-${{ github.ref_name }}-linux-x86_64-bin
+
       - name: Change owner before compression
-        run: sudo chown $USER:$USER /usr/local/bin/hap
+        run: sudo chown $USER:$USER bin/hap-${{ github.ref_name }}-linux-x86_64-bin
 
       - name: Compress binary
         uses: svenstaro/upx-action@v2
         with:
-          file: /usr/local/bin/hap
+          file: bin/hap-${{ github.ref_name }}-linux-x86_64-bin
           args: --best --lzma
           strip: true
-
-      - name: Rename binary file
-        run: cp /usr/local/bin/hap bin/hap-${{ github.ref_name }}-linux-x86_64-bin
 
       - name: Create draft release
         uses: softprops/action-gh-release@v1
