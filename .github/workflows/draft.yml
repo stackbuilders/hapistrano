@@ -6,7 +6,7 @@
 name: Draft
 
 on:
-  create:
+  push:
     tags:
       - v*
 
@@ -23,14 +23,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v2
+
       - name: Cache Docker layers
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: ${{ runner.os }}-buildx-
+
       - name: Build Docker image
         uses: docker/build-push-action@v2
         with:
@@ -39,6 +42,7 @@ jobs:
           tags: ${{ github.repository }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
       - name: Copy static binary
         run: |
           docker run \
@@ -47,6 +51,17 @@ jobs:
             ${{ github.repository }} \
             /usr/local/bin/hap \
             /root/bin/hap-${{ github.ref_name }}-linux-x86_64-bin
+
+      - name: Change owner before compression
+        run: sudo chown $USER:$USER bin/hap-${{ github.ref_name }}-linux-x86_64-bin
+
+      - name: Compress binary
+        uses: svenstaro/upx-action@v2
+        with:
+          file: bin/hap-${{ github.ref_name }}-linux-x86_64-bin
+          args: --best --lzma
+          strip: true
+
       - name: Create draft release
         uses: softprops/action-gh-release@v1
         with:
@@ -54,6 +69,7 @@ jobs:
             bin/hap-*
             LICENSE
           draft: true
+
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
