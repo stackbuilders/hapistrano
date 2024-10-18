@@ -137,23 +137,28 @@ exec' ::
   -> Hapistrano String -- ^ Raw stdout output of that program
 exec' cmd readProcessOutput maybeRelease = do
   Config {..} <- ask
-  time <- liftIO getZonedTime
-  let timeStampFormat = "%T,  %F (%Z)"
-      printableTime = formatTime defaultTimeLocale timeStampFormat time
-      hostLabel =
-        case configSshOptions of
-          Nothing              -> "localhost"
-          Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
-      hostInfo = colorizeString Blue $ putLine hostLabel
-      timestampInfo = colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
-      cmdInfo = colorizeString Green (cmd ++ "\n")
-  liftIO $ configPrint StdoutDest (hostInfo ++ timestampInfo ++ cmdInfo)
-  (exitCode', stdout', stderr') <- liftIO readProcessOutput
-  unless (null stdout') . liftIO $ configPrint StdoutDest stdout'
-  unless (null stderr') . liftIO $ configPrint StderrDest stderr'
-  case exitCode' of
-    ExitSuccess   -> return stdout'
-    ExitFailure n -> failWith n Nothing maybeRelease
+  if configDryRun
+    then do
+      liftIO $ configPrint StderrDest $ "[Dry run] " <> cmd
+      return ""
+      else do
+      time <- liftIO getZonedTime
+      let timeStampFormat = "%T,  %F (%Z)"
+          printableTime = formatTime defaultTimeLocale timeStampFormat time
+          hostLabel =
+            case configSshOptions of
+              Nothing              -> "localhost"
+              Just SshOptions {..} -> sshHost ++ ":" ++ show sshPort
+          hostInfo = colorizeString Blue $ putLine hostLabel
+          timestampInfo = colorizeString Cyan ("[" ++ printableTime ++ "] INFO -- : $ ")
+          cmdInfo = colorizeString Green (cmd ++ "\n")
+      liftIO $ configPrint StdoutDest (hostInfo ++ timestampInfo ++ cmdInfo)
+      (exitCode', stdout', stderr') <- liftIO readProcessOutput
+      unless (null stdout') . liftIO $ configPrint StdoutDest stdout'
+      unless (null stderr') . liftIO $ configPrint StderrDest stderr'
+      case exitCode' of
+        ExitSuccess   -> return stdout'
+        ExitFailure n -> failWith n Nothing maybeRelease
 
 -- | Put something “inside” a line, sort-of beautifully.
 putLine :: String -> String
