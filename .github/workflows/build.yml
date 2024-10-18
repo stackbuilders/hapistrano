@@ -1,8 +1,14 @@
 ---
 name: Build
 
-on: push
-
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
