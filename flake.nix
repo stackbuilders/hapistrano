@@ -36,10 +36,13 @@
                 hlint = {};
                 haskell-language-server = {};
               };
+              shell.buildInputs = with pkgs; [
+                pre-commit
+              ];
               compiler-nix-name = "ghc966";
             };
           })
-        ];       
+        ];
         pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
         flake = pkgs.hapistrano.flake { };
       in rec {
