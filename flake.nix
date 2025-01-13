@@ -1,71 +1,57 @@
 {
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
-    haskellNix.url = "github:input-output-hk/haskell.nix";
-    nixpkgs.follows = "haskellNix/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    systems.url = "github:nix-systems/default";
+    devenv.url = "github:cachix/devenv";
+    devenv.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   nixConfig = {
-    allow-import-from-derivation = "true";
-    extra-substituters = [
-      "https://cache.iog.io"
-      "https://cache.zw3rk.com"
-    ];
-    extra-trusted-public-keys = [
-      "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
-      "loony-tools:pr9m4BkM/5/eSTZlkQyRt57Jz7OMBxNSUiMC4FkcNfk="
-    ];
+    extra-trusted-public-keys = "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
+    extra-substituters = "https://devenv.cachix.org";
   };
 
-  outputs = inputs@{ self, flake-utils, haskellNix, nixpkgs }:
-    # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes.html
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        overlays = [
-          haskellNix.overlay
-          (final: prev: {
-            hapistrano = final.haskell-nix.cabalProject' {
-              src = final.haskell-nix.haskellLib.cleanGit {
-                name = "hapistrano";
-                src = ./.;
-              };
-              # This is used by `nix develop .` to open a shell for use with
-              # `cabal`, `hlint` and `haskell-language-server`
-              shell.tools = {
-                cabal = {};
-                hlint = {};
-                haskell-language-server = {};
-              };
-              shell.buildInputs = with pkgs; [
+  outputs = {
+    self,
+    nixpkgs,
+    devenv,
+    systems,
+    ...
+  } @ inputs: let
+    forEachSystem = nixpkgs.lib.genAttrs (import systems);
+  in {
+    packages = forEachSystem (system: {
+      devenv-up = self.devShells.${system}.default.config.procfileScript;
+      devenv-test = self.devShells.${system}.default.config.test;
+    });
+
+    devShells =
+      forEachSystem
+      (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        default = devenv.lib.mkShell {
+          inherit inputs pkgs;
+          modules = [
+            {
+              languages.haskell.enable = true;
+              languages.haskell.package = pkgs.haskell.compiler.ghc96;
+
+              # https://devenv.sh/reference/options/
+              packages = with pkgs; [
                 pre-commit
               ];
-              compiler-nix-name = "ghc966";
-            };
-          })
-        ];
-        pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
-        flake = pkgs.hapistrano.flake { };
-      in rec {
-        apps = {
-          test = {
-            type = "app";
-            program = "${packages.test}/bin/test";
-          };
-        };
-        packages = {
-          default = flake.packages."hapistrano:exe:hap";
-          test = flake.packages."hapistrano:test:test".overrideAttrs (_: {
-            postFixup = ''
-              wrapProgram $out/bin/test \
-                --set PATH ${pkgs.lib.makeBinPath [
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.findutils
-                  pkgs.git
-                  pkgs.zsh
-                ]}
-            '';
-          });
+
+              enterShell = ''
+                pre-commit install
+              '';
+
+              enterTest = ''
+                cabal test
+              '';
+            }
+          ];
         };
       });
+  };
 }

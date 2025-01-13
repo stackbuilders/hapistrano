@@ -1,8 +1,10 @@
--   repo: local
-    hooks:
-    -   id: hlint
-        name: hlint
-        description: HLint gives suggestions on how to improve your source code.
-        entry: hlint
-        language: system
-        files: '\.l?hs$'
+repos:
+    -   repo: local
+        hooks:
+        -   id: hlint
+            name: hlint
+            description: HLint gives suggestions on how to improve your source code.
+            entry: hlint
+            language: system
+            files: '\.l?hs$'
+
