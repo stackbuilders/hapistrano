@@ -34,12 +34,18 @@
           inherit inputs pkgs;
           modules = [
             {
+              # Need to set GHC_NO_UNICODE as mentioned here:
+              # https://gitlab.haskell.org/ghc/ghc/-/commit/74132c2b0992849f83ef87c8a56ac3975738e767#af1d9e2647379d23697be69f8b7fc568ed0294c5_1825_1825
+              env.LC_ALL = "en_US.UTF-8";
+              env.GHC_CHARENC = "GHC_NO_UNICODE";
+
               languages.haskell.enable = true;
               languages.haskell.package = pkgs.haskell.compiler.ghc96;
 
               # https://devenv.sh/reference/options/
               packages = with pkgs; [
                 pre-commit
+                zsh
               ];
 
               enterShell = ''
@@ -47,6 +53,7 @@
               '';
 
               enterTest = ''
+                cabal update
                 cabal test
               '';
             }

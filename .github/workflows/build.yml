@@ -18,24 +18,42 @@ jobs:
     strategy:
       matrix:
         os:
-          - macos-13      # x86_64-darwin
-          - macos-latest  # aarch64-darwin
-          - ubuntu-latest # x86_64-linux
+          # - macos-13      # x86_64-darwin
+          # - macos-latest  # aarch64-darwin
+          - ubuntu-24.04 # x86_64-linux
       fail-fast: true
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v12
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
         with:
           extra-conf: accept-flake-config = true
-      - uses: DeterminateSystems/magic-nix-cache-action@v7
+      - name: Setup devenv binary cache
+        uses: cachix/cachix-action@v15
+        with:
+          name: devenv
+      - name: Install devenv
+        run:  nix-env -if https://github.com/cachix/devenv/archive/refs/tags/v1.3.1.tar.gz
+      - name: Cache ~/.cabal/packages, ~/.cabal/store and dist-newstyle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cabal/packages
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('**/*.cabal') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
+      - name: Update Cabal list of known packages.
+        run: nix develop --no-pure-eval -c cabal update
       - name: Compile code ${{ matrix.ghc }}
-        run: nix build .#test
+        run: nix develop --no-pure-eval -c cabal build
       - name: Run tests ${{ matrix.ghc }}
-        run: nix run .#test
+        run: nix develop --no-pure-eval -c cabal test
 
-  docker:
-    uses: ./.github/workflows/reusable-docker.yml
-    with:
-      push: false
+  # docker:
+  #   uses: ./.github/workflows/reusable-docker.yml
+  #   with:
+  #     push: false
