@@ -18,8 +18,8 @@ jobs:
     strategy:
       matrix:
         os:
-          # - macos-13      # x86_64-darwin
-          # - macos-latest  # aarch64-darwin
+          - macos-13     # x86_64-darwin
+          - macos-latest # aarch64-darwin
           - ubuntu-24.04 # x86_64-linux
       fail-fast: true
     runs-on: ${{ matrix.os }}
@@ -53,7 +53,7 @@ jobs:
       - name: Run tests ${{ matrix.ghc }}
         run: nix develop --no-pure-eval -c cabal test
 
-  # docker:
-  #   uses: ./.github/workflows/reusable-docker.yml
-  #   with:
-  #     push: false
+  docker:
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      push: false
