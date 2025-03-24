@@ -8,6 +8,7 @@
     {
       nixpkgs,
       stacklock2nix,
+      ...
     }:
     let
       pkgs = import nixpkgs {
@@ -19,11 +20,12 @@
               stackYaml = ./stack.yaml;
               baseHaskellPkgSet = final.haskell.packages.ghc984;
             };
+            hapistrano = final.hapistrano-stacklock.pkgSet.hapistrano;
           })
         ];
       };
     in
     {
-      packages.x86_64-linux = pkgs;
+      packages.x86_64-linux.default = pkgs.hapistrano;
     };
 }
