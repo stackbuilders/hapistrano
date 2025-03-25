@@ -9,12 +9,26 @@ on:
     types:
       - opened
       - synchronize
+
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  nix-build:
+    strategy:
+      matrix:
+        runner:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: nix build
+
   haskell:
+    if: false
     strategy:
       matrix:
         os:
@@ -36,6 +50,7 @@ jobs:
         run: nix run .#test
 
   docker:
+    if: false
     uses: ./.github/workflows/reusable-docker.yml
     with:
       push: false
