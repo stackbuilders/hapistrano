@@ -1,0 +1,7 @@
+{ pkgs, ... }:
+
+{
+  packages = [
+    pkgs.hapistrano    
+  ];
+}
