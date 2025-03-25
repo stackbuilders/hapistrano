@@ -52,13 +52,13 @@ library
                      , System.Hapistrano.Commands.Internal
                      , System.Hapistrano.Maintenance
   build-depends:       aeson              >= 2.0 && < 3.0
-                     , ansi-terminal      >= 0.9 && < 0.12
+                     , ansi-terminal      >= 1.0 && < 2.0
                      , base               >= 4.9 && < 5.0
                      , directory          >= 1.2.5 && < 1.4
                      , filepath           >= 1.2 && < 1.5
                      , gitrev             >= 1.2 && < 1.4
                      , mtl                >= 2.0 && < 3.0
-                     , megaparsec         >= 9.0.0 && < 9.6.1
+                     , megaparsec         >= 9.6 && < 10.0
                      , stm                >= 2.0 && < 2.6
                      , path               >= 0.5 && < 1.0
                      , path-io            >= 1.2 && < 1.9
@@ -84,7 +84,7 @@ executable hap
                      , formatting         >= 6.2 && < 8.0
                      , gitrev             >= 1.2 && < 1.4
                      , hapistrano
-                     , optparse-applicative >= 0.11 && < 0.17
+                     , optparse-applicative >= 0.18 && < 0.19
                      , stm                >= 2.4 && < 2.6
                      , yaml               >= 0.11.7 && < 0.12
   if flag(dev)
