@@ -26,16 +26,14 @@
                 sha256 = "sha256-Z0UJ78I3O8kWduNOqz7jASnR5XB8mwBDP0fVvjJoqOg=";
               };
               additionalHaskellPkgSetOverrides = hfinal: hprev: {
-                hapistrano = final.haskell.lib.dontCheck hprev.hapistrano;
+                hapistrano = final.haskell.lib.compose.overrideCabal (drv: {
+                  testToolDepends = drv.testToolDepends ++ [
+                    pkgs.git
+                    pkgs.zsh
+                  ];
+                }) hprev.hapistrano;
               };
             };
-            # hapistrano = final.haskell.lib.compose.overrideCabal (drv: {
-            #   testToolDepends = [
-            #     pkgs.coreutils
-            #     pkgs.zsh
-            #   ];
-            # }) final.hapistrano-stacklock.pkgSet.hapistrano;
-            # hapistrano = final.haskell.lib.dontCheck final.hapistrano-stacklock.pkgSet.hapistrano;
             hapistrano = final.hapistrano-stacklock.pkgSet.hapistrano;
           })
         ];
