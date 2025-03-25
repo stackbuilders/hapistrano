@@ -7,6 +7,7 @@
 
   outputs =
     {
+      self,
       flake-utils,
       nixpkgs,
       stacklock2nix,
@@ -46,5 +47,10 @@
       {
         packages.default = pkgs.hapistrano;
       }
-    );
+    )
+    // {
+      overlays.default = final: prev: {
+        hapistrano = self.packages.${prev.system}.default;
+      };
+    };
 }
