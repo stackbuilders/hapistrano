@@ -22,6 +22,9 @@ jobs:
           - macos-latest
           - ubuntu-latest
     runs-on: ${{ matrix.runner }}
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
