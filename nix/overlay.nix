@@ -1,6 +1,8 @@
 final: prev: {
   hapistrano-stacklock = final.stacklock2nix {
     stackYaml = ../stack.yaml;
+    # The version of the compiler declared here must match the GHC version
+    # provided by the stack resolver.
     baseHaskellPkgSet = final.haskell.packages.ghc984;
     all-cabal-hashes = final.fetchFromGitHub {
       owner = "commercialhaskell";

@@ -1,1 +1,4 @@
+# After upgrading the resolver, make sure that the GHC version specified in the
+# `./nix/overlay.nix` file under the `baseHaskellPkgSet` field matches the
+# compiler version provided by the resolver.
 resolver: lts-23.15
