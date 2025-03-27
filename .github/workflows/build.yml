@@ -33,13 +33,23 @@ jobs:
         with:
           path: ~/.stack
           key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}
-      - run: devenv shell -- stack build --only-dependencies --test
+          restore-keys: |
+            ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-
+            ${{ runner.os }}-stack-global-
+      - name: Install dependencies
+        run: devenv shell -- stack build --only-dependencies --test
       - uses: actions/cache@v4
         with:
           path: .stack-work
           key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}-${{ hashFiles('**/*.hs') }}
-      - run: devenv shell -- stack build --test --no-run-tests
-      - run: devenv shell -- stack test
+          restore-keys: |
+            ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}-
+            ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-
+            ${{ runner.os }}-stack-work-
+      - name: Compile code
+        run: devenv shell -- stack build --test --no-run-tests
+      - name: Run tests
+        run: devenv shell -- stack test
 
   nix-build:
     if: false
