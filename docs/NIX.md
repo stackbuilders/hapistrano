@@ -3,46 +3,50 @@
 ## Requirements
 
 - Install [Nix](https://nixos.org/download.html)
-- Enable Flakes [permanently](https://nixos.wiki/wiki/Flakes#Permanent)
+- Enable [Flakes](https://nixos.wiki/wiki/Flakes#Permanent) permanently
+- Install [devenv](https://devenv.sh/getting-started/):
 
-**For macOS users**
+## Project Structure
 
-Add the following lines to configuration file located at `/etc/nix/nix.conf`:
+The project uses:
+- Nix Flakes for reproducible builds and development environments
+- `stacklock2nix` for deriving Nix packages from stack.yaml.lock
+- `devenv` for creating consistent development environments
 
-```
-trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-substituters = https://cache.iog.io https://cache.nixos.org
-```
+### Flake.nix
 
-Restart the `nix-daemon` service:
+The flake.nix file has the following inputs:
+- `nixpkgs`: Standard Nix packages repository
+- `stacklock2nix`: A tool for generating Nix packages from stack.yaml.lock files
 
-```
-sudo launchctl stop org.nixos.nix-daemon
-sudo launchctl start org.nixos.nix-daemon
-```
+The flake outputs:
+- `packages.default`: The Hapistrano package for each supported system
+- `overlays.default`: An overlay for integrating Hapistrano into other Nix
+  systems
 
-If the following messages appear running the scripts detailed in the section
-below, it means that Nix is not picking up the substituters we described
-earlier and is unable to use them as a derivation cache: 
+## Development Environments
 
-```
-warning: ignoring untrusted substituter 'https://cache.iog.io'
-```
-in which case
-it is recommended to go over the steps detailed in this section again, or look for alternative ways to add extra substituters in [nix.conf](https://nix.dev/manual/nix/2.18/command-ref/conf-file).
+The project includes a `devenv.nix` configuration that provides a consistent
+development environment with all necessary dependencies.
 
-## Enabling the development environment
-
-To enable the development environment exposed by the project's [Nix flake](../flake.nix), you can start a development shell by running the following command from within the project's root:
+To use devenv:
 
 ```
-nix develop
+devenv shell
 ```
 
-Alternatively, if you are using [nix-direnv](https://github.com/nix-community/nix-direnv) (recommended), you can run:
+The devenv configuration includes:
+- Essential tools like git, stack, and zsh
+- System-specific dependencies (e.g., gmp for Linux systems)
+
+### Using nix-direnv
+
+If you are using [nix-direnv](https://github.com/nix-community/nix-direnv), run:
 
 ```
 direnv allow
 ```
 
-that will enable the development shell according to the contents of [.envrc](../.envrc). It is advisable not to run `direnv allow` blindly and always check the contents of [.envrc](../.envrc) files first to ensure nothing malicious is executed.
+This will enable the development shell according to the contents of
+[.envrc](../.envrc). Always check the contents of [.envrc](../.envrc) files
+before running `direnv allow` to ensure nothing malicious is executed.
