@@ -28,8 +28,12 @@ jobs:
       - uses: cachix/cachix-action@v16
         with:
           name: devenv
-      - run: nix profile install nixpkgs#devenv
-      - run: devenv shell -- stack build
+      - run: nix profile install nixpkgs#devenv 
+      - uses: actions/cache@v4
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}
+      - run: devenv shell -- stack build --only-dependencies --test
 
   nix-build:
     if: false
