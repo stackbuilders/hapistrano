@@ -1,8 +1,16 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, inputs, ... }:
 
+let
+  pkgs-unstable = import inputs.nixpkgs-unstable {
+    system = pkgs.stdenv.system;
+  };
+in
 {
-
   packages = [
-    pkgs.stack
+    pkgs-unstable.haskell.compiler.ghc984
   ];
+
+  scripts.stack.exec = ''
+    ${pkgs.stack}/bin/stack --system-ghc "$@"
+  '';
 }
