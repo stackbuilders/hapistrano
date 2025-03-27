@@ -19,8 +19,8 @@ jobs:
     strategy:
       matrix:
         runner:
-          # - macos-latest
-          - ubuntu-latest
+          - macos-latest
+          # - ubuntu-latest
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
