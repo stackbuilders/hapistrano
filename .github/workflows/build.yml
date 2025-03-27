@@ -15,6 +15,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build:
+    strategy:
+      matrix:
+        runner:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: devenv shell -- stack build
+
   nix-build:
     strategy:
       matrix:
@@ -30,28 +42,6 @@ jobs:
           name: stackbuilders
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - run: nix build
-
-  haskell:
-    if: false
-    strategy:
-      matrix:
-        os:
-          - macos-13      # x86_64-darwin
-          - macos-latest  # aarch64-darwin
-          - ubuntu-latest # x86_64-linux
-      fail-fast: true
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v12
-        with:
-          extra-conf: accept-flake-config = true
-      - uses: DeterminateSystems/magic-nix-cache-action@v7
-      - name: Compile code ${{ matrix.ghc }}
-        run: nix build .#test
-      - name: Run tests ${{ matrix.ghc }}
-        run: nix run .#test
 
   docker:
     if: false
