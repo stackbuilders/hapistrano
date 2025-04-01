@@ -9,31 +9,76 @@ on:
     types:
       - opened
       - synchronize
+
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  haskell:
+  build:
     strategy:
       matrix:
-        os:
-          - macos-13      # x86_64-darwin
-          - macos-latest  # aarch64-darwin
-          - ubuntu-latest # x86_64-linux
-      fail-fast: true
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+        runner:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v12
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v16
         with:
-          extra-conf: accept-flake-config = true
-      - uses: DeterminateSystems/magic-nix-cache-action@v7
-      - name: Compile code ${{ matrix.ghc }}
-        run: nix build .#test
-      - name: Run tests ${{ matrix.ghc }}
-        run: nix run .#test
+          name: devenv
+      - name: Install devenv
+        run: nix profile install nixpkgs#devenv 
+      - name: Setup cache for `~/.stack`
+        uses: actions/cache@v4
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-
+            ${{ runner.os }}-stack-global-
+      - name: Install dependencies
+        run: devenv shell -- stack build --only-dependencies --test
+      - name: Setup cache for `.stack-work`
+        uses: actions/cache@v4
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}-${{ hashFiles('**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('hapistrano.cabal') }}-
+            ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-
+            ${{ runner.os }}-stack-work-
+      - name: Compile code
+        run: devenv shell -- stack build --test --no-run-tests
+      - name: Run tests
+        run: devenv shell -- stack test
+
+  nix-build:
+    strategy:
+      matrix:
+        runner:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v16
+        with:
+          name: stackbuilders
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Build `default` package
+        run: nix build
 
   docker:
     uses: ./.github/workflows/reusable-docker.yml
