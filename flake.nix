@@ -51,7 +51,7 @@
         hapistrano = self.packages.${prev.system}.default;
       };
       templates.default = {
-        description = "Install Hapistrano on devenv";
+        description = "Install Hapistrano via devenv";
         path = ./templates/default;
       };
     };
