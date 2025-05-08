@@ -50,5 +50,9 @@
       overlays.default = final: prev: {
         hapistrano = self.packages.${prev.system}.default;
       };
+      templates.default = {
+        description = "Install Hapistrano using devenv";
+        path = ./templates/default;
+      };
     };
 }

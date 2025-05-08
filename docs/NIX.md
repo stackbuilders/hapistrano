@@ -9,6 +9,7 @@
 ## Project Structure
 
 The project uses:
+
 - Nix Flakes for reproducible builds and development environments
 - `stacklock2nix` for deriving Nix packages from stack.yaml.lock
 - `devenv` for creating consistent development environments
@@ -16,13 +17,16 @@ The project uses:
 ### Flake.nix
 
 The flake.nix file has the following inputs:
+
 - `nixpkgs`: Standard Nix packages repository
 - `stacklock2nix`: A tool for generating Nix packages from stack.yaml.lock files
 
 The flake outputs:
+
 - `packages.default`: The Hapistrano package for each supported system
 - `overlays.default`: An overlay for integrating Hapistrano into other Nix
   systems
+- `templates.default`: A template showing how to install Hapistrano using devenv
 
 ## Development Environments
 
