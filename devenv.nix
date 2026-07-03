@@ -4,6 +4,7 @@
   packages =
     [
       pkgs.git
+      pkgs.haskell.compiler.ghc984
       pkgs.stack
       pkgs.zsh
     ]
