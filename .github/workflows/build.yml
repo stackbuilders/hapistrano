@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-
             ${{ runner.os }}-stack-global-
       - name: Install dependencies
-        run: devenv shell -- stack --system-ghc --no-install-ghc build --only-dependencies --test
+        run: devenv shell -- stack build --only-dependencies --test
       - name: Setup cache for `.stack-work`
         uses: actions/cache@v4
         with:
@@ -56,9 +56,9 @@ jobs:
             ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-
             ${{ runner.os }}-stack-work-
       - name: Compile code
-        run: devenv shell -- stack --system-ghc --no-install-ghc build --test --no-run-tests
+        run: devenv shell -- stack build --test --no-run-tests
       - name: Run tests
-        run: devenv shell -- stack --system-ghc --no-install-ghc test
+        run: devenv shell -- stack test
 
   nix-build:
     strategy:
