@@ -1,5 +1,5 @@
 # Build
-FROM quay.io/benz0li/ghc-musl:9.6.6 AS build
+FROM quay.io/benz0li/ghc-musl:9.6.7 AS build
 
 WORKDIR /usr/src/app
 
