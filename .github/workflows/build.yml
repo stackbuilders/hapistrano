@@ -19,7 +19,6 @@ jobs:
     strategy:
       matrix:
         runner:
-          - macos-15-intel
           - ubuntu-24.04
     runs-on: ${{ matrix.runner }}
     env:
