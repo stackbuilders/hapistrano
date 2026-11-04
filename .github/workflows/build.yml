@@ -18,12 +18,16 @@ jobs:
   build:
     strategy:
       matrix:
-        runner:
-          - ubuntu-24.04
+        include:
+          - runner: ubuntu-24.04
+            systemGhc: false
+          - runner: macos-latest
+            systemGhc: true
     runs-on: ${{ matrix.runner }}
     env:
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
+      STACK_FLAGS: ${{ matrix.systemGhc && '--system-ghc' || '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +48,7 @@ jobs:
             ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-
             ${{ runner.os }}-stack-global-
       - name: Install dependencies
-        run: devenv shell -- stack build --only-dependencies --test
+        run: devenv shell -- stack $STACK_FLAGS build --only-dependencies --test
       - name: Setup cache for `.stack-work`
         uses: actions/cache@v4
         with:
@@ -55,9 +59,9 @@ jobs:
             ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-
             ${{ runner.os }}-stack-work-
       - name: Compile code
-        run: devenv shell -- stack build --test --no-run-tests
+        run: devenv shell -- stack $STACK_FLAGS build --test --no-run-tests
       - name: Run tests
-        run: devenv shell -- stack test
+        run: devenv shell -- stack $STACK_FLAGS test
 
   nix-build:
     strategy:
