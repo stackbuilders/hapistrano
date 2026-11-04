@@ -21,6 +21,8 @@ jobs:
         include:
           - runner: ubuntu-24.04
             systemGhc: false
+          # On Apple Silicon, Stack's downloaded GHC fails to resolve
+          # libffi's _ffi_type_void; use the Nix-provided GHC instead.
           - runner: macos-latest
             systemGhc: true
     runs-on: ${{ matrix.runner }}
